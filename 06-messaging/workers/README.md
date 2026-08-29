@@ -161,14 +161,62 @@ Processing rate against arrival rate — the only pair that answers "are we keep
 duration, so the visibility timeout can be set above the p99 rather than guessed. Redelivery count as
 a direct measure of crashes and timeouts. DLQ depth, alerted at anything above zero.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"How many workers?"** — wants Little's Law against the backlog target, and the shared-dependency
-  ceiling.
-- **"A worker dies mid-job. What happens?"** — wants redelivery and idempotency.
-- **"How do you deploy workers without losing work?"** — wants SIGTERM handling and draining.
-- **"Backlog is growing but CPU is 20%. Why?"** — I/O-bound; wants scaling on depth.
-- **"Job takes 10 minutes, visibility timeout is 5. What happens?"** — it runs twice, concurrently.
+**1.** A job takes 10 minutes. The visibility timeout is 5. What happens?
+
+<details><summary>Answer</summary>
+
+At the five-minute mark the broker decides the worker is dead and redelivers the message, so a second
+worker starts the same job while the first is still halfway through it. Both run to completion,
+concurrently, and **neither knows about the other** — so any non-idempotent step happens twice, and
+any shared resource they both write is a race.
+
+Set the visibility timeout above the p99 job duration — which means measuring per-job duration, not
+guessing — or extend the lease with a heartbeat while the job runs.
+</details>
+
+**2.** The backlog is growing and worker CPU is at 20%. Why, and what is the autoscaler keyed on?
+
+<details><summary>Answer</summary>
+
+The work is I/O-bound, which is the normal case: the workers are waiting on a database or an HTTP
+call, not computing. CPU-based autoscaling will therefore never add a worker, no matter how large the
+backlog gets, because by its own signal the fleet is idle.
+
+**Scale on queue depth.** CPU tells you how hard the existing workers are working; depth tells you
+whether the fleet is keeping up, which is the actual question. Pair it with processing rate versus
+arrival rate, since that is what says whether the backlog will ever drain.
+</details>
+
+**3.** You must drain a 500,000-message backlog within an hour, and each job takes 200 ms. How much
+concurrency do you need, and what would stop you using that number?
+
+<details><summary>Answer</summary>
+
+`500,000 / 3,600 ≈ 139` jobs per second, and Little's Law gives `139 × 0.2 ≈ 28` in flight — so about
+28 concurrent slots across the fleet. The arithmetic is the easy half.
+
+What stops you is the shared downstream. Fleet concurrency is workers × per-worker concurrency, so
+twenty workers configured with concurrency 50 is a thousand simultaneous operations against a
+database whose pool the request path also uses. The ceiling is set by what the dependency can absorb,
+not by what the backlog demands — and if that means the drain takes three hours, it takes three
+hours.
+</details>
+
+**4.** Deploys are slow because workers drain in-flight jobs on `SIGTERM`. Someone proposes killing
+them immediately instead. Do you approve it?
+
+<details><summary>Answer</summary>
+
+No. **Graceful shutdown is a correctness feature, not a nicety.** Work killed mid-flight is not lost,
+but it waits out the entire visibility timeout before redelivery — so every deploy silently delays a
+slice of work by minutes — and any non-idempotent job may be left half-applied.
+
+Since autoscaling and deploys kill workers constantly, this is not a rare path. If drains genuinely
+take too long, shorten the jobs, lower per-worker concurrency, or lower the drain timeout to a
+bounded value — do not remove the drain.
+</details>
 
 ## 32. Decision checklist
 

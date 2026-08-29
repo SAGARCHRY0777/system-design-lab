@@ -294,17 +294,79 @@ discipline these use: real numbers, and an explicit list of what production adds
 would produce — eviction rate, which tells you the cache is too small, and p99 specifically, since
 the tail *is* the miss path and a good average hides it entirely.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"When would you not add a cache?"** — the best question here. Wants uniform access, write-heavy
-  workloads, and "fix the query instead".
-- **"Your cache dies. What happens?"** — wants the 10–20× step change and the observation that the
-  database may not survive it.
-- **"What's a thundering herd?"** — wants hot-key expiry, and coalescing or probabilistic early
-  refresh as the fix.
-- **"Cache-aside vs read-through?"** — wants "who owns invalidation", not a definition.
-- **"How would you size it?"** — wants working set and access distribution, not a fraction of the
-  dataset.
+**1.** A report endpoint takes 4 seconds. The query sequentially scans a 200-million-row table. An
+engineer proposes caching the result. Do you approve it?
+
+<details><summary>Answer</summary>
+
+Not yet. A cache would hide the missing index rather than remove it, and hidden problems survive for
+years. Every miss still pays the 4 seconds, so your p99 remains 4 seconds — see
+[§7](#7-the-problem-it-does-not-solve) — and the first request after every invalidation is a user
+waiting for a full scan.
+
+Fix the query first: an index here is routinely a 10–100× improvement, it is free, and it is
+reversible. Cache afterwards if it is still worth caching. **If your options table has no row for
+"do nothing", you have not finished thinking.**
+</details>
+
+**2.** Your cache tier dies at peak traffic. What does the database see in the next second?
+
+<details><summary>Answer</summary>
+
+At a 95% hit rate, a **20× step change** in one instant — every read that was being absorbed now
+arrives at once. Most databases do not survive that, which is how a cache outage becomes a full
+outage.
+
+The uncomfortable part is structural: the cache stopped being an optimisation the moment the database
+could no longer serve the traffic unaided, and it is usually still labelled "safe to lose" on the
+diagram. Decide in advance whether a cache outage should fail open (fall through, risk the origin) or
+fail closed (serve errors, protect it) — **both are defensible and the default is usually neither,
+because nobody chose.**
+</details>
+
+**3.** A single hot key expires while 5,000 requests for it are in flight. Describe what happens and
+name two fixes.
+
+<details><summary>Answer</summary>
+
+A thundering herd: all 5,000 miss simultaneously and hit the origin with an identical query, which is
+4,999 more than were needed. It typically happens on the most popular key, at the busiest moment,
+because that is what "hot" means.
+
+Fixes: **request coalescing** (single-flight — one request fetches, the rest wait on it) and
+**probabilistic early expiry**, where a key is refreshed slightly before its TTL with a probability
+that rises as expiry nears, so one unlucky request rebuilds it while the others still get a hit.
+</details>
+
+**4.** Two code paths update the same row. One of them forgets to invalidate the cache. Which
+strategy made that possible, and what removes the possibility?
+
+<details><summary>Answer</summary>
+
+Cache-aside. Its defining property is that **invalidation lives in application code**, so correctness
+depends on every write path remembering — and the one that forgets is found in production, months
+later, by a user looking at stale data.
+
+Read-through moves the population logic into the cache, and CDC-driven invalidation derives it from
+the database's change log, so no human has to remember. The real question behind "cache-aside or
+read-through?" is never the definition; it is *who owns invalidation*.
+</details>
+
+**5.** The dataset is 500 GB. Someone sizes the cache at 100 GB, "because 20% is a reasonable
+fraction". What did they not ask?
+
+<details><summary>Answer</summary>
+
+The access distribution. 20% of a **uniform** workload gives you a 20% hit rate and a new failure
+mode for nothing; 20% of a Zipf-distributed workload can give 95%. The same number is either useless
+or transformative depending on a property nobody measured.
+
+Size from the **working set** — the keys actually being read in a window — not from a fraction of the
+dataset. And check where the extra nines pay: going from 90% to 99% removes 90% of the *remaining*
+origin load, which is often worth more than the first 90% was.
+</details>
 
 ## 32. Decision checklist
 

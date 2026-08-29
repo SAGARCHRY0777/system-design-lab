@@ -176,13 +176,63 @@ first shows up in a 5xx count. Track MTTR, not just incident count. Run reconcil
 re-derive state independently and alert on divergence; this is the only defence against silent
 corruption.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Availability vs reliability?"** — wants up versus correct, and that they can be traded.
-- **"You add retries. What breaks?"** — wants duplicates, and idempotency as the answer.
-- **"How do you make a payment endpoint safe to retry?"** — wants an idempotency key stored with the
-  result, so a repeat returns the original outcome instead of charging twice.
-- **"A message keeps failing. What happens?"** — wants a delivery cap and a DLQ, not infinite retry.
+**1.** A colleague adds retries to every outbound call in the service. What did they just break?
+
+<details><summary>Answer</summary>
+
+Correctness on every non-idempotent write. A retry cannot tell a lost request from a lost *response*,
+so a timeout that fires after the work succeeded turns "charge the card" into "charge the card
+twice".
+
+Retries are easy to add and [idempotency](../../GLOSSARY.md#idempotency) is easy to forget, which is
+exactly the sequence in the diagram in [§9](#9-how-it-works). They also need backoff **and** jitter:
+without backoff you finish off a dependency that was merely struggling, and without jitter every
+client retries in lockstep and recreates the original spike.
+</details>
+
+**2.** Make a payment endpoint safe to retry. What exactly do you store, and where?
+
+<details><summary>Answer</summary>
+
+An idempotency key supplied by the client, stored **with the result** of the operation — so a repeat
+of the same key returns the original outcome rather than performing the effect again. Returning
+"already done" is not enough; the caller needs the same response body it would have got the first
+time, or it cannot tell success from a duplicate.
+
+The subtlety is atomicity: the key and the effect must be committed together. Write the charge in one
+transaction and record the key in another and a crash between them gives you a charge with no key,
+which is precisely the case the whole mechanism exists to prevent.
+</details>
+
+**3.** A service returns HTTP 200, quickly, every time — with a balance that is wrong. What is its
+availability, and what is its reliability?
+
+<details><summary>Answer</summary>
+
+100% available and catastrophically unreliable. Availability measures whether you responded, not
+whether you were right, so this failure is invisible in an uptime dashboard and invisible in a 5xx
+rate.
+
+It also sits near the top of the badness ordering — `data loss > silent wrong answer > loud failure >
+slow > fine` — because a loud failure can be retried and a wrong answer propagates. This is what
+reconciliation jobs are for: periodically re-derive the truth independently and alert on divergence.
+</details>
+
+**4.** Your analytics events replicate asynchronously. An engineer proposes switching to synchronous
+replication so that no event can ever be lost. Do you approve it?
+
+<details><summary>Answer</summary>
+
+No. Synchronous replication puts the slowest follower on the critical path of every write and reduces
+availability — a real, permanent cost — to protect data whose loss nobody can detect. A missing
+analytics event is at the cheap end of the ordering above.
+
+The question to ask is what a lost record actually costs, and then whether the money would buy more
+by reducing MTTR than by increasing MTBF. It usually would: you cannot prevent every failure, but you
+can always recover faster. Save synchronous replication for the ledger, not the telemetry.
+</details>
 
 ## 32. Decision checklist
 

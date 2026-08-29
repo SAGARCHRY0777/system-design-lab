@@ -233,17 +233,64 @@ Alert on **partition events themselves** — nodes unable to reach quorum — no
 Track replication lag as your live measure of divergence. On AP systems, count conflict resolutions;
 a rising count means real data is being merged, or silently dropped.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Explain CAP."** — the reason this is asked is to see whether you say "pick two of three". The
-  right answer starts with *P is not optional*.
-- **"Is Postgres CP or AP?"** — a trick: single-node Postgres is neither. It depends entirely on the
-  replication configuration.
-- **"Design a system that's CP for payments and AP for the feed."** — wants per-dataset choice, which
-  is the mature position.
-- **"What happens when the partition heals?"** — the best question in this area. Wants conflict
-  resolution, and awareness that LWW loses data.
-- **"Why can't I have all three?"** — wants the two-shops proof, not a recited definition.
+**1.** A vendor describes their product as "CA". What have they actually told you?
+
+<details><summary>Answer</summary>
+
+That they have not thought about partitions. **P is not a property you elect to have** — cables get
+cut and packets get dropped whether or not it was in the design document — so a multi-node "CA"
+system is one that will hang or silently corrupt when the network splits, and nobody chose which.
+
+The only honest CA system is a single node, because it has no network to partition. Ask instead what
+happens to a write when half the cluster is unreachable; the answer is CP or AP regardless of the
+label on the box.
+</details>
+
+**2.** With `N=3`, why is `W=2, R=2` the usual setting rather than `W=3, R=1`?
+
+<details><summary>Answer</summary>
+
+Both are strongly consistent — `R + W > N` means reads and writes overlap on at least one node, and
+`4 > 3` as surely as `4 > 3`. The difference is what happens when a node dies. At `W=3` every write
+needs all three acks, so losing any single node stops writes entirely; at `W=2` you survive it.
+
+`W=2, R=2` is the sweet spot because it keeps the consistency guarantee while tolerating one failure,
+and knowing *why* is worth more than any amount of CAP vocabulary. `W=3, R=1` is still the right dial
+for a read-dominated dataset where writes are rare and downtime on write is acceptable.
+</details>
+
+**3.** You chose AP. The partition lasts four minutes and then heals. When does the bill arrive?
+
+<details><summary>Answer</summary>
+
+**After it heals, not during it.** During the partition both sides happily serve local data, which is
+what you bought. Afterwards you have two divergent replicas and no way to merge them unless you
+planned one.
+
+If no merge strategy was designed, the default is usually wall-clock last-write-wins, which silently
+discards whichever update lost a timestamp comparison between two imperfectly synchronised clocks.
+Plan the reconciliation *before* choosing AP — CRDTs, version vectors, or an application-level merge
+rule — and count conflict resolutions in production so you know it is being exercised.
+</details>
+
+**4.** Your system is three nodes in one datacentre. Someone proposes moving to an AP datastore "for
+availability". Do you?
+
+<details><summary>Answer</summary>
+
+Probably not on that argument. You would take on conflict resolution, staleness, and merge logic
+permanently, in exchange for better behaviour during an event that a single-datacentre deployment
+rarely experiences — and CAP describes only that moment. An AP system behaves like a CP one 99.9% of
+the time.
+
+The question that matters is [PACELC's else-branch](#pacelc): with a healthy network, are you trading
+latency or consistency, and what does that cost inside one datacentre? Usually ~1 ms, which is
+ignorable. Ask what the availability target actually is, what the measured partition rate actually
+is, and whether the real problem is a single point of failure that redundancy would fix without
+touching the consistency model at all.
+</details>
 
 ## 32. Decision checklist
 

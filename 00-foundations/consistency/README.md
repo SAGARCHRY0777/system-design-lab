@@ -179,13 +179,63 @@ Alert on **replication lag** with a threshold derived from your stated window �
 alert at 10s. Track stale-read rate where you can detect it. Count conflict resolutions; a rising
 count means your assumptions about concurrency are wrong.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Strong vs eventual — which for a like counter?"** — wants eventual, and the reason: nobody can tell.
-- **"User posts and immediately gets a 404. Why?"** — wants replication lag and read-your-writes.
-- **"How do you resolve concurrent writes?"** — wants LWW's flaws, then vector clocks or CRDTs.
-- **"Can you have strong consistency across regions?"** — wants yes, at ~150ms per write, and that this
-  is physics rather than implementation.
+**1.** One screen shows a like counter and an account balance. Which consistency model does each get,
+and what would you have to write down before shipping either?
+
+<details><summary>Answer</summary>
+
+Eventual for the counter — nobody can tell, and nobody is harmed by a number that is briefly two
+low. Strong for the balance, because it is double-spendable. Same screen, same product, two models:
+choosing one model for a whole system is a design smell.
+
+What you write down is the **bound**. "Eventually consistent" with no stated window is not a design,
+because nobody can verify it or build against it. The useful form names the window and who is
+affected: *the like count may lag up to 30 seconds; the balance never lags.*
+</details>
+
+**2.** A user creates a post, is shown `201 Created`, immediately loads their own timeline, and it is
+empty. What guarantee broke, and what is the cheapest fix?
+
+<details><summary>Answer</summary>
+
+**Read-your-writes.** The write went to the primary; the read went to an asynchronous replica that has
+not applied it yet. It is the most common consistency bug in any system with replicas, and it looks
+like data loss to the user even though nothing was lost.
+
+The cheap fix is routing that user's reads to the primary for a few seconds after they write, or
+pinning the session to a replica known to have caught up. You do not need strong consistency to fix
+the visible symptom — see [replication §10](../../05-databases/replication/#10-the-bug-you-will-hit).
+</details>
+
+**3.** Two servers write to the same key 30 ms apart. Last-write-wins keeps the *earlier* one. How?
+
+<details><summary>Answer</summary>
+
+Clock skew. Wall-clock last-write-wins compares timestamps generated on different machines, and if
+those clocks differ by more than the gap between the writes, the comparison picks the wrong winner
+and the later write is silently discarded.
+
+**Wall-clock LWW is a data-loss mechanism dressed as a conflict-resolution strategy.** Use logical
+clocks — vector clocks, version vectors — or a CRDT, or an application-level merge rule. And count
+conflict resolutions in production: a rising count means your assumptions about concurrency are
+wrong.
+</details>
+
+**4.** A PM asks for the entire product to be strongly consistent, "to be safe". What do you say?
+
+<details><summary>Answer</summary>
+
+Not a flat no — for a single-region system it is a genuinely common and correct answer, and it
+removes an entire class of reconciliation code. Price it honestly first: strong consistency costs a
+coordination round trip per operation, which is ~1 ms inside a datacentre and ~150 ms across regions,
+and it means the system stops answering during a partition.
+
+Then ask which datasets actually need it, because paying that on the follower count is pure waste.
+And note the cheapest answer of all, which people skip: **the simplest way to avoid consistency
+problems is not to have replicas.** That is legitimate until scale or availability forces otherwise.
+</details>
 
 ## 32. Decision checklist
 

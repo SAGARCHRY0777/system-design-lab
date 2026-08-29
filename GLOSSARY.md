@@ -30,6 +30,16 @@ item in the batch. The clearest example of two goals in direct opposition.
 The single component that saturates first. Every scaling step is: find it, fix it, find the next one.
 Fixing anything else changes nothing. → [SYSTEM-DESIGN-THINKING.md](SYSTEM-DESIGN-THINKING.md)
 
+### Bearer token
+A credential where possession is sufficient — anyone holding it can use it. Which is why transport
+security and short lifetimes matter more than token format.
+→ [12-security/jwt/](12-security/jwt/)
+
+### IDOR / BOLA
+Checking authorization on the *endpoint* but not on the *object*, so changing an id in the URL
+returns someone else's data. The most common real API vulnerability.
+→ [12-security/api-security/](12-security/api-security/)
+
 ### Cache
 A faster, smaller copy of data kept nearer the reader. Buys latency, sells **staleness**. Worth having
 only when access is **skewed** — a cache over uniformly random reads hits almost never.
@@ -84,7 +94,17 @@ One key receiving a disproportionate share of traffic. Defeats sharding, because
 ### Idempotency
 Doing the operation twice has the same effect as once. **Mandatory wherever you retry** — and you
 always end up retrying.
-→ [06-messaging/queues/](06-messaging/queues/)
+→ [07-api-design/idempotency/](07-api-design/idempotency/)
+
+### Cursor pagination
+Paging by an opaque pointer to the last row seen, rather than by offset. Exists because **offset
+pagination silently skips and duplicates rows** when the data changes mid-traversal.
+→ [07-api-design/pagination/](07-api-design/pagination/)
+
+### Distributed monolith
+Services that must be deployed together, with network failure between them. The worst of both
+architectures, and the usual result of splitting a monolith along the wrong seams.
+→ [02-architecture/monolith-vs-microservices/](02-architecture/monolith-vs-microservices/)
 
 ### Latency
 Time for one operation. Always quote **p99**, not the average: the average hides the experience of

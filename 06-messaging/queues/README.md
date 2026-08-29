@@ -265,16 +265,80 @@ happen. Processing rate against arrival rate: if arrival exceeds processing for 
 the outage is already scheduled. Redelivery count, which is a direct measure of how often workers are
 failing mid-job.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Queue or stream?"** — wants replay and multi-consumer, not a product comparison.
-- **"Exactly-once delivery — how?"** — the right answer starts with "you cannot, end to end".
-- **"A worker crashes halfway. What happens?"** — wants redelivery, and idempotency as the fix.
-- **"The queue is growing. What do you do?"** — wants: is this a spike or a deficit? Autoscale for
-  the first; shed load or add capacity for the second.
-- **"How do you guarantee ordering?"** — wants partition keys, and the parallelism cost.
-- **"What breaks when you move work behind a queue?"** — the best question here. Wants: results
-  become eventual, and the database loses its natural backpressure.
+**1.** On Tuesday you discover a bug that has been corrupting records since Monday. Which choice made
+on Friday decides whether Tuesday is survivable?
+
+<details><summary>Answer</summary>
+
+Queue or stream. With a **stream** the messages are still there within the retention window: fix the
+consumer, reset the offset to Monday, and reprocess. With a **queue** they were deleted on ack, and
+the only record of what happened is whatever the corrupted rows still imply.
+
+That single property — replay — justifies a log for anything resembling an event, and it is worth
+more than any feature comparison between products. The other half is fan-out: a queue gives each
+message to one consumer, a log gives every consumer its own offset.
+</details>
+
+**2.** A vendor advertises exactly-once delivery. Your users report receiving the same email four
+times. Who is wrong?
+
+<details><summary>Answer</summary>
+
+Not the vendor — the design, about what that guarantee covers. **Exactly-once does not exist end to
+end.** What is sold as exactly-once is at-least-once plus deduplication *inside* the broker's
+boundary; the moment an effect leaves it — an SMTP call, a card charge — the ack can be lost after
+the work succeeded and the message comes back.
+
+Four deliveries means the worker crashed or timed out after sending and before acking, three times.
+Assume at-least-once, make the consumer idempotent, and check the ack happens **after** the work is
+durable — acking first turns this into silent data loss instead, which is worse.
+</details>
+
+**3.** Queue depth has been climbing for an hour. What is the first question, and how do the two
+answers differ?
+
+<details><summary>Answer</summary>
+
+**Is this a spike or a deficit?** If arrivals temporarily exceed processing, the queue is doing
+precisely its job — absorbing the peak — and the fix is to autoscale consumers on depth and wait.
+
+If producers outpace consumers *on average*, no amount of queue helps: it grows until memory or disk
+runs out, and you have converted a slowdown into an outage. That needs capacity, load shedding or
+backpressure. Also check **oldest-message age**, not just depth — ten messages three hours old is a
+stalled consumer, and a depth-only alert cannot see it.
+</details>
+
+**4.** An internal call takes 5 ms and succeeds 99.99% of the time. Someone proposes putting it behind
+a queue "for resilience". Do you approve it?
+
+<details><summary>Answer</summary>
+
+No. You would be buying a broker to operate, at-least-once duplicates, an idempotency requirement, a
+DLQ that needs monitoring and an alert, and results that are now eventual — for five milliseconds of
+work whose answer the caller needs in order to respond.
+
+**A queue is a distributed system's worth of complexity**, and a synchronous call is the common case
+precisely because it is simpler. The arguments that would win are a slow or unreliable callee, a
+spiky arrival rate, or work the user genuinely does not need in the response — none of which is
+present here.
+</details>
+
+**5.** You move work behind a queue and the database starts falling over in ways it never did on the
+request path. What changed?
+
+<details><summary>Answer</summary>
+
+The queue removed the **natural backpressure**. On the request path a slow database slows the client,
+which throttles the arrival rate — a feedback loop nobody designed but everybody relied on. Behind a
+queue, workers pull at their own pace and nothing pushes back.
+
+The number that decides the outcome is total fleet concurrency — workers × per-worker concurrency —
+and it is easy to be wrong about it by an order of magnitude. Bound it against measured downstream
+capacity and give [workers](../workers/) their own connection pool, or a backlog drain becomes a site
+outage.
+</details>
 
 ## 32. Decision checklist
 

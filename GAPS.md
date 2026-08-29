@@ -24,28 +24,28 @@ The list most interview guides and job descriptions use, scored honestly against
 | **Caching — strategies, eviction** | ✅ | [cache](04-caching/fundamentals/) |
 | **Redis vs Memcached** | ◐ | Named in the cache page's alternatives table; no comparison page |
 | **CDN** | ❌ | Referenced in 13 files, has no page |
-| **APIs — REST, gRPC, GraphQL, versioning** | ❌ | The word appears everywhere; API *design* is nowhere |
+| **APIs — REST, gRPC, GraphQL, versioning** | ✅ | [07-api-design](07-api-design/) — plus pagination and idempotency |
 | **Functional / non-functional requirements** | ◐ | Steps 3–4 of [the method](SYSTEM-DESIGN-THINKING.md); the NFRs each have a page; no page on eliciting or writing requirements |
-| **DNS** | ◐ | Mentioned in availability and load balancer; no page |
-| **TCP / UDP** | ❌ | One passing mention |
-| **HTTP / HTTP2 / HTTP3** | ❌ | Mentioned as a protocol label only |
-| **WebSockets** | ❌ | Two mentions |
-| **TLS / SSL** | ◐ | Certificate expiry as a failure mode; no page |
-| **OAuth** | ❌ | Zero occurrences |
-| **JWT** | ❌ | Zero occurrences |
-| **API security** | ❌ | — |
+| **DNS** | ✅ | [dns](01-networking/dns/) — TTL is your real failover time |
+| **TCP / UDP** | ✅ | [tcp-udp](01-networking/tcp-udp/) — handshake cost, HOL blocking, why QUIC |
+| **HTTP / HTTP2 / HTTP3** | ✅ | [http](01-networking/http/) — HTTP/2 fixed HTTP, not TCP |
+| **WebSockets** | ✅ | [websockets](01-networking/websockets/) — polling/SSE/WS compared |
+| **TLS / SSL** | ✅ | [tls](01-networking/tls/) — expiry is a total, predictable outage |
+| **OAuth** | ✅ | [oauth](12-security/oauth/) — and why it is *authorization*, not authentication |
+| **JWT** | ✅ | [jwt](12-security/jwt/) — revocation is the whole problem |
+| **API security** | ✅ | [api-security](12-security/api-security/) — IDOR/BOLA leads it |
 | **Rate limiting** | ✅ | [Implementation](18-implementations/rate-limiter/) with measured benchmarks |
-| **DDoS protection** | ❌ | One mention |
+| **DDoS protection** | ✅ | [ddos](12-security/ddos/) — L3/L4 vs L7, and what rate limiting cannot do |
 | **Message queues** | ✅ | [queue](06-messaging/queues/) |
 | **Kafka vs RabbitMQ** | ◐ | The queue-vs-stream distinction is covered properly; no product comparison page |
-| **Microservices vs monolith** | ❌ | Named in trade-offs; no page |
+| **Microservices vs monolith** | ✅ | [monolith-vs-microservices](02-architecture/monolith-vs-microservices/) |
 | **Fault tolerance / fallback** | ◐ | [reliability](00-foundations/reliability/); circuit breaker and bulkhead have no pages |
 | **Redundancy** | ✅ | [availability](00-foundations/availability/) |
 | **Load balancer types and algorithms** | ✅ | [load balancer](03-load-balancing/fundamentals/) — L4/L7 and six algorithms |
 | **Observability — Prometheus, Grafana, ELK** | ✅ | [observability](11-observability/) — three pillars, cardinality trap, the stack by role |
 | **Alerting — PagerDuty, on-call** | ✅ | [observability](11-observability/#12-alerting) — symptom-based, burn-rate, actionable-only |
 
-**Roughly a third covered, a third partial, a third absent.**
+**Was roughly a third covered. Now most of it is** — the ❌ rows that remain are real and listed below.
 
 ## Scorecard — HLD deliverable
 
@@ -72,10 +72,10 @@ What a high-level design document is expected to contain.
 | Gap | Why it matters |
 |---|---|
 
-| **Security** | OAuth, JWT, TLS, API security, secrets, DDoS. Absent entirely. |
-| **Networking** | DNS, TCP/UDP, HTTP/2/3, WebSockets, connection pooling. |
-| **API design** | REST vs gRPC vs GraphQL, versioning, pagination, error contracts, idempotency keys. The interface every other decision is expressed through. |
-| **Microservices vs monolith** | When to split, how to manage dependencies, the distributed monolith. |
+
+
+
+
 | **HLD / LLD templates** | The document people are actually asked to produce. |
 | **Schema migration** | Zero-downtime change: expand-contract, dual writes, backfills. The most common way a deploy causes an outage. |
 | **Data modelling / ER** | Normalisation, access-pattern modelling, ER diagrams. |

@@ -192,12 +192,75 @@ health endpoint saying it is fine. Track it as successful requests / total, per 
 error budget burn rate rather than on individual failures, so a slow leak is caught and a single blip
 is not paged.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"What does 99.99% actually mean?"** — wants 52 min/year and the implication that recovery must be automated.
-- **"Three services at 99.9% in series — what's the availability?"** — wants 99.7%, and why chains multiply.
-- **"How do you get from 99.9% to 99.99%?"** — wants automated failover, multi-AZ, staged deploys — and the observation that most outages are deploys, not hardware.
-- **"Would you ever choose lower availability?"** — wants a yes: consistency for a payment ledger.
+**1.** A request passes through three services in series, each measured at 99.9%. What is the
+availability of the request, in per cent and in hours per year?
+
+<details><summary>Answer</summary>
+
+`0.999 × 0.999 × 0.999 = 99.7%`, which is about **26 hours a year** — roughly three times the
+downtime of any single link. A chain is always less available than its weakest member, and ten
+dependencies at 99.9% give you 99%.
+
+This is the strongest technical argument against gratuitous synchronous dependencies: every one you
+add has a cost you can compute before you add it. It is also the arithmetic most people skip, which
+is why it is on the [diagnostic](../../DIAGNOSTIC.md).
+</details>
+
+**2.** Two servers at 99% each, in parallel, calculate to 99.99%. When is that number a lie?
+
+<details><summary>Answer</summary>
+
+Whenever the failures are correlated, which is most of the time. Two servers in a rack share a power
+supply and a switch; two availability zones share a region; two regions share your deployment
+pipeline, your DNS, your certificate authority and your config management.
+
+**Independence is the word doing all the work in that formula.** Correlated failure is what turns a
+calculated 99.99% into a real 99.5%, and the correlation is usually organisational rather than
+physical — one bad config, pushed everywhere at once.
+</details>
+
+**3.** You are at 99.9% and have been asked for 99.99%. What actually has to change?
+
+<details><summary>Answer</summary>
+
+52 minutes a year is less than it takes a human to read an alert and open a laptop, so the first
+change is that **no recovery may involve a person**: automated failover, multi-AZ, health-check-driven
+ejection. That is the answer people expect.
+
+The more useful half is that most outages are not hardware. They are deploys, config changes,
+certificate expiry and capacity exhaustion — none of which redundancy protects against, since the bad
+config reaches every replica simultaneously. Canaries, staged rollout and fast rollback usually buy
+more nines per pound than another standby does.
+</details>
+
+**4.** An internal dashboard used by three people sits at 99%. Someone proposes multi-AZ with
+automated failover. Do you approve it?
+
+<details><summary>Answer</summary>
+
+No. 99% is 3.65 days a year, and for a dashboard three people open occasionally that costs
+approximately nothing — while the proposal costs roughly double the infrastructure plus a failover
+mechanism that must itself be tested to be worth anything.
+
+The question to make people answer is *what does an hour of downtime cost here*, and then compare it
+to the price of the next nine. Chasing nines nobody asked for is a real and common way to spend a
+budget that would have bought more as [latency](../latency/) somewhere else.
+</details>
+
+**5.** Would you ever deliberately choose **lower** availability?
+
+<details><summary>Answer</summary>
+
+Yes, and a payment ledger is the standard case. Under a network partition you must pick: keep
+answering and risk a double spend, or refuse and be down for the duration. For money, refusing is
+correct — a bank that is briefly closed survives, one that loses a transaction does not.
+
+That is the CP side of [CAP](../cap-theorem/), and it is a deliberate purchase of correctness with
+availability. Note also that availability says nothing about correctness on its own: a system
+returning wrong answers quickly scores 100%.
+</details>
 
 ## 32. Decision checklist
 

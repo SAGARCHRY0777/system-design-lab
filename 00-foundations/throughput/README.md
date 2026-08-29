@@ -192,14 +192,62 @@ Requests/sec **and** the corresponding latency percentiles, always together. Tra
 growing queue is the earliest signal that demand has passed capacity, and it leads the latency graph
 by minutes. Watch utilisation per stage to see where the bottleneck currently sits, because it moves.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"How many servers do you need for 10K rps?"** — wants Little's Law and per-server capacity, not a
-  guess.
-- **"Throughput is fine, latency is bad. What's wrong?"** — wants queueing, or batching applied where
-  it should not have been.
-- **"Adding servers didn't help. Why?"** — wants a shared bottleneck: the database, a lock, or a pool.
-- **"When would you deliberately make latency worse?"** — wants batching, and the reasoning behind it.
+**1.** You need 10,000 rps and each request spends 30 ms in the system. Your connection pool is set to
+100. What is the ceiling, and what should the pool be?
+
+<details><summary>Answer</summary>
+
+Little's Law: `L = λ × W = 10,000 × 0.03 = 300` requests in flight, so you need ~300 slots. With 100
+you have capped yourself at `100 / 0.03 ≈ 3,300 rps`, and no amount of extra hardware moves that
+number — the queue simply grows in front of the pool instead.
+
+Oversizing is not free either: 5,000 slots wastes memory and pushes the bottleneck downstream onto
+something with no such limit. Size pools from the formula, not from the default in the config file.
+</details>
+
+**2.** You double the app servers and throughput does not move. What is going on?
+
+<details><summary>Answer</summary>
+
+Something shared is the bottleneck, and adding clients to a contended resource does not increase its
+capacity — it just makes more threads wait on it. The usual suspects are the database, a global lock,
+or a connection pool, and the last one is the most commonly overlooked because it lives in a config
+file rather than on the architecture diagram.
+
+Throughput is set by the narrowest stage, so optimising any other stage produces exactly zero
+improvement. Find the ceiling by measurement before spending anything — see [§9](#9-how-it-works--finding-the-ceiling).
+</details>
+
+**3.** Requests per second is flat and healthy on the dashboard. Latency has been climbing for twenty
+minutes. What is happening, and why does the throughput graph look fine?
+
+<details><summary>Answer</summary>
+
+Demand has passed capacity. Throughput is flat because it is *pinned at the ceiling* — you are
+serving everything you can serve — while arrivals in excess of that are accumulating in a queue, and
+queue wait is what the latency graph is showing.
+
+A throughput problem always surfaces as a latency problem first, which is why the two numbers are
+only meaningful together. Queue depth is the leading indicator here and moves minutes before latency
+does; without [backpressure](../../GLOSSARY.md#backpressure) the ending is memory exhaustion rather
+than a slowdown.
+</details>
+
+**4.** You comfortably serve 900 rps and demand peaks at 400. An engineer proposes batching to reach
+3,000 rps. Do you approve it?
+
+<details><summary>Answer</summary>
+
+No. Extra throughput you will not use has no value, and batching is never free — it worsens latency
+for **every** item in the batch, always, and it makes a single poison item retry the other 99
+alongside it.
+
+The honest answer is that you are already meeting demand, so the effort belongs on headroom, cost, or
+the [latency](../latency/) users actually feel. Batching earns its place when throughput is the
+binding constraint and nobody is waiting on an individual item — an ingestion pipeline, not this.
+</details>
 
 ## 32. Decision checklist
 

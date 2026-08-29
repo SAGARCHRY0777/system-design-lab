@@ -56,6 +56,9 @@ both the app and the diagrams committed here. They cannot drift apart.
 
 ## Where to start
 
+**Not sure where you are?** Take the [diagnostic](DIAGNOSTIC.md) — twelve questions, ordered easy to
+expert, that route you to the right starting point. A missed question tells you more than the score.
+
 **New to system design** — read in this order, it is a deliberate sequence:
 
 1. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
@@ -95,10 +98,14 @@ systems are made of.
 | Where | What |
 |---|---|
 | [00-foundations/](00-foundations/) | Latency, throughput, scalability, availability, reliability, consistency, CAP |
+| [01-networking/](01-networking/) | DNS, TCP/UDP, HTTP/1-2-3, WebSockets, TLS |
+| [02-architecture/](02-architecture/) | Monolith vs microservices — when to split, and when not to |
+| [07-api-design/](07-api-design/) | REST/gRPC/GraphQL, versioning, pagination, idempotency |
 | [03-load-balancing/](03-load-balancing/fundamentals/) · [04-caching/](04-caching/fundamentals/) | ★ Flagship components, full depth |
 | [05-databases/](05-databases/fundamentals/) · [06-messaging/](06-messaging/queues/) | ★ Storage and asynchrony |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
 | 09-scalability/ | Batching, async processing |
+| [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |
 | [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
 | [13-design-patterns/](13-design-patterns/) | **78 patterns**, incl. all 23 Gang of Four with distributed counterparts |
 | [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |

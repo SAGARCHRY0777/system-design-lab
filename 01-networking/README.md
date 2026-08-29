@@ -25,7 +25,7 @@ flowchart TD
     DNS["1 · DNS<br/><i>name → address</i>"] --> TCP["2 · TCP / UDP<br/><i>open the pipe</i>"]
     TCP --> TLS["3 · TLS<br/><i>secure the pipe</i>"]
     TLS --> HTTP["4 · HTTP<br/><i>speak over the pipe</i>"]
-    HTTP --> WS["5 · WebSockets & SSE<br/><i>keep the pipe open</i>"]
+    HTTP --> WS["5 · WebSockets and SSE<br/><i>keep the pipe open</i>"]
 
     style DNS fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
     style TLS fill:#2b1c17,stroke:#e0705a,color:#e4ecea

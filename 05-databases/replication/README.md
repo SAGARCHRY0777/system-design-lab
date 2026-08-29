@@ -213,16 +213,77 @@ promised 30 seconds, alert at 10. Replication **stream health** separately, beca
 read as zero lag. Failover events and their duration. On multi-leader setups, count conflict
 resolutions: a rising count means real data is being merged, or quietly dropped.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Sync or async replication?"** — wants the data-loss-versus-latency trade, and semi-sync as the
-  usual answer.
-- **"A user posts and immediately sees nothing. Why?"** — replication lag; wants read-your-writes.
-- **"Does replication help write throughput?"** — no. Every replica applies every write. Wants
-  sharding.
-- **"Is a replica a backup?"** — no, and the reason: it faithfully replicates a bad `DELETE`.
-- **"Leader dies with 2s of lag. What have you lost?"** — two seconds of acknowledged writes, under
-  async.
+**1.** Your leader dies with 2 seconds of replication lag, under async replication. What exactly have
+you lost, and who was told otherwise?
+
+<details><summary>Answer</summary>
+
+Every write acknowledged in that 2-second window. Those users received a `201` or a success screen
+for data that no longer exists anywhere, which is worse than an error would have been — a loud
+failure can be retried and a silent one propagates.
+
+That is the async bill, stated plainly: fast writes, in exchange for a data-loss window on failover.
+**Semi-synchronous is the usual compromise** — one follower acks synchronously, the rest catch up —
+so you keep durability against a single-node loss without letting the slowest replica set your write
+latency. Whichever you pick, the acceptable window should be a number someone agreed to.
+</details>
+
+**2.** A user creates a post, is shown `201 Created`, immediately loads their own list, and it is
+empty. Give three fixes, cheapest first.
+
+<details><summary>Answer</summary>
+
+**Read-your-writes** is the guarantee being violated — see [§10](#10-the-bug-you-will-hit). Cheapest
+first: route that user's reads to the leader for N seconds after a write; pin the session to a
+replica known to have caught up; or pass the write's log position with the read and wait for the
+replica to reach it.
+
+The point worth keeping is that none of these is strong consistency. The visible symptom has a cheap
+fix, and reaching for [linearizability](../../00-foundations/consistency/) to solve it is paying a
+permanent latency cost for a routing problem.
+</details>
+
+**3.** Writes are the bottleneck. An engineer adds three read replicas. What happens?
+
+<details><summary>Answer</summary>
+
+It gets slightly worse. **Every replica applies every write**, so you have tripled the total write
+work in the system and added three streams that can lag, while the leader — which is the thing that
+was saturated — has exactly as much write capacity as before.
+
+Replicas scale reads. When writes or storage are the constraint the answer is
+[sharding](../sharding/), and confirming which of the two you actually have is one measurement, not a
+debate.
+</details>
+
+**4.** Your lag dashboard reads 0 ms and users are reporting stale data. How?
+
+<details><summary>Answer</summary>
+
+The replication stream has stopped. Lag is commonly computed as the difference between the last
+position **received** and the last position **applied** — and if nothing is being received, those two
+are identical, so a dead stream reports perfect health.
+
+Monitor stream health as a separate signal from lag, and alert on both. This is the failure that
+looks fine on every dashboard right up until someone opens a ticket, which makes it one of the more
+expensive ones on [§19](#19-failure-scenarios).
+</details>
+
+**5.** One machine serves all your reads at 20% CPU. An engineer proposes a read replica "for safety".
+Do you approve it?
+
+<details><summary>Answer</summary>
+
+Not for read scale — there is no read problem, and a replica would add an operational burden, a new
+failure mode, and the read-your-writes bug above in exchange for capacity you are not using.
+
+If the goal is surviving a machine loss, that is a real argument, but price it against tested backups
+and a documented restore first, and be explicit that **a replica is not a backup**: a `DELETE` with no
+`WHERE` reaches every copy in milliseconds. A *delayed* replica, deliberately kept an hour behind, is
+the underused version of this proposal and defends against the failure a normal replica cannot.
+</details>
 
 ## 32. Decision checklist
 

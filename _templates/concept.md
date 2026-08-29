@@ -198,9 +198,28 @@ Which metric tells you this is unhealthy, and what the alert threshold means.
 
 How to prove it works — including how to test the failure path, which is the part people skip.
 
-## 31. Interview questions
+## 31. Exercises
 
-Questions with the *reason they are asked*. A question without the reason is trivia.
+Three to five questions, each with its answer **hidden**:
+
+```markdown
+**1.** <a question that requires reasoning, not recall>
+
+<details><summary>Answer</summary>
+
+<the answer, 2-5 sentences>
+</details>
+```
+
+Retrieval practice needs a gap between the question and the answer. A page that prints both on the
+same line is prose wearing a question mark -- which is what the old "Interview questions" sections
+were, and why they were replaced.
+
+At least one question per page should be a judgement call whose correct answer is *no* or *not yet*.
+Those are the ones that teach restraint, and restraint is most of system design.
+
+`check_links.py` fails any page with an Exercises section and no `<details>`. Note that it SKIPS
+`_templates/`, so this file is the one place the rule cannot protect -- keep it correct by hand.
 
 ## 32. Decision checklist
 

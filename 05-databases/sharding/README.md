@@ -251,17 +251,76 @@ Per-shard everything: QPS, storage, latency, error rate. **An aggregate hides a 
 queries; a rising ratio means the access pattern has drifted away from the shard key. Watch shard
 size divergence as the early signal that rebalancing is due.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"How do you pick a shard key?"** — wants cardinality, distribution, and presence in queries — and
-  the tension between them.
-- **"What breaks after sharding?"** — wants joins, transactions, global uniqueness, `COUNT(*)`.
-- **"Why not `hash % N`?"** — wants ~80% remapping, then consistent hashing.
-- **"One shard is at 90% CPU, the others at 10%. Why?"** — hot key. Wants that hashing balances keys,
-  not load.
-- **"How do you reshard live?"** — wants dual-write, backfill, verify, cut over.
-- **"When would you *not* shard?"** — the best question. Wants: almost always, until the specific
-  ceiling is proven.
+**1.** Storage has reached 3 TB and queries are slowing. The team proposes sharding. What do you check
+first, and what is the most likely real answer?
+
+<details><summary>Answer</summary>
+
+Everything in [§13](#13-when-to-shard), in order: query plans and indexes, vertical headroom — 3 TB is
+well inside one modern machine — then cache, then read replicas. Sharding solves exactly two problems,
+write throughput and storage capacity, and "queries are slowing" is neither of them until proven.
+
+The most likely real answer is that five years of history nobody queries is sitting in the same table
+as this week's rows. Archiving cold data is reversible and takes a week; sharding is close to
+permanent and takes a quarter. Row four of [§18](#18-why-not) is the one to read twice.
+</details>
+
+**2.** You shard on `user_id`. Which queries did you just make expensive, and why is that not fixable
+later with an index?
+
+<details><summary>Answer</summary>
+
+Every query that does not carry `user_id`. "All orders placed today" now scatters to every shard and
+gathers, so it costs the **slowest shard's p99 every single time** rather than one lookup.
+
+An index cannot fix it because a secondary index is per-shard: no shard holds the global answer. Your
+options are a separate index shard, a dedicated search index, or maintaining a denormalised copy —
+all of which are new systems. A good shard key needs high cardinality, even distribution **and**
+presence in most queries, and the third property is the one that pulls against the others.
+</details>
+
+**3.** Sixteen shards, a uniform hash, tenants spread evenly. One shard sits at 95% CPU while the rest
+idle at 10%. What happened?
+
+<details><summary>Answer</summary>
+
+Hashing distributes **keys** evenly. It does not distribute **load**. One tenant ten times larger than
+the others, one celebrity account, one product on the front page — a perfectly balanced hash gives you
+a badly balanced system, and this is sharding's defining failure rather than an edge case.
+
+Fixes all cost something: isolate that tenant onto its own shard, split the hot range, or put a cache
+in front of the hot key. Changing the shard key rewrites every row. Note also that an aggregate CPU
+dashboard would have read ~15% and told you nothing — **per-shard monitoring is the whole point**.
+</details>
+
+**4.** Why is `hash(key) % N` a trap, and what is the cheaper thing to do at the very start?
+
+<details><summary>Answer</summary>
+
+Because `N` appears in the formula. Going from 4 shards to 5 changes the destination of roughly
+`(N−1)/N` of all keys — about 80% — and every one of those rows must physically move before the
+system is correct again. Consistent hashing puts keys and nodes on a ring, so a new node steals a
+contiguous arc from one neighbour and only ~1/N of keys move.
+
+The cheaper trick is to **over-shard logically at the start**: create 1,024 logical shards on 4
+machines. Resharding then becomes moving logical shards between machines — a data-movement problem
+rather than a re-keying one — and it costs almost nothing to adopt early.
+</details>
+
+**5.** You shard eight ways and your availability gets *worse*. Explain, and say what you left out.
+
+<details><summary>Answer</summary>
+
+Naive sharding reduces availability: eight machines must now be up instead of one, and losing any one
+of them takes 1/8 of your users **fully** down rather than degrading everyone slightly. Availability
+of the whole is the product of the parts, so eight nodes at 99.9% each is 99.2%.
+
+What is missing is a replica per shard. Sharding buys write scale and storage; replication buys
+availability; they are orthogonal and the standard large-database shape is both together — see
+[replication](../replication/). Sharding without it converts one single point of failure into eight.
+</details>
 
 ## 32. Decision checklist
 

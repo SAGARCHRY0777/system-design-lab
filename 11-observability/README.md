@@ -248,19 +248,79 @@ Next         →  SLOs and error budgets to decide what is worth alerting on, an
 | Dashboards instead of alerts | Nobody is watching a dashboard at 3am |
 | No runbook link on the alert | The responder starts from zero |
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Monitoring vs observability?"** — known-question dashboards versus answering unanticipated
-  questions.
-- **"What are the golden signals?"** — latency, traffic, errors, saturation; and saturation is the
-  predictive one.
-- **"What's an error budget?"** — `1 − SLO`, and that it works in both directions: unspent means ship
-  faster.
-- **"How do you avoid alert fatigue?"** — symptoms not causes, burn rate not instants, and every page
-  actionable.
-- **"Why not add `user_id` as a metric label?"** — cardinality explosion. A very common real incident.
-- **"How would you debug a slow request across 11 services?"** — distributed tracing with propagated
-  context, including through the queue.
+**1.** To chase one customer complaint, an engineer adds `user_id` as a label on the HTTP request
+metric. Predict the next thirty minutes, and say where that data belonged.
+
+<details><summary>Answer</summary>
+
+The metrics backend runs out of memory and you go blind — plausibly shortly before the next real
+incident, since the change was made during one. Labels multiply into time series:
+`{method, status, endpoint}` might be 1,200 series, and a million user IDs makes that 1.2 billion.
+
+Metric labels must be **bounded**; per-request identity belongs in logs or traces, which are built
+for unbounded cardinality and pay for it with sampling and retention limits. See
+[the cardinality trap](#the-cardinality-trap). That the observability system dies exactly when it is
+needed is also the argument for keeping its path independent of the system it watches.
+</details>
+
+**2.** Latency and error rate both look normal, but the incident started ten minutes ago. Which golden
+signal would have told you first?
+
+<details><summary>Answer</summary>
+
+**Saturation** — how full the constrained resource is. A climbing queue depth, a connection pool at
+90%, a disk filling: these move *before* anything a user can feel, because the system is still
+absorbing the pressure.
+
+Latency and errors are confirmations that it already went wrong. Saturation is the only one of the
+[four](#13-the-four-golden-signals) that predicts, which is why it is both the most useful and the
+one teams most often omit.
+</details>
+
+**3.** Traces are complete right up to the point where a request enqueues a job, and then they stop.
+What is missing?
+
+<details><summary>Answer</summary>
+
+Trace context is not being propagated through the message headers, so the asynchronous half of the
+request is invisible and appears as a span that simply ends. The correlation ID has to travel with
+the message, be read by the worker, and be attached to everything it does.
+
+This is the most common gap in an otherwise good setup, and it is the worst possible place for one:
+**the queue is exactly where work goes missing.** A trace that stops at the broker cannot answer
+whether the job ran, ran twice, or is sitting in a DLQ.
+</details>
+
+**4.** Your team receives about 40 pages a week and missed the one that mattered. What changes?
+
+<details><summary>Answer</summary>
+
+Three rules, in order of how much they buy. **Alert on symptoms, not causes** — "p99 above 1s" means
+users are affected; "CPU above 80%" is a healthy batch job as often as not. **Alert on burn rate, not
+instants** — a single failed request should never page, while consuming 5% of the monthly error
+budget in an hour should, and one burn-rate rule catches both the fast catastrophe and the slow leak.
+
+Then the filter that removes most of the rest: **every page must be actionable**. If the runbook says
+"check whether it recovers", it was a ticket. A team that has learned its pager is usually noise will
+miss the one that is not — which is what already happened. See [§12](#12-alerting).
+</details>
+
+**5.** You have hit 100% of your SLO for three months and the error budget is untouched. The proposal
+is to raise the SLO. What do you say?
+
+<details><summary>Answer</summary>
+
+That an unspent budget is a signal to **ship faster**, not to move the target. The error budget works
+in both directions — exhausted means stop shipping features and fix reliability; unspent means you
+are being more cautious than the users require and are paying for it in velocity. Teams almost always
+implement only the first half.
+
+Raising the SLO removes the slack without any user noticing an improvement, and it makes the
+mechanism harsher for no return. An SLO of 100% is not a target at all, it is a refusal to make a
+decision. Set it below what users currently experience and above what they would complain about.
+</details>
 
 ## 32. Decision checklist
 

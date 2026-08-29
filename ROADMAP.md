@@ -141,6 +141,16 @@ Python, stdlib-only, with tests and **executed** benchmarks.
 - [ ] Message queue `[A]`
 - [ ] Distributed lock `[E]`
 
+## Phase 9 — Named gaps ✅ (in progress)
+
+Written in the exercises format from the start rather than retrofitted.
+
+- [x] [Networking](01-networking/) — DNS, TCP/UDP, HTTP/1-2-3, WebSockets, TLS `[I]`
+- [x] [API design](07-api-design/) — REST/gRPC/GraphQL, versioning, pagination, idempotency `[I]`
+- [x] ★ [Monolith vs microservices](02-architecture/monolith-vs-microservices/) `[A]`
+- [x] [Observability](11-observability/) `[I]`
+- [x] [Security](12-security/) — authn, OAuth, JWT, API security, DDoS `[I]`
+
 ## Phase 8 — Judgment
 
 - [ ] ADRs with the template and 3 worked records
@@ -157,8 +167,7 @@ Python, stdlib-only, with tests and **executed** benchmarks.
 Directory and template only for now — real content in a later pass. Listed so the absence is a
 decision rather than an oversight.
 
-Networking (§01) · architecture styles (§02) · security (§12) · case studies (§17) ·
-design exercises (§16)
+Case studies (§17) · design exercises (§16)
 
 [Observability](11-observability/) is now written.
 

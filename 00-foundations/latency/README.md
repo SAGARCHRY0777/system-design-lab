@@ -210,15 +210,74 @@ Track p50, p99 and p99.9 separately — **never average percentiles across hosts
 mathematically meaningless. Alert on p99 breaching its budget, not on the mean. Break the number down
 by endpoint; one slow endpoint disappears inside an aggregate.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"What's the difference between latency and throughput?"** — checks whether you know the two are
-  independent, and can be opposed.
-- **"Your p50 is fine and p99 is terrible. What's happening?"** — wants queueing, GC pauses, cold
-  caches, or a slow shard.
-- **"Why not run servers at 95% utilisation?"** — wants the non-linear queueing answer.
-- **"A downstream service slows to 5 seconds. What happens to you?"** — wants thread exhaustion, and
-  timeouts plus circuit breakers as the fix.
+**1.** Your p50 is 25 ms and your p99 is 3 seconds. The code path is identical for both. Where is the
+time going?
+
+<details><summary>Answer</summary>
+
+Not in the code — if the path is the same, the difference is contention rather than computation.
+Queueing delay is the usual culprit, along with GC pauses, a cold cache, a connection pool wait, or
+one slow shard or replica. None of those appear in a profiler run on an idle machine, which is why
+this gets misdiagnosed.
+
+A p99 that is 100× the p50 is the signature of a system running close to saturation — check
+utilisation and queue depth per stage before anything else, and see [§21](#21-performance--the-counter-intuitive-part).
+</details>
+
+**2.** Finance points out that your servers average 35% CPU and asks you to run them at 90%. Make the
+counter-argument in numbers.
+
+<details><summary>Answer</summary>
+
+Queueing theory: wait time scales roughly with `1/(1 − utilisation)`. At 50% you wait about 2× the
+service time, at 90% about 10×, at 95% about 20× — so the last slice of capacity costs an order of
+magnitude of latency, and it is also the slice that absorbs a traffic spike.
+
+At 90% you do not degrade gracefully under a spike, you fall off a cliff. The correct response to the
+cost question is not "no" but fewer larger instances, or autoscaling — cheaper capacity, not less
+headroom.
+</details>
+
+**3.** A dependency you call synchronously slows from 50 ms to 5 seconds but keeps returning 200s.
+Why is that worse than it going down, and what would have contained it?
+
+<details><summary>Answer</summary>
+
+A dead dependency fails in milliseconds — connection refused — so you route around it or fail fast. A
+slow one holds a thread and a pool slot for five seconds per request, so at any real arrival rate your
+pool exhausts and **every** endpoint goes down, including the ones that never touch it.
+
+Containment is a timeout set below your own latency budget, which is the only thing that converts
+"slow" back into "down" — a failure mode you can actually handle — plus a circuit breaker and a
+bulkhead so one dependency cannot consume the whole pool.
+</details>
+
+**4.** Your p50 is 20 ms. Product asks for 10 ms. Should you do the work?
+
+<details><summary>Answer</summary>
+
+Almost certainly not, and you should say so rather than quietly deprioritising it. Perceptible delay
+starts around 100 ms; 20 ms to 10 ms is invisible to a human and will cost you something real — a
+cache to invalidate, a denormalisation to keep in sync, headroom spent.
+
+Two answers would change it: the endpoint sits on a fan-out path where your p99 becomes someone
+else's typical case, or a contract specifies the number. Ask which. Otherwise the honest reply is
+"we can, and it would be the worst-value work on the roadmap" — see [§14](#14-when-not-to).
+</details>
+
+**5.** Adding servers cut your p99 in half. Does that mean latency scales horizontally after all?
+
+<details><summary>Answer</summary>
+
+Only the queueing term did. You removed contention, so requests stopped waiting for a free worker —
+but the network, processing and storage terms are untouched, and once the queue is empty there is
+nothing left to remove. Add more servers to an under-utilised system and p99 will not move at all.
+
+The general rule survives: horizontal scaling buys [throughput](../throughput/), and buys latency only
+to the extent that the latency was a capacity problem wearing a disguise.
+</details>
 
 ## 32. Decision checklist
 

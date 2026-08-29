@@ -184,14 +184,75 @@ Track utilisation **per tier** so you can see where the bottleneck currently is 
 throughput per instance: if it falls as you add instances, you have found contention. Watch queue
 depth as the leading indicator; it moves before latency does.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"Vertical or horizontal?"** — wants "vertical until it hurts", not reflexive distribution.
-- **"You doubled servers and throughput didn't move. Why?"** — wants a shared bottleneck: database,
-  lock, or pool.
-- **"How do you scale a stateful service?"** — the real question. Wants replication, sharding, and the
-  consistency cost.
-- **"What limits horizontal scaling?"** — wants Amdahl and the serial fraction.
+**1.** A new internal service is expected to peak at 50 rps and the team is four people. The proposed
+architecture is sharded, multi-region and distributed from day one. What do you say?
+
+<details><summary>Answer</summary>
+
+No — and the argument is not that it will not work, it is that you pay the complexity immediately for
+capacity you may never need. 50 rps is a laptop. Scale up until it hurts, then scale out.
+
+**Team size is an architectural constraint**, not an excuse: four people cannot operate `N` databases,
+their backups, failovers and migrations while also building the product. The reversible mistake is
+running on one large machine for two years; the expensive one is a distributed system nobody has time
+to run.
+</details>
+
+**2.** You remove every bottleneck you can find, but 5% of the work still passes through a single
+global lock. What is your ceiling?
+
+<details><summary>Answer</summary>
+
+**20×, with infinitely many machines.** Amdahl's Law: `1 / (s + (1−s)/N)` converges on `1/s`, and
+`1/0.05 = 20`. Buying the 200th machine changes nothing measurable.
+
+That makes the lock the project, not the hardware. The serial fraction is nearly always a shared
+database, a global lock, or a single-threaded coordinator — finding and removing it is worth more
+than any budget you could spend on instances.
+</details>
+
+**3.** You double the instance count and total throughput rises by 20%, so throughput *per instance*
+has fallen. What have you found?
+
+<details><summary>Answer</summary>
+
+Contention on something shared. The new instances are not doing independent work; they are queueing
+alongside the old ones on the same database, lock, or pool, and each one now gets a smaller slice.
+
+This is the measurement worth watching, because aggregate throughput still went up and looks like a
+win. Falling per-instance throughput is the early signal that you are approaching the serial fraction
+and that the next instance will buy even less than this one did.
+</details>
+
+**4.** The web tier scales by editing one number. The database does not. Why is that asymmetry
+fundamental rather than a gap in tooling?
+
+<details><summary>Answer</summary>
+
+Because stateless copies share nothing, so any of them can serve any request and be killed at will.
+Stateful copies must **agree**, and agreement costs coordination — which is latency, and which fails
+under partition.
+
+That is why the whole of [replication](../../GLOSSARY.md#replication) and
+[sharding](../../GLOSSARY.md#sharding) exists, and why every scaling story eventually becomes a story
+about the datastore. Scaling web servers is a solved problem; the datastore is the actual project.
+</details>
+
+**5.** You autoscale during a traffic spike and the site gets measurably *slower* for ninety seconds
+after the new instances arrive. Explain.
+
+<details><summary>Answer</summary>
+
+Coordinated cold start. The new instances begin with empty caches and empty connection pools, so
+every request they take is a miss that goes to the database — which is already the constrained
+resource. For a minute you have added load to the bottleneck rather than capacity.
+
+Mitigations are warming on startup, staggering the rollout, and keeping the cache tier shared rather
+than in-process. It is also a reason autoscaling is a poor answer to a spike that has already
+started: capacity arrives after the damage.
+</details>
 
 ## 32. Decision checklist
 

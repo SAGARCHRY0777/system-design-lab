@@ -287,17 +287,82 @@ consistency window. Connection pool utilisation — exhaustion looks like a tota
 database sits idle. Disk growth **trend**, not just a threshold, because the alert needs to fire days
 before it matters. Lock waits and deadlock counts.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"SQL or NoSQL?"** — wants "relational by default, and here is what would change my mind". An
-  immediate NoSQL answer is a flag.
-- **"How would you scale reads?"** — wants the ordered list: queries, then cache, then replicas.
-- **"What's the difference between B-tree and LSM?"** — wants read-heavy vs write-heavy, and
-  compaction as the cost.
-- **"Index on `(a, b)` — does it help `WHERE b = ?`"** — no. Leftmost prefix.
-- **"You must not lose a write. What changes?"** — wants synchronous replication and the latency it
-  costs.
-- **"Why is your database slow at 3am?"** — wants backup jobs, vacuum, batch reads evicting the cache.
+**1.** A team picks a wide-column store for a new product "because we might need to scale". What have
+they traded, and when will they find out?
+
+<details><summary>Answer</summary>
+
+Joins, multi-row transactions and ad-hoc queries — traded away before knowing whether the scale is
+real. Relational is the correct default and everything else needs an argument; "we might need to
+scale" is a hypothesis, not an argument.
+
+They find out when the first unanticipated query appears, because in a wide-column or key-value store
+the access pattern is fixed at design time. Getting the model wrong there is not slow, it is
+**impossible without a migration** — which is what turns this into two years of reimplementing joins
+in application code.
+</details>
+
+**2.** Reads are slow. Rank these and say why the order is not negotiable: shard, add a cache, fix the
+queries, add read replicas, scale up.
+
+<details><summary>Answer</summary>
+
+Fix the queries → scale up → cache → read replicas → shard, exactly as in [§20](#20-scaling--in-order).
+
+The order is forced by cost and reversibility, not preference. Indexing and killing an N+1 is
+routinely 10–100×, free, and undoable this afternoon. Scaling up needs no architectural change at
+all. A cache adds staleness and a failure mode. Replicas add lag and the read-your-writes bug.
+Sharding is last because it is near-irreversible and it changes what the application can *express* —
+no cross-shard joins, no `COUNT(*)`, a shard key you will live with forever.
+
+Steps 1–3 solve the overwhelming majority of real problems, and most teams skip to step 5.
+</details>
+
+**3.** You have an index on `(tenant_id, created_at)` and a query that filters only on `created_at`.
+Will it be used?
+
+<details><summary>Answer</summary>
+
+No — the **leftmost-prefix rule**. A composite index is ordered by its first column, so it serves
+`WHERE tenant_id = ?` and `WHERE tenant_id = ? AND created_at = ?`, but a predicate on the second
+column alone has nothing to seek on.
+
+Before adding an index on `created_at`, note that it is not free: **every index is a tax on every
+insert, update and delete** of the indexed columns. The classic failure is a table that accumulated
+fifteen indexes one incident at a time, where writes have quietly become the bottleneck.
+</details>
+
+**4.** Under Postgres's default isolation level, `SELECT balance` followed by `UPDATE balance = :new`
+is a bug. Why, and what are the three fixes?
+
+<details><summary>Answer</summary>
+
+Read committed permits non-repeatable reads, so two concurrent transactions can both read 100, both
+compute 90, and both write 90 — one debit vanishes. This is a **lost update**, and no amount of care
+in application code prevents it, because the race is between the read and the write.
+
+Three fixes: `SELECT ... FOR UPDATE` to lock the row, an atomic `UPDATE ... SET balance = balance -
+10` that never reads into the application at all, or serializable isolation. Note also that
+"repeatable read" means different things in Postgres and MySQL, so the level name alone is not a
+specification.
+</details>
+
+**5.** The database is slow every night at 3am and fine all day. Someone proposes a read replica. Do
+you approve it?
+
+<details><summary>Answer</summary>
+
+Not before finding out what runs at 3am. The candidates are all scheduled work: backups, vacuum or
+compaction, and batch jobs reading every row — and that last one also evicts the buffer pool and the
+[cache](../../04-caching/fundamentals/) working set, so the morning traffic arrives cold and the
+symptom outlives the job.
+
+A replica may well be right, and moving analytics off the hot path is a good reason to have one. But
+adding infrastructure to hide a pattern you have not explained buys lag, an operational burden and
+another thing to fail — and it will not help at all if the cause was vacuum on the primary.
+</details>
 
 ## 32. Decision checklist
 

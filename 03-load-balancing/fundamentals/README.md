@@ -283,18 +283,78 @@ perfectly. Track health check state changes; flapping is a signal in its own rig
 counts against the limit, and alert on certificate expiry in days, because that outage is both total
 and entirely avoidable.
 
-## 31. Interview questions
+## 31. Exercises
 
-- **"You add a load balancer. What's the new single point of failure?"** — the load balancer.
-  Anyone who misses this has not run one.
-- **"L4 or L7?"** — wants the routing/parsing trade-off, not a definition.
-- **"Round robin or least-connections?"** — wants "does request cost vary?"
-- **"How do you deploy without downtime?"** — wants connection draining, and a drain timeout longer
-  than the slowest request.
-- **"Health check returns 200 but the server can't reach the database. What now?"** — wants shallow
-  vs deep, and why deep checks for routing are dangerous.
-- **"Why is consistent hashing better than modulo?"** — wants "adding a server remaps 1/N of keys
-  instead of nearly all of them".
+**1.** You add a load balancer in front of five app servers so no single machine can take the site
+down. What is the new single point of failure, and what else just entered your availability
+calculation?
+
+<details><summary>Answer</summary>
+
+The load balancer itself. Five servers behind one load balancer is a system with the availability of
+one machine, and adding an LB to remove a single point of failure while creating one is the most
+common mistake in this topic. Fix it with a redundant pair and a floating address.
+
+Two dependencies arrive quietly with it. **DNS is now on the critical path**, and its TTL sets your
+real failover time. And the five servers still share one database, which is un-redundant and is
+therefore your actual number — see [availability](../../00-foundations/availability/).
+</details>
+
+**2.** Requests on this service range from 2 ms to 4 seconds. Round robin is configured. Predict the
+symptom.
+
+<details><summary>Answer</summary>
+
+One server pinned while others idle, and a p99 far worse than the fleet's capacity suggests. Round
+robin counts **requests, not work**, so it will cheerfully hand the next report-rebuild to the server
+still grinding through the last one.
+
+Least-connections approximates "least loaded" for free by tracking in-flight requests, and variable
+request cost is the normal case rather than an exotic one — which is why round robin being the
+default in most configurations is unfortunate. See [§11](#11-algorithms).
+</details>
+
+**3.** A server returns 200 from `/health` but cannot reach the database. Then you make the health
+check query the database, and one database blip takes the whole site down. What is the resolution?
+
+<details><summary>Answer</summary>
+
+Both extremes fail, so use both checks for different purposes: a **shallow** check for routing, and a
+**deep** check for alerting.
+
+A shallow check keeps servers in the pool that cannot do useful work. A deep check for routing is
+worse, because the dependency is shared — one blip marks every backend unhealthy simultaneously, and
+the load balancer now has an empty pool. Decide deliberately what happens then, too: fail closed with
+503s, or fail open and route anyway. The default is rarely what you want.
+</details>
+
+**4.** Your cache tier sits behind a load balancer using `hash(key) % N`. You add one node to a
+four-node tier. What does the origin see?
+
+<details><summary>Answer</summary>
+
+A step change it may not survive. Changing `N` from 4 to 5 changes the destination for roughly
+`(N−1)/N` of all keys — about 80% — so the cache tier is effectively empty in one instant and 80% of
+reads fall through to the origin simultaneously.
+
+Consistent hashing places keys and nodes on a ring, so a new node steals a contiguous arc from one
+neighbour and only ~1/N of keys move. This is why cache affinity behind a load balancer is one of the
+few places the extra complexity of a hash ring clearly pays.
+</details>
+
+**5.** A service runs comfortably on one machine at 30 rps and deploys during a monthly maintenance
+window. Someone proposes a load balancer "for scalability". Do you?
+
+<details><summary>Answer</summary>
+
+Not on that argument. At 30 rps capacity is not the problem, and adding a load balancer in front of a
+single backend buys you an extra hop, a certificate to renew, health checks to tune and a new failure
+mode — for no benefit at all.
+
+The arguments that would win are the other two: surviving an instance dying, and deploys without
+downtime. If a monthly maintenance window is genuinely acceptable and an hour of downtime costs
+nothing, then one bigger server remains the right answer — **more often than people admit**.
+</details>
 
 ## 32. Decision checklist
 
