@@ -6,8 +6,14 @@ import hooks from 'eslint-plugin-react-hooks'
 export default [
   { ignores: ['dist/**'] },
   js.configs.recommended,
+  // scripts/ runs under Node, not in the browser -- console, process and URL
+  // are legitimate there and undefined in the app.
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { ecmaVersion: 2022, globals: globals.node, sourceType: 'module' },
+  },
+  {
+    files: ['src/**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,

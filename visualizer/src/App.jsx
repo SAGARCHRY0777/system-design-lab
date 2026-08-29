@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
 import Patterns from './components/Patterns.jsx'
+import Predict from './components/Predict.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
 import { activeEdges, flowAvailable, layout } from './lib/layout.js'
@@ -103,6 +104,16 @@ export default function App() {
     setSimMs(next ? next.startMs : 0)
   }
 
+  const replay = ({ version: v, flowId: fid, down: node }) => {
+    const idx = scene.versions.findIndex(x => x.v === v)
+    if (idx >= 0) setVIndex(idx)
+    setFlowId(fid)
+    setDown(new Set([node]))
+    setSimMs(0)
+    setPlaying(true)
+    setView('architecture')
+  }
+
   const blocked = timeline?.blockedAt !== null && timeline?.blockedNode
   const reachedBlock = blocked && simMs >= timeline.totalMs - 1
 
@@ -119,12 +130,16 @@ export default function App() {
             onClick={() => setView('architecture')}
           >Architectures</button>
           <button
+            className={view === 'predict' ? 'tick on' : 'tick'}
+            onClick={() => setView('predict')}
+          >Predict</button>
+          <button
             className={view === 'patterns' ? 'tick on' : 'tick'}
             onClick={() => setView('patterns')}
           >Patterns</button>
         </nav>
         <div className="topright">
-          {view === 'architecture' && (
+          {view !== 'patterns' && (
             <label className="scene-pick">
               <span>System</span>
               <select value={sceneId} onChange={e => setSceneId(e.target.value)}>
@@ -137,6 +152,8 @@ export default function App() {
       </header>
 
       {view === 'patterns' && <Patterns />}
+
+      {view === 'predict' && <Predict scene={scene} onReplay={replay} />}
 
       {view === 'architecture' && <>
       <section className="stage">

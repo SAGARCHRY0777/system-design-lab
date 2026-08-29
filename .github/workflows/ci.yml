@@ -56,6 +56,12 @@ jobs:
         working-directory: visualizer
         run: npm run lint
 
+      # A wrong answer key confidently corrects the reader with something false.
+      # Lint cannot see that, so the quiz is checked against the scene directly.
+      - name: Quiz answer keys match the scene
+        working-directory: visualizer
+        run: npm run check:quiz
+
       - name: Build
         working-directory: visualizer
         run: npm run build
