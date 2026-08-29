@@ -1,0 +1,29 @@
+{
+  "name": "system-design-lab-visualizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive architecture lab — watch a request flow, scrub an architecture V1→V8, and switch components off to see what breaks.",
+  "license": "MIT",
+  "author": "SAGARCHRY0777",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.11.0",
+    "vite": "^5.1.4"
+  }
+}

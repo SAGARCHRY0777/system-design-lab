@@ -1,0 +1,65 @@
+%% What you must understand before what.
+%% Follow an arrow forwards only when the source is solid -- sharding before
+%% partitioning, or consensus before quorum, is how people end up able to
+%% recite a definition they cannot apply.
+%%
+%% Render: paste into https://mermaid.live, or view in any Mermaid-aware editor.
+
+flowchart TD
+    subgraph FOUND["Foundations"]
+        LAT[Latency] --> THR[Throughput]
+        THR --> SCALE[Scalability]
+        AVAIL[Availability] --> REL[Reliability]
+        CONS[Consistency] --> CAP[CAP theorem]
+        AVAIL --> CAP
+        CAP --> PACELC[PACELC]
+    end
+
+    subgraph REQ["Sizing"]
+        SCALE --> EST[Estimation]
+        EST --> BOTTLE[Finding the bottleneck]
+    end
+
+    subgraph COMP["Components"]
+        BOTTLE --> LB[Load Balancer]
+        BOTTLE --> CACHE[Cache]
+        BOTTLE --> DB[Database]
+        LB --> HASH[Consistent hashing]
+        CACHE --> INVAL[Invalidation and TTL]
+        DB --> IDX[Indexing]
+        IDX --> PART[Partitioning]
+        PART --> SHARD[Sharding]
+        DB --> REPL[Replication]
+        REPL --> LEADER[Leader / follower]
+    end
+
+    subgraph ASYNC["Asynchrony"]
+        BOTTLE --> QUEUE[Queue]
+        QUEUE --> WORKER[Workers]
+        WORKER --> BATCH[Batching]
+        QUEUE --> BACKP[Backpressure]
+        WORKER --> RETRY[Retries]
+        RETRY --> IDEM[Idempotency]
+        RETRY --> BACKOFF[Exponential backoff]
+        BACKOFF --> CB[Circuit breaker]
+        RETRY --> DLQ[Dead letter queue]
+        QUEUE --> ORDER[Delivery semantics and ordering]
+    end
+
+    subgraph DIST["Distributed systems"]
+        REPL --> QUORUM[Quorum]
+        LEADER --> ELECT[Leader election]
+        ELECT --> CONSENSUS[Consensus]
+        QUORUM --> CONSENSUS
+        CONS --> EVENTUAL[Eventual consistency]
+        SHARD --> HASH
+        CONSENSUS --> LOCK[Distributed locks]
+    end
+
+    CAP -.->|"constrains every choice below"| COMP
+    CAP -.-> DIST
+
+    classDef start fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    classDef hard fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    class LAT,AVAIL,CONS start
+    class CONSENSUS,PACELC,LOCK hard

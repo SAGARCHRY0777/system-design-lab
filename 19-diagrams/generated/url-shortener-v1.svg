@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 652 202" width="652" height="202" role="img" aria-label="URL Shortener version 1: 10K req/day">
+<style>
+.bg{fill:#0e1414}
+.shape{fill:#111818;stroke:#344544;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#d9a441;stroke-width:2.2}
+.lbl{fill:#e4ecea;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6f817d;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#344544;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6f817d;font:10px system-ui,sans-serif}
+.head{fill:#344544}
+.title{fill:#e4ecea;font:600 14px system-ui,sans-serif}
+.sub{fill:#9fb0ac;font:12px system-ui,sans-serif}
+.tag{fill:#4fc3a1;font:600 11px ui-monospace,monospace}
+.halo{fill:#4fc3a1;opacity:.2}
+.core{fill:#4fc3a1}
+</style>
+<rect class="bg" width="652" height="202"/>
+<text class="tag" x="40" y="26">V1</text>
+<text class="title" x="70" y="26">URL Shortener</text>
+<text class="sub" x="40" y="46">10K req/day · p50 35ms · p99 120ms</text>
+<g transform="translate(0 62)">
+<path id="e0" class="edge sync" d="M172.0,70.0 C211.5,70.0 211.5,70.0 251.0,70.0"/>
+<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">HTTPS</textPath></text>
+<path id="e1" class="edge sync" d="M392.0,70.0 C431.5,70.0 431.5,70.0 471.0,70.0"/>
+<rect class="shape client" x="40" y="40.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="75.0" text-anchor="middle">Client</text>
+<rect class="shape service" x="260" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="326.0" y="75.0" text-anchor="middle">App Servers</text>
+<path class="shape store" d="M480,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M480,49.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="546.0" y="67.0" text-anchor="middle">Database</text>
+<text class="note" x="546.0" y="84.0" text-anchor="middle">primary</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="3.38s" repeatCount="indefinite" path="M106.0,70.0 L326.0,70.0 L546.0,70.0 L326.0,70.0 L106.0,70.0"/></g>
+</g></svg>

@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # The cross-link graph IS the value of this repository, so a broken relative
+  # link is a real defect, not a cosmetic one. Same for a scene that no longer
+  # matches its committed diagram.
+  docs:
+    name: Docs · links, scenes, diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Every relative markdown link resolves
+        run: python scripts/check_links.py
+
+      - name: Every scene validates against the schema
+        run: python scripts/check_scenes.py
+
+      - name: No committed diagram is stale versus its scene
+        run: python scripts/render_diagrams.py --check
+
+  visualizer:
+    name: Visualizer · lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: visualizer/package-lock.json
+
+      - name: Install
+        working-directory: visualizer
+        run: npm ci
+
+      - name: Lint
+        working-directory: visualizer
+        run: npm run lint
+
+      - name: Build
+        working-directory: visualizer
+        run: npm run build
+
+  implementations:
+    name: Implementations · pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      # Implementations are stdlib-only on purpose: a reader should be able to
+      # run any of them with nothing installed but Python and pytest.
+      - name: Test
+        run: pytest 18-implementations -q
+
+  ci:
+    name: CI passed
+    runs-on: ubuntu-latest
+    needs: [docs, visualizer, implementations]
+    steps:
+      - run: echo "All CI jobs passed."

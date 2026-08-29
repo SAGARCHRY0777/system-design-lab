@@ -1,0 +1,57 @@
+name: Deploy visualizer to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pages serves this repo from the gh-pages branch rather than from a Pages
+# artifact, so this workflow needs to write a branch, not call deploy-pages.
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: visualizer/package-lock.json
+
+      - name: Install dependencies
+        working-directory: visualizer
+        run: npm ci
+
+      # The app imports scenes from 19-diagrams/scenes, outside the visualizer
+      # root. Building from the repo checkout keeps those paths resolvable.
+      - name: Build
+        working-directory: visualizer
+        run: npm run build
+
+      - name: Publish dist to gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cd visualizer/dist
+          # Stops Pages from running the output through Jekyll, which would drop
+          # any file or directory beginning with an underscore.
+          touch .nojekyll
+          # The published branch holds only build output, so each deploy is a
+          # fresh single-commit history force-pushed over the last one.
+          git init -q
+          git checkout -q -b gh-pages
+          git add -A
+          git commit -qm "Deploy ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

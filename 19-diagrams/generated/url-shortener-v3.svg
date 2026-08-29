@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 872 292" width="872" height="292" role="img" aria-label="URL Shortener version 3: 50M req/day">
+<style>
+.bg{fill:#0e1414}
+.shape{fill:#111818;stroke:#344544;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#d9a441;stroke-width:2.2}
+.lbl{fill:#e4ecea;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6f817d;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#344544;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6f817d;font:10px system-ui,sans-serif}
+.head{fill:#344544}
+.title{fill:#e4ecea;font:600 14px system-ui,sans-serif}
+.sub{fill:#9fb0ac;font:12px system-ui,sans-serif}
+.tag{fill:#4fc3a1;font:600 11px ui-monospace,monospace}
+.halo{fill:#4fc3a1;opacity:.2}
+.core{fill:#4fc3a1}
+</style>
+<rect class="bg" width="872" height="292"/>
+<text class="tag" x="40" y="26">V3</text>
+<text class="title" x="70" y="26">URL Shortener</text>
+<text class="sub" x="40" y="46">50M req/day · p50 25ms · p99 160ms</text>
+<g transform="translate(0 62)">
+<path id="e0" class="edge sync" d="M172.0,115.0 C211.5,115.0 211.5,115.0 251.0,115.0"/>
+<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">HTTPS</textPath></text>
+<path id="e1" class="edge sync" d="M392.0,115.0 C431.5,115.0 431.5,115.0 471.0,115.0"/>
+<path id="e2" class="edge sync" d="M612.0,115.0 C651.5,115.0 651.5,160.0 691.0,160.0"/>
+<text class="elbl" dy="-6"><textPath href="#e2" startOffset="50%" text-anchor="middle">reads</textPath></text>
+<path id="e3" class="edge sync" d="M612.0,115.0 C651.5,115.0 651.5,70.0 691.0,70.0"/>
+<text class="elbl" dy="-6"><textPath href="#e3" startOffset="50%" text-anchor="middle">writes</textPath></text>
+<path id="e4" class="edge replication" d="M824.0,70.0 C820.0,70.0 820.0,160.0 824.0,160.0"/>
+<rect class="shape client" x="40" y="85.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="120.0" text-anchor="middle">Client</text>
+<polygon class="shape lb" points="278,85.0 374,85.0 392,115.0 374,145.0 278,145.0 260,115.0"/>
+<text class="lbl" x="326.0" y="120.0" text-anchor="middle">Load Balancer</text>
+<rect class="shape service" x="480" y="85.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="546.0" y="120.0" text-anchor="middle">App Servers</text>
+<path class="shape store" d="M700,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M700,49.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="766.0" y="67.0" text-anchor="middle">Database</text>
+<text class="note" x="766.0" y="84.0" text-anchor="middle">primary</text>
+<path class="shape store" d="M700,139.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M700,139.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="766.0" y="165.0" text-anchor="middle">Read Replicas</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="5.11s" repeatCount="indefinite" path="M106.0,115.0 L546.0,115.0 L766.0,70.0 L546.0,115.0 L106.0,115.0"/></g>
+</g></svg>

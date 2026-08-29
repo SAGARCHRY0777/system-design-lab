@@ -1,0 +1,749 @@
+{
+  "id": "url-shortener",
+  "title": "URL Shortener",
+  "summary": "Create a short code for a long URL, then redirect on lookup. Read-dominated by roughly 100:1, which is what drives every architectural decision below.",
+  "nodes": {
+    "client": {
+      "kind": "client",
+      "label": "Client"
+    },
+    "cdn": {
+      "kind": "edge",
+      "label": "CDN / Edge",
+      "note": "301 cached at PoP"
+    },
+    "lb": {
+      "kind": "lb",
+      "label": "Load Balancer"
+    },
+    "app": {
+      "kind": "service",
+      "label": "App Servers"
+    },
+    "cache": {
+      "kind": "cache",
+      "label": "Cache",
+      "note": "read-through, TTL 1h"
+    },
+    "db": {
+      "kind": "store",
+      "label": "Database",
+      "note": "primary"
+    },
+    "replica": {
+      "kind": "store",
+      "label": "Read Replicas"
+    },
+    "shards": {
+      "kind": "store",
+      "label": "Sharded DB",
+      "note": "hash(code) % N"
+    },
+    "queue": {
+      "kind": "queue",
+      "label": "Analytics Queue"
+    },
+    "worker": {
+      "kind": "service",
+      "label": "Click Workers"
+    },
+    "app_r2": {
+      "kind": "service",
+      "label": "App (EU)"
+    },
+    "shards_r2": {
+      "kind": "store",
+      "label": "Sharded DB (EU)"
+    }
+  },
+  "versions": [
+    {
+      "v": 1,
+      "label": "10K req/day",
+      "trigger": "Launch. One box, one database, no traffic worth planning for.",
+      "traffic": {
+        "rps": 0.12,
+        "label": "10K/day  ·  ~0.1 rps"
+      },
+      "active": [
+        "client",
+        "app",
+        "db"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "app",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "kind": "sync"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 35,
+        "p99_ms": 120
+      },
+      "bottleneck": null,
+      "note": "Correct for the scale. Adding anything here is the premature-optimisation anti-pattern, not foresight."
+    },
+    {
+      "v": 2,
+      "label": "10M req/day",
+      "trigger": "One app server saturated CPU at ~200 rps, and deploys meant downtime.",
+      "traffic": {
+        "rps": 116,
+        "label": "10M/day  ·  ~116 rps avg, ~350 peak"
+      },
+      "active": [
+        "client",
+        "lb",
+        "app",
+        "db"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "lb",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "kind": "sync"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 30,
+        "p99_ms": 140
+      },
+      "bottleneck": null,
+      "note": "The load balancer bought horizontal scale AND zero-downtime deploys. The second benefit is usually the one that actually forces the change."
+    },
+    {
+      "v": 3,
+      "label": "50M req/day",
+      "trigger": "Reads swamped the primary. Writes were fine — the ratio is ~100:1.",
+      "traffic": {
+        "rps": 578,
+        "label": "50M/day  ·  ~578 rps avg"
+      },
+      "active": [
+        "client",
+        "lb",
+        "app",
+        "db",
+        "replica"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "lb",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "replica",
+          "kind": "sync",
+          "label": "reads"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "kind": "sync",
+          "label": "writes"
+        },
+        {
+          "from": "db",
+          "to": "replica",
+          "kind": "replication"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 25,
+        "p99_ms": 160
+      },
+      "bottleneck": null,
+      "note": "First real consistency cost: a code created and immediately clicked can 404 if the read hits a lagging replica. Read-your-writes now has to be handled explicitly."
+    },
+    {
+      "v": 4,
+      "label": "200M req/day",
+      "trigger": "p99 reached 800ms under peak. 92% of reads were for the top 0.1% of codes.",
+      "traffic": {
+        "rps": 2314,
+        "label": "200M/day  ·  ~2.3K rps avg, ~7K peak"
+      },
+      "active": [
+        "client",
+        "lb",
+        "app",
+        "cache",
+        "db",
+        "replica"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "lb",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "cache",
+          "kind": "sync",
+          "label": "read-through"
+        },
+        {
+          "from": "app",
+          "to": "replica",
+          "kind": "sync",
+          "label": "on miss"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "kind": "sync",
+          "label": "writes"
+        },
+        {
+          "from": "db",
+          "to": "replica",
+          "kind": "replication"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 6,
+        "p99_ms": 55
+      },
+      "bottleneck": null,
+      "note": "A skewed access pattern is what makes a cache worth having. Uniformly random reads over a huge keyspace would have gained almost nothing."
+    },
+    {
+      "v": 5,
+      "label": "500M req/day",
+      "trigger": "Median user was 120ms from the nearest datacentre before any work began.",
+      "traffic": {
+        "rps": 5787,
+        "label": "500M/day  ·  ~5.8K rps avg"
+      },
+      "active": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "db",
+        "replica"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "cdn",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "cdn",
+          "to": "lb",
+          "kind": "sync",
+          "label": "on miss"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "cache",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "replica",
+          "kind": "sync",
+          "label": "on miss"
+        },
+        {
+          "from": "app",
+          "to": "db",
+          "kind": "sync",
+          "label": "writes"
+        },
+        {
+          "from": "db",
+          "to": "replica",
+          "kind": "replication"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 4,
+        "p99_ms": 48
+      },
+      "bottleneck": null,
+      "note": "Speed of light is the one constraint no amount of hardware fixes. The only fix is to be physically closer, which is what an edge PoP is."
+    },
+    {
+      "v": 6,
+      "label": "1B req/day",
+      "trigger": "Write throughput and dataset size both exceeded what one primary could hold.",
+      "traffic": {
+        "rps": 11574,
+        "label": "1B/day  ·  ~11.6K rps avg, ~35K peak"
+      },
+      "active": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "shards",
+        "queue",
+        "worker"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "cdn",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "cdn",
+          "to": "lb",
+          "kind": "sync",
+          "label": "on miss"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "cache",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "shards",
+          "kind": "sync",
+          "label": "on miss"
+        },
+        {
+          "from": "app",
+          "to": "queue",
+          "kind": "async",
+          "label": "click event"
+        },
+        {
+          "from": "queue",
+          "to": "worker",
+          "kind": "async"
+        },
+        {
+          "from": "worker",
+          "to": "shards",
+          "kind": "async",
+          "label": "counters"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 4,
+        "p99_ms": 40
+      },
+      "bottleneck": null,
+      "note": "Two changes at once, for two different reasons. Sharding solved write throughput. Moving click analytics onto a queue took a write off the redirect path entirely — the user no longer waits for a counter increment."
+    },
+    {
+      "v": 7,
+      "label": "1B/day, multi-region",
+      "trigger": "EU traffic still crossed the Atlantic on every cache miss.",
+      "traffic": {
+        "rps": 11574,
+        "label": "1B/day  ·  split US / EU"
+      },
+      "active": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "shards",
+        "queue",
+        "worker",
+        "app_r2",
+        "shards_r2"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "cdn",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "cdn",
+          "to": "lb",
+          "kind": "sync",
+          "label": "geo-routed"
+        },
+        {
+          "from": "lb",
+          "to": "app",
+          "kind": "sync",
+          "label": "US"
+        },
+        {
+          "from": "lb",
+          "to": "app_r2",
+          "kind": "sync",
+          "label": "EU"
+        },
+        {
+          "from": "app",
+          "to": "cache",
+          "kind": "sync"
+        },
+        {
+          "from": "app",
+          "to": "shards",
+          "kind": "sync"
+        },
+        {
+          "from": "app_r2",
+          "to": "shards_r2",
+          "kind": "sync"
+        },
+        {
+          "from": "shards",
+          "to": "shards_r2",
+          "kind": "replication",
+          "label": "async, ~200ms lag"
+        },
+        {
+          "from": "app",
+          "to": "queue",
+          "kind": "async"
+        },
+        {
+          "from": "queue",
+          "to": "worker",
+          "kind": "async"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 3,
+        "p99_ms": 35
+      },
+      "bottleneck": null,
+      "note": "Redirects tolerate a stale replica; a freshly created code might 404 in the EU for ~200ms. That is an acceptable trade here and would be unacceptable for a payment. The tolerance is a property of the use case, never of the technology."
+    },
+    {
+      "v": 8,
+      "label": "Regional failure",
+      "trigger": "Design review: what actually happens when a whole region goes dark?",
+      "traffic": {
+        "rps": 11574,
+        "label": "1B/day  ·  US region down"
+      },
+      "active": [
+        "client",
+        "cdn",
+        "lb",
+        "app_r2",
+        "shards_r2",
+        "queue",
+        "worker"
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "cdn",
+          "kind": "sync",
+          "label": "HTTPS"
+        },
+        {
+          "from": "cdn",
+          "to": "lb",
+          "kind": "sync"
+        },
+        {
+          "from": "lb",
+          "to": "app_r2",
+          "kind": "sync",
+          "label": "failover: all traffic"
+        },
+        {
+          "from": "app_r2",
+          "to": "shards_r2",
+          "kind": "sync"
+        },
+        {
+          "from": "app_r2",
+          "to": "queue",
+          "kind": "async"
+        },
+        {
+          "from": "queue",
+          "to": "worker",
+          "kind": "async"
+        }
+      ],
+      "metrics": {
+        "p50_ms": 9,
+        "p99_ms": 95
+      },
+      "bottleneck": "app_r2",
+      "note": "The failover only works if EU was provisioned to absorb 100% of traffic, not 50%. That is the cost nobody budgets for: multi-region done properly means paying for roughly 2x the capacity you use. Untested failover is not failover."
+    }
+  ],
+  "flows": [
+    {
+      "id": "v1-read",
+      "label": "Redirect (V1–V3)",
+      "minVersion": 1,
+      "maxVersion": 3,
+      "path": [
+        "client",
+        "app",
+        "db",
+        "app",
+        "client"
+      ],
+      "outcome": "Every read is a full database round trip. Nothing absorbs repeat traffic."
+    },
+    {
+      "id": "v4-hit",
+      "label": "Redirect — cache hit",
+      "minVersion": 4,
+      "maxVersion": 4,
+      "path": [
+        "client",
+        "lb",
+        "app",
+        "cache",
+        "app",
+        "client"
+      ],
+      "outcome": "Never touches the database. Once warm this is roughly 95% of reads."
+    },
+    {
+      "id": "v4-miss",
+      "label": "Redirect — cache miss",
+      "minVersion": 4,
+      "maxVersion": 4,
+      "path": [
+        "client",
+        "lb",
+        "app",
+        "cache",
+        "app",
+        "replica",
+        "app",
+        "client"
+      ],
+      "outcome": "A miss pays the full round trip, then populates the cache for everyone queued behind it."
+    },
+    {
+      "id": "edge-hit",
+      "label": "Redirect — served at the edge",
+      "minVersion": 5,
+      "maxVersion": 7,
+      "path": [
+        "client",
+        "cdn",
+        "client"
+      ],
+      "outcome": "The request never reaches your infrastructure at all. This is the cheapest possible response, and the reason a CDN beats any amount of origin tuning."
+    },
+    {
+      "id": "v5-origin-miss",
+      "label": "Redirect — edge miss to origin",
+      "minVersion": 5,
+      "maxVersion": 5,
+      "path": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "app",
+        "replica",
+        "app",
+        "cdn",
+        "client"
+      ],
+      "outcome": "Edge miss plus cache miss: the worst case, and the one your p99 is actually made of."
+    },
+    {
+      "id": "v6-origin-hit",
+      "label": "Redirect — edge miss, cache hit",
+      "minVersion": 6,
+      "maxVersion": 7,
+      "path": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "app",
+        "cdn",
+        "client"
+      ],
+      "outcome": "Missed the edge but hit the cache — no shard is touched."
+    },
+    {
+      "id": "v6-origin-miss",
+      "label": "Redirect — edge miss, cache miss",
+      "minVersion": 6,
+      "maxVersion": 7,
+      "path": [
+        "client",
+        "cdn",
+        "lb",
+        "app",
+        "cache",
+        "app",
+        "shards",
+        "app",
+        "cdn",
+        "client"
+      ],
+      "outcome": "Falls through to a single shard. Only one shard is consulted, which is the whole point of hashing the key."
+    },
+    {
+      "id": "v4-create",
+      "label": "Create short URL",
+      "minVersion": 4,
+      "maxVersion": 5,
+      "path": [
+        "client",
+        "lb",
+        "app",
+        "db",
+        "app",
+        "client"
+      ],
+      "outcome": "Writes bypass the cache entirely and go straight to the primary."
+    },
+    {
+      "id": "v6-create",
+      "label": "Create short URL (sharded)",
+      "minVersion": 6,
+      "maxVersion": 7,
+      "path": [
+        "client",
+        "lb",
+        "app",
+        "shards",
+        "app",
+        "client"
+      ],
+      "outcome": "The shard is chosen by hashing the new code, so writes spread evenly instead of queueing on one primary."
+    },
+    {
+      "id": "v8-failover",
+      "label": "Redirect during regional failure",
+      "minVersion": 8,
+      "path": [
+        "client",
+        "cdn",
+        "lb",
+        "app_r2",
+        "shards_r2",
+        "app_r2",
+        "cdn",
+        "client"
+      ],
+      "outcome": "Every request now crosses to EU. It works, but only because EU was provisioned for 100% of traffic rather than its usual half."
+    },
+    {
+      "id": "v6-click",
+      "label": "Click analytics (async)",
+      "minVersion": 6,
+      "maxVersion": 7,
+      "path": [
+        "app",
+        "queue",
+        "worker"
+      ],
+      "outcome": "Off the request path entirely — the user's redirect completed before this started. Losing this loses counters, not redirects."
+    },
+    {
+      "id": "v8-click",
+      "label": "Click analytics during failover",
+      "minVersion": 8,
+      "path": [
+        "app_r2",
+        "queue",
+        "worker"
+      ],
+      "outcome": "Analytics keeps flowing from the surviving region. Async work degrades last, which is exactly why it was moved off the request path."
+    }
+  ],
+  "failures": [
+    {
+      "id": "cache-down",
+      "node": "cache",
+      "minVersion": 4,
+      "effect": "Every read falls through to the database at once. The database sees roughly 20x its normal load in one step — a thundering herd, and the most common way a cache outage becomes a full outage.",
+      "bottleneck": "db",
+      "survivable": true
+    },
+    {
+      "id": "replica-down",
+      "node": "replica",
+      "minVersion": 3,
+      "effect": "Reads shift onto the primary, which is also serving writes. Survivable at V3, dangerous by V5.",
+      "bottleneck": "db",
+      "survivable": true
+    },
+    {
+      "id": "db-down",
+      "node": "db",
+      "minVersion": 1,
+      "effect": "Cached codes keep redirecting until their TTL expires; everything else fails. Creation stops entirely.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "lb-down",
+      "node": "lb",
+      "minVersion": 2,
+      "effect": "Total outage unless the load balancer is itself redundant. A single load balancer converts N redundant servers back into one point of failure — the classic mistake.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "queue-down",
+      "node": "queue",
+      "minVersion": 6,
+      "effect": "Redirects are completely unaffected — analytics counters simply stop. This is exactly why the click counter was moved off the request path.",
+      "bottleneck": null,
+      "survivable": true
+    }
+  ]
+}
