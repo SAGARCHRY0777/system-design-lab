@@ -48,6 +48,7 @@ every diagram.
 - [x] Running latency readout, speeds from 0.1x, step-by-step and scrub
 - [x] Patterns browser, fed from the same data as CATALOGUE.md
 - [ ] Keyboard navigation and a reduced-motion still mode
+- [x] Prediction mode — commit-then-reveal, 45 questions derived from the scenes, verified in CI
 - [ ] Scene picker populated as more systems land
 
 ## Phase 2 — Foundations ✅
@@ -121,7 +122,7 @@ in the visualizer.
 - [x] [URL shortener](15-real-world-problems/url-shortener/) — full V1→V8 worked design with exercises `[B]`
 - [ ] Notification system `[I]`
 - [ ] Chat system `[A]`
-- [ ] Social feed `[A]`
+- [x] [Social feed](19-diagrams/scenes/social-feed.json) — scene: fan-out on write vs read, the celebrity problem, hybrid `[A]`
 - [ ] File storage `[I]`
 - [ ] Payment system `[E]`
 - [ ] Ticket booking `[A]`

@@ -7,5 +7,6 @@
  * Adding a system: drop the JSON in 19-diagrams/scenes/ and add it here.
  */
 import urlShortener from '../../../19-diagrams/scenes/url-shortener.json'
+import socialFeed from '../../../19-diagrams/scenes/social-feed.json'
 
-export const SCENES = [urlShortener]
+export const SCENES = [urlShortener, socialFeed]

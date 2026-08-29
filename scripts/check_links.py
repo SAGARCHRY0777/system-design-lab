@@ -87,6 +87,26 @@ def orphans(files: list[Path]) -> list[Path]:
     return [f for f in files if f.resolve() not in linked and f.resolve() not in roots]
 
 
+def exercises_without_answers(files: list[Path]) -> list[Path]:
+    """Exercise sections whose answers are not hidden.
+
+    Retrieval practice needs a GAP between the question and the answer. A page
+    that prints both on the same line is prose wearing a question mark, which is
+    exactly what the old "Interview questions" sections were. `<details>`
+    collapses natively on GitHub, so the gap costs nothing -- but only if it is
+    actually used, and without this rule the format decays back within a few
+    edits.
+    """
+    bad = []
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        if "## 31. Exercises" not in text and "## Exercises" not in text:
+            continue
+        if "<details>" not in text:
+            bad.append(path)
+    return bad
+
+
 def main() -> int:
     files = markdown_files()
     total_bad = 0
@@ -101,6 +121,12 @@ def main() -> int:
             for lineno, target in bad:
                 print(f"        line {lineno}: {target}")
 
+    unhidden = exercises_without_answers(files)
+    if unhidden:
+        print("EXERCISES WITH VISIBLE ANSWERS -- wrap each answer in <details>:")
+        for f in unhidden:
+            print(f"        {f.relative_to(ROOT)}")
+
     lost = orphans(files)
     if lost:
         print("ORPHANED -- committed but unreachable, nothing links to these:")
@@ -108,13 +134,16 @@ def main() -> int:
             print(f"        {f.relative_to(ROOT)}")
 
     print()
-    if total_bad or lost:
+    if total_bad or lost or unhidden:
         if total_bad:
             print(f"{total_bad} broken link(s) across {checked} markdown file(s)")
         if lost:
             print(f"{len(lost)} orphaned page(s)")
+        if unhidden:
+            print(f"{len(unhidden)} exercise section(s) with visible answers")
         return 1
-    print(f"all relative links resolve, no orphans ({checked} markdown file(s) checked)")
+    print(f"links resolve, no orphans, exercise answers hidden "
+          f"({checked} markdown file(s) checked)")
     return 0
 
 

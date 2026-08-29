@@ -1,0 +1,307 @@
+{
+  "id": "social-feed",
+  "title": "Social Feed",
+  "summary": "Post a message; see a timeline of posts from everyone you follow. Write-amplified rather than read-dominated, which inverts almost every decision the URL shortener made.",
+  "nodes": {
+    "client":    { "kind": "client",  "label": "Client" },
+    "cdn":       { "kind": "edge",    "label": "CDN / Edge", "note": "images and video" },
+    "lb":        { "kind": "lb",      "label": "Load Balancer" },
+    "app":       { "kind": "service", "label": "App Servers" },
+    "cache":     { "kind": "cache",   "label": "Cache", "note": "hot timelines" },
+    "graph":     { "kind": "store",   "label": "Follow Graph" },
+    "posts":     { "kind": "store",   "label": "Post Store" },
+    "feeds":     { "kind": "store",   "label": "Feed Store", "note": "precomputed timelines" },
+    "queue":     { "kind": "queue",   "label": "Fan-out Queue" },
+    "worker":    { "kind": "service", "label": "Fan-out Workers" },
+    "blob":      { "kind": "store",   "label": "Object Storage", "note": "media bytes" }
+  },
+  "versions": [
+    {
+      "v": 1,
+      "label": "10K users",
+      "trigger": "Launch. Build the timeline by querying at read time — the obvious implementation, and correct at this size.",
+      "traffic": { "rps": 5, "label": "10K users · ~5 rps" },
+      "active": ["client", "app", "graph", "posts"],
+      "edges": [
+        { "from": "client", "to": "app",   "kind": "sync", "label": "HTTPS" },
+        { "from": "app",    "to": "graph", "kind": "sync", "label": "who do I follow?" },
+        { "from": "app",    "to": "posts", "kind": "sync", "label": "their recent posts" }
+      ],
+      "metrics": { "p50_ms": 60, "p99_ms": 210 },
+      "bottleneck": null,
+      "note": "This is fan-out on READ: assemble the timeline when someone asks for it. One join, no duplication, and a post is visible the instant it is written."
+    },
+    {
+      "v": 2,
+      "label": "500K users",
+      "trigger": "Timeline assembly became the slowest endpoint. The same users refresh constantly and get an identical answer each time.",
+      "traffic": { "rps": 260, "label": "500K users · ~260 rps" },
+      "active": ["client", "lb", "app", "cache", "graph", "posts"],
+      "edges": [
+        { "from": "client", "to": "lb",    "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",   "kind": "sync" },
+        { "from": "app",    "to": "cache", "kind": "sync", "label": "assembled timeline" },
+        { "from": "app",    "to": "graph", "kind": "sync", "label": "on miss" },
+        { "from": "app",    "to": "posts", "kind": "sync", "label": "on miss" }
+      ],
+      "metrics": { "p50_ms": 18, "p99_ms": 190 },
+      "bottleneck": null,
+      "note": "The cache hides the cost but does not remove it. p99 barely moves, because the tail IS the miss path — and every new post invalidates the timeline of everyone who follows the author."
+    },
+    {
+      "v": 3,
+      "label": "5M users",
+      "trigger": "A user following 2,000 accounts needed a 2,000-way merge on every refresh. Read-time assembly does not scale with follow count.",
+      "traffic": { "rps": 2600, "label": "5M users · ~2.6K rps" },
+      "active": ["client", "lb", "app", "cache", "graph", "posts", "feeds"],
+      "edges": [
+        { "from": "client", "to": "lb",    "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",   "kind": "sync" },
+        { "from": "app",    "to": "cache", "kind": "sync" },
+        { "from": "app",    "to": "feeds", "kind": "sync", "label": "read precomputed" },
+        { "from": "app",    "to": "posts", "kind": "sync", "label": "hydrate" },
+        { "from": "app",    "to": "graph", "kind": "sync", "label": "on write" }
+      ],
+      "metrics": { "p50_ms": 12, "p99_ms": 60 },
+      "bottleneck": null,
+      "note": "The inversion: fan-out on WRITE. When you post, push the post id into every follower's precomputed feed. Reads become a single sequential read. The cost has moved from read time to write time — and it has been multiplied by your follower count."
+    },
+    {
+      "v": 4,
+      "label": "20M users",
+      "trigger": "Fan-out on write made posting slow: the author waited while the system wrote to thousands of feeds.",
+      "traffic": { "rps": 10400, "label": "20M users · ~10.4K rps" },
+      "active": ["client", "lb", "app", "cache", "graph", "posts", "feeds", "queue", "worker"],
+      "edges": [
+        { "from": "client", "to": "lb",     "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",    "kind": "sync" },
+        { "from": "app",    "to": "cache",  "kind": "sync" },
+        { "from": "app",    "to": "feeds",  "kind": "sync", "label": "read" },
+        { "from": "app",    "to": "posts",  "kind": "sync", "label": "write post" },
+        { "from": "app",    "to": "queue",  "kind": "async", "label": "fan-out job" },
+        { "from": "queue",  "to": "worker", "kind": "async" },
+        { "from": "worker", "to": "graph",  "kind": "async", "label": "followers" },
+        { "from": "worker", "to": "feeds",  "kind": "async", "label": "insert N rows" }
+      ],
+      "metrics": { "p50_ms": 10, "p99_ms": 48 },
+      "bottleneck": null,
+      "note": "The author's request returns as soon as the post is durable. Fan-out happens behind a queue, so a post is visible to followers seconds later rather than instantly — which nobody notices, and which is the whole reason this is acceptable."
+    },
+    {
+      "v": 5,
+      "label": "Celebrity posts",
+      "trigger": "An account with 40M followers posted. That is 40M feed writes from a single request, and the fan-out queue backed up for hours behind it.",
+      "traffic": { "rps": 10400, "label": "20M users · one 40M-follower post" },
+      "active": ["client", "lb", "app", "cache", "graph", "posts", "feeds", "queue", "worker"],
+      "edges": [
+        { "from": "client", "to": "lb",     "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",    "kind": "sync" },
+        { "from": "app",    "to": "cache",  "kind": "sync" },
+        { "from": "app",    "to": "feeds",  "kind": "sync", "label": "read" },
+        { "from": "app",    "to": "posts",  "kind": "sync" },
+        { "from": "app",    "to": "queue",  "kind": "async" },
+        { "from": "queue",  "to": "worker", "kind": "async" },
+        { "from": "worker", "to": "graph",  "kind": "async" },
+        { "from": "worker", "to": "feeds",  "kind": "async", "label": "40M inserts" }
+      ],
+      "metrics": { "p50_ms": 11, "p99_ms": 320 },
+      "bottleneck": "queue",
+      "note": "The celebrity problem, and it is not an edge case — it is the defining constraint of every social product. Fan-out on write assumes follower counts are roughly uniform. They follow a power law, so the top 0.001% of accounts generate most of the total write volume."
+    },
+    {
+      "v": 6,
+      "label": "Hybrid fan-out",
+      "trigger": "Neither strategy works alone: write fan-out dies on celebrities, read fan-out dies on high follow counts.",
+      "traffic": { "rps": 15600, "label": "30M users · ~15.6K rps" },
+      "active": ["client", "lb", "app", "cache", "graph", "posts", "feeds", "queue", "worker"],
+      "edges": [
+        { "from": "client", "to": "lb",     "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",    "kind": "sync" },
+        { "from": "app",    "to": "cache",  "kind": "sync" },
+        { "from": "app",    "to": "feeds",  "kind": "sync", "label": "normal accounts" },
+        { "from": "app",    "to": "posts",  "kind": "sync", "label": "celebrities, at read time" },
+        { "from": "app",    "to": "graph",  "kind": "sync", "label": "who is a celebrity?" },
+        { "from": "app",    "to": "queue",  "kind": "async" },
+        { "from": "queue",  "to": "worker", "kind": "async" },
+        { "from": "worker", "to": "feeds",  "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 14, "p99_ms": 70 },
+      "bottleneck": null,
+      "note": "Push for the long tail, pull for the few. A timeline read is now a merge of one precomputed feed and a handful of celebrity queries. Slightly slower reads for everyone, in exchange for the write path never seeing a 40M-row insert."
+    },
+    {
+      "v": 7,
+      "label": "Media at scale",
+      "trigger": "Images and video dominated bandwidth and cost far more to serve than the text ever did.",
+      "traffic": { "rps": 26000, "label": "50M users · ~26K rps" },
+      "active": ["client", "cdn", "lb", "app", "cache", "graph", "posts", "feeds", "queue", "worker", "blob"],
+      "edges": [
+        { "from": "client", "to": "cdn",    "kind": "sync", "label": "media" },
+        { "from": "client", "to": "lb",     "kind": "sync", "label": "timeline JSON" },
+        { "from": "cdn",    "to": "blob",   "kind": "sync", "label": "on miss" },
+        { "from": "lb",     "to": "app",    "kind": "sync" },
+        { "from": "app",    "to": "cache",  "kind": "sync" },
+        { "from": "app",    "to": "feeds",  "kind": "sync" },
+        { "from": "app",    "to": "posts",  "kind": "sync" },
+        { "from": "app",    "to": "graph",  "kind": "sync" },
+        { "from": "app",    "to": "queue",  "kind": "async" },
+        { "from": "queue",  "to": "worker", "kind": "async" },
+        { "from": "worker", "to": "feeds",  "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 13, "p99_ms": 65 },
+      "bottleneck": null,
+      "note": "The timeline response carries URLs, not bytes. Media never touches the application tier — an app server that streams video is an app server doing the CDN's job at a hundred times the cost."
+    },
+    {
+      "v": 8,
+      "label": "Fan-out workers lost",
+      "trigger": "Design review: the fan-out workers stop. What does a user actually see?",
+      "traffic": { "rps": 26000, "label": "50M users · workers down" },
+      "active": ["client", "cdn", "lb", "app", "cache", "graph", "posts", "feeds", "queue", "blob"],
+      "edges": [
+        { "from": "client", "to": "cdn",   "kind": "sync", "label": "media" },
+        { "from": "client", "to": "lb",    "kind": "sync" },
+        { "from": "cdn",    "to": "blob",  "kind": "sync" },
+        { "from": "lb",     "to": "app",   "kind": "sync" },
+        { "from": "app",    "to": "cache", "kind": "sync" },
+        { "from": "app",    "to": "feeds", "kind": "sync", "label": "stale but serving" },
+        { "from": "app",    "to": "posts", "kind": "sync" },
+        { "from": "app",    "to": "graph", "kind": "sync" },
+        { "from": "app",    "to": "queue", "kind": "async", "label": "backlog growing" }
+      ],
+      "metrics": { "p50_ms": 13, "p99_ms": 65 },
+      "bottleneck": "queue",
+      "note": "Nothing fails. Timelines still load, they just stop gaining new posts, and the backlog drains when workers return. That is graceful degradation earned by design — the same outage on the synchronous V3 architecture would have taken posting down entirely."
+    }
+  ],
+  "flows": [
+    {
+      "id": "v1-read",
+      "label": "Load timeline (fan-out on read)",
+      "minVersion": 1,
+      "maxVersion": 1,
+      "path": ["client", "app", "graph", "app", "posts", "app", "client"],
+      "outcome": "Two queries and an N-way merge, at read time, on every single refresh."
+    },
+    {
+      "id": "v2-hit",
+      "label": "Load timeline — cache hit",
+      "minVersion": 2,
+      "maxVersion": 2,
+      "path": ["client", "lb", "app", "cache", "app", "client"],
+      "outcome": "Fast, until someone you follow posts and invalidates it."
+    },
+    {
+      "id": "v2-miss",
+      "label": "Load timeline — cache miss",
+      "minVersion": 2,
+      "maxVersion": 2,
+      "path": ["client", "lb", "app", "cache", "app", "graph", "app", "posts", "app", "client"],
+      "outcome": "The full assembly cost reappears. This path is your p99, and caching did not remove it."
+    },
+    {
+      "id": "v3-read",
+      "label": "Load timeline (precomputed)",
+      "minVersion": 3,
+      "maxVersion": 6,
+      "path": ["client", "lb", "app", "feeds", "app", "posts", "app", "client"],
+      "outcome": "One sequential read of a ready-made list, then hydrate the post bodies. Independent of how many accounts you follow."
+    },
+    {
+      "id": "v4-post",
+      "label": "Publish a post",
+      "minVersion": 4,
+      "maxVersion": 7,
+      "path": ["client", "lb", "app", "posts", "app", "client"],
+      "outcome": "Returns as soon as the post is durable. The follower fan-out has not happened yet — and the author cannot tell."
+    },
+    {
+      "id": "v4-fanout",
+      "label": "Fan-out (async, off the request path)",
+      "minVersion": 4,
+      "maxVersion": 7,
+      "path": ["app", "queue", "worker", "feeds"],
+      "outcome": "One row inserted per follower. For a normal account that is hundreds; for a celebrity it is tens of millions."
+    },
+    {
+      "id": "v6-hybrid",
+      "label": "Load timeline (hybrid merge)",
+      "minVersion": 6,
+      "maxVersion": 6,
+      "path": ["client", "lb", "app", "feeds", "app", "graph", "app", "posts", "app", "client"],
+      "outcome": "Precomputed feed for the long tail, merged with live queries for the few celebrities you follow."
+    },
+    {
+      "id": "v7-media",
+      "label": "Load an image",
+      "minVersion": 7,
+      "path": ["client", "cdn", "client"],
+      "outcome": "Served at the edge. Never reaches your infrastructure — which is why media does not appear in your capacity plan."
+    },
+    {
+      "id": "v8-degraded",
+      "label": "Load timeline while fan-out is down",
+      "minVersion": 8,
+      "path": ["client", "lb", "app", "feeds", "app", "posts", "app", "client"],
+      "outcome": "Serves normally from the last-written feed. The timeline is stale, not broken."
+    }
+  ],
+  "failures": [
+    {
+      "id": "cache-down",
+      "node": "cache",
+      "minVersion": 2,
+      "effect": "Every timeline is reassembled from scratch. At V2 that is catastrophic because assembly is the expensive path; from V3 on it barely matters, because reads are already precomputed.",
+      "bottleneck": "posts",
+      "survivable": true
+    },
+    {
+      "id": "feeds-down",
+      "node": "feeds",
+      "minVersion": 3,
+      "effect": "Timelines cannot be read at all. Precomputing moved the read path onto this store, so losing it is losing the product's main screen.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "worker-down",
+      "node": "worker",
+      "minVersion": 4,
+      "effect": "Timelines stop gaining new posts but keep serving what they already hold. Posting still works. The backlog drains when workers return — graceful degradation earned by putting fan-out behind a queue.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "queue-down",
+      "node": "queue",
+      "minVersion": 4,
+      "effect": "Posts are accepted and durably stored but never reach anyone's timeline — and unlike a worker outage, the work is not waiting anywhere to be replayed.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "graph-down",
+      "node": "graph",
+      "minVersion": 1,
+      "effect": "Follow and unfollow stop. Reading still works from V3 on, because the follower list was consulted at write time rather than read time.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "posts-down",
+      "node": "posts",
+      "minVersion": 1,
+      "effect": "Feed rows still exist but there is nothing to hydrate them with — the timeline renders as a list of ids with no content. Posting fails.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "cdn-down",
+      "node": "cdn",
+      "minVersion": 7,
+      "effect": "Text timelines are unaffected; media falls back to origin and the bandwidth bill becomes the incident.",
+      "bottleneck": "blob",
+      "survivable": true
+    }
+  ]
+}
