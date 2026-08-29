@@ -52,6 +52,32 @@ data loss  >  silent wrong answer  >  loud failure  >  slow  >  fine
 **A loud failure is better than a silent wrong answer**, because a loud failure can be retried and a
 wrong answer propagates. This ordering should drive your design: prefer to fail visibly.
 
+```mermaid
+stateDiagram-v2
+    state "In flight" as F
+    state "5 · Fine" as A
+    state "4 · Slow" as B
+    state "3 · Loud failure" as C
+    state "2 · Silent wrong answer" as D
+    state "1 · Committed data lost" as E
+    [*] --> F
+    F --> A: correct, on time
+    F --> B: correct, but late
+    F --> C: 500 or a timeout
+    F --> D: 200, with a wrong body
+    F --> E: crash after the ack
+    B --> C: a timeout converts slow into down
+    C --> F: retry. The caller knows something failed.
+    D --> D: propagates downstream. Nothing alerts.
+    E --> [*]: nothing left to retry
+```
+
+The numbers rank the fates by badness, 1 being worst. Read the transitions rather than the boxes:
+state 3 is the only fate with an arrow back into the system, which is the whole reason a loud failure
+outranks a quiet one, and state 4 reaches it through a transition you install deliberately — the
+timeout, which converts *slow* into *down* precisely because *down* is the one you can handle. State
+2 loops on itself because propagating is the only thing a wrong answer does.
+
 Standard measures: **MTBF** (mean time between failures), **MTTR** (mean time to recovery).
 Reducing MTTR is almost always cheaper than increasing MTBF — you cannot prevent every failure, but
 you can always recover faster.
@@ -116,6 +142,20 @@ because retries are easy to add and idempotency is easy to forget.
 - Before you have basic observability: **you cannot improve reliability you cannot measure**
 - When it would be cheaper to make recovery fast than to make failure rare
 
+```mermaid
+flowchart LR
+    BASE["Today<br/>fails every 30 days<br/>down 60 minutes each time<br/><b>99.86%</b>"] --> X["Double the MTBF<br/>fails every 60 days<br/>down 60 minutes<br/><b>99.93%</b><br/><i>cost: prevent half of all failures</i>"]
+    BASE --> Y["Halve the MTTR<br/>fails every 30 days<br/>down 30 minutes<br/><b>99.93%</b><br/><i>cost: an alert and a runbook</i>"]
+
+    style Y fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+Both branches land on the identical number, and that is arithmetic rather than coincidence:
+availability is `MTBF / (MTBF + MTTR)`, so only the ratio moves, and halving the bottom does exactly
+what doubling the top does. Read off the last line of each box, the only place the two branches
+differ — one asks you to eliminate half of all possible failures, the other asks you to answer the
+pager faster. That asymmetry is why rehearsing recovery usually beats another layer of prevention.
+
 ## 17. Trade-offs
 
 | Choose | Get | Pay |
@@ -140,6 +180,25 @@ because retries are easy to add and idempotency is easy to forget.
 
 **Silent corruption is the worst row**, because nothing alerts. This is what reconciliation jobs are
 for: periodically re-derive the truth and compare.
+
+```mermaid
+sequenceDiagram
+    participant C as Caller
+    participant S as Payment service
+    C->>S: attempt 1 - charge the card
+    S->>S: card charged
+    S--xC: the response is lost in the network
+    Note over C: the timeout fires. A lost request and a lost<br/>response look exactly the same from here.
+    C->>S: attempt 2 - charge the card
+    S->>S: card charged a second time
+    Note over C,S: an idempotency key committed alongside the charge<br/>makes attempt 2 return the attempt 1 result
+```
+
+The flowchart in [§9](#9-how-it-works) shows the decision; this shows why the caller cannot make it
+correctly. Read the third arrow — the caller's information after a timeout is identical whether the
+request never arrived or the reply never came back, so "retry only if it did not happen" is not
+implementable on the client at all. That is what forces the fix onto the server as an idempotency
+key, and why the key has to be committed in the same transaction as the effect.
 
 ## 25. Without it → With it → New problem → Next
 

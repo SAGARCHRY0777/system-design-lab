@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
 import Patterns from './components/Patterns.jsx'
 import Predict from './components/Predict.jsx'
+import StarButton from './components/StarButton.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
 import { activeEdges, flowAvailable, layout } from './lib/layout.js'
@@ -148,6 +149,7 @@ export default function App() {
             </label>
           )}
           <ThemeToggle />
+          <StarButton />
         </div>
       </header>
 

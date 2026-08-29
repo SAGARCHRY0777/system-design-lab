@@ -58,6 +58,28 @@ Two things become true at scale that are not obvious at small scale.
 Nearly two thirds of page loads hit somebody's p99. **At scale, your p99 becomes your typical
 experience.**
 
+```mermaid
+flowchart TD
+    U["One page load"] --> F["fans out to 100 backend services"]
+    F --> A["Service 1<br/>fast 99 calls in 100"]
+    F --> B["Service 2<br/>fast 99 calls in 100"]
+    F --> C["...97 more, each just as good..."]
+    F --> D["Service 100<br/>fast 99 calls in 100"]
+    A --> J["The page cannot finish until the<br/><b>slowest</b> of the 100 has finished"]
+    B --> J
+    C --> J
+    D --> J
+    J --> OUT["1 minus 0.99 to the power 100 = 0.63<br/><b>63 page loads in every 100<br/>are waiting on someone's p99</b>"]
+
+    style J fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style OUT fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Every box in the middle row is individually excellent — a service that is fast 99% of the time is one
+most teams would be pleased to own. Read off the join: a fan-out inherits the **maximum** of its
+dependencies, not their average, so a hundred excellent services compose into a page that is slow
+most of the time. Nobody on that middle row will see anything wrong on their own dashboard.
+
 **Latency adds along the synchronous path and does not along the asynchronous one.** This is the
 single most useful reading skill for an architecture diagram — sum the solid arrows, ignore the
 dashed ones. See [the notation contract](../../19-diagrams/README.md).
@@ -99,6 +121,26 @@ Five contributors, roughly in order of how often they are the actual culprit:
 3. **Processing** — actual computation. Usually the *smallest* term, and usually where people look first.
 4. **Storage** — disk seeks, index traversal, lock waits.
 5. **Serialisation** — encoding and decoding, which becomes real with large payloads.
+
+Those five are not the same size, and they do not grow together. Illustrative numbers for one
+endpoint, same code path in both rows:
+
+```mermaid
+flowchart LR
+    subgraph FAST["This request at p50 — 13 ms total"]
+        F1["network<br/>10 ms"] --> F2["queue<br/>0 ms"] --> F3["serialise<br/>1 ms"] --> F4["process<br/>1 ms"] --> F5["storage<br/>1 ms"]
+    end
+    subgraph SLOW["The same request at p99 — 250 ms total"]
+        S1["network<br/>10 ms"] --> S2["queue<br/>237 ms"] --> S3["serialise<br/>1 ms"] --> S4["process<br/>1 ms"] --> S5["storage<br/>1 ms"]
+    end
+
+    style S2 fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+Read off which box changed. Four of the five terms are **identical** in both rows; the entire
+p50-to-p99 gap is queueing. That term is invisible to a profiler, because the request has not begun
+executing while it accrues — which is why the instinct to open a flame graph and stare at *process*,
+the smallest box on the diagram, so reliably finds nothing.
 
 ## 11. The numbers that shape architecture
 
@@ -172,6 +214,21 @@ Latency does **not** degrade linearly with load. Queueing theory says wait time 
 
 **This is why you do not run systems at 90% utilisation**, however efficient it looks on a cost
 dashboard. The last 10% of capacity buys you 10× the latency, and leaves nothing for a traffic spike.
+
+```mermaid
+flowchart LR
+    A["Running at 50% utilisation<br/>wait ≈ 2× the service time"] -->|"traffic rises<br/>by 10 points"| A2["Now at 60%<br/>wait ≈ 2.5×<br/><i>nobody notices</i>"]
+    B["Running at 90% utilisation<br/>wait ≈ 10× the service time"] -->|"<b>the same</b><br/>10-point rise"| B2["Now at 100%<br/>the queue never drains<br/><i>wait is bounded only by your timeout</i>"]
+
+    style B fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style B2 fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Two rows, the same input on both: ten points more traffic. Read off how different the outputs are —
+the top row absorbs it invisibly, the bottom row falls off the end of the curve, because
+`1/(1 − utilisation)` has no finite value at 1. The headroom that looks like waste on a cost
+dashboard is the identical headroom that was absorbing your spikes, so the two rows are the same
+decision seen before and after.
 
 ---
 

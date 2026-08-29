@@ -52,6 +52,21 @@ distributed would have run comfortably on one large machine for years.
 The honest sequence is: **scale up until it hurts, then scale out.** Going distributed on day one
 buys complexity you pay for immediately and capacity you may never need.
 
+```mermaid
+flowchart LR
+    A["One small machine<br/><i>complexity: none</i>"] -->|"scale UP<br/>change one number, no code"| B["One large machine<br/>hundreds of cores, terabytes of RAM<br/><i>complexity: still none</i>"]
+    B -->|"the ceiling: no bigger box exists,<br/>or its price has turned absurd"| C["The wall<br/><i>most systems never reach it</i>"]
+    C -->|"scale OUT<br/>statelessness, coordination, consistency"| D["Many machines<br/>no ceiling, redundancy included<br/><i>complexity: permanent, paid daily</i>"]
+
+    style C fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The table above sets the two directions side by side, which makes them look like alternatives. Read
+this instead as stages. Capacity rises smoothly left to right, but complexity is a **step function**
+that fires at the wall — and you pay it in full on crossing, even if what you needed was 20% more
+capacity. Going distributed on day one is this same picture with the first two boxes deleted and the
+bill brought forward.
+
 ### Amdahl's Law — why scaling stops working
 
 If a fraction `s` of the work is serial (cannot be parallelised), the maximum speedup with `N` workers is:
@@ -71,6 +86,22 @@ speedup  =  1 / (s + (1 - s)/N)
 **Just 5% serial work caps you at 20× no matter how many machines you buy.** That serial 5% is usually
 a shared database, a global lock, or a single-threaded coordinator. Finding and removing it is worth
 more than any amount of extra hardware.
+
+```mermaid
+flowchart TD
+    W1["<b>1 worker</b><br/>parallel ███████████████████ 95<br/>serial █ 5<br/>total 100"]
+    W10["<b>10 workers</b><br/>parallel ██ 9.5<br/>serial █ 5<br/>total 14.5 — speedup 6.9×"]
+    WINF["<b>Infinitely many workers</b><br/>parallel · 0<br/>serial █ 5<br/>total 5 — speedup 20×, and never more"]
+    W1 --> W10 --> WINF
+
+    style WINF fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+Read off the width of the serial bar: it is the same in all three rows. Machines shorten only the
+top bar, and the top bar cannot go below zero, so the total converges on the serial term and the
+speedup converges on `1/s`. The second reading is where the money goes — ten machines already bought
+you 6.9× of the available 20×, so every further machine competes with the far cheaper option of
+deleting that 5%.
 
 ## 5. Engineering at scale
 
@@ -150,6 +181,27 @@ ceiling. Every scaling story eventually becomes a story about the datastore.
 
 That last one is a genuinely common surprise: scaling *out* during a spike can make things worse for
 a minute, because the new instances arrive with empty caches.
+
+```mermaid
+sequenceDiagram
+    participant T as Traffic
+    participant AS as Autoscaler
+    participant NEW as New instances
+    participant DB as Database
+    T->>AS: load crosses the threshold
+    Note over AS: 60 to 90 s to boot and register
+    AS->>NEW: start 10 more instances
+    NEW->>DB: every request is a cache miss<br/>on a cold connection pool
+    Note over DB: already the constrained resource,<br/>now taking MORE load than before
+    DB-->>NEW: slower answers, for old and new instances alike
+    Note over T,DB: the site is slower AFTER the capacity arrived
+```
+
+Read the order, because the order is the whole surprise. Capacity arrives late, and when it arrives
+it lands *on* the bottleneck rather than relieving it — for the first minute the autoscaler is a load
+generator aimed at the database. That is also the argument against autoscaling as a response to a
+spike already in progress: warm on boot, stagger the rollout, and keep the cache shared rather than
+in-process, so a new instance costs the database nothing.
 
 ## 25. Without it → With it → New problem → Next
 

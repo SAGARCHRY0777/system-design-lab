@@ -63,6 +63,30 @@ This is the decision that actually matters:
 up asynchronously. You keep durability against a single-node loss without letting the slowest replica
 set your write latency.
 
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant L as Leader
+    participant F as Follower
+    Note over C,F: ASYNC - acknowledge first, ship afterwards
+    C->>L: write W
+    L-->>C: 201, committed
+    L-)F: ship W whenever the stream gets to it
+    Note over L,F: The leader dying anywhere in this gap<br/>promotes a follower that never saw W.<br/>The client holds a 201 for data<br/>that now exists nowhere.
+    Note over C,F: SYNC - ship first, acknowledge afterwards
+    C->>L: write X
+    L->>F: ship X
+    F-->>L: durable on my disk
+    L-->>C: 201, committed
+    Note over L,F: No gap exists to lose anything in.
+```
+
+The data-loss window is not an abstract risk — it is **the visible distance between the acknowledgement
+arrow and the shipping arrow**, and it is measured in whatever your current replication lag happens to
+be. The second half shows that sync does not remove that cost so much as relocate it: it moves out of
+a rare failover and into every single write, where a slow follower now slows all writers. That is the
+whole reason semi-sync exists.
+
 ## 5. Engineering at scale
 
 **Replication lag is not a bug to be fixed; it is a property to be bounded and stated.** Under normal
@@ -176,6 +200,27 @@ Monitor stream health separately.
 A **delayed replica** — one deliberately kept an hour behind — is an underused defence against the
 logical-error row. It gives you an hour to notice the bad `DELETE` and recover from a live database
 rather than from backup.
+
+The split-brain row is the one worth drawing, because both halves of the system are behaving correctly:
+
+```mermaid
+flowchart TD
+    P["A network partition cuts the cluster in two"]
+    P --> A["Side A holds the original leader.<br/>It cannot reach any follower, concludes<br/>they are down, and keeps accepting writes."]
+    P --> B["Side B holds the followers.<br/>They cannot reach the leader, conclude<br/>it is down, and elect a new one."]
+    A --> AW["Writes land here and are<br/>acknowledged to real users"]
+    B --> BW["Different writes land here and are<br/>acknowledged to real users"]
+    AW --> M["The partition heals.<br/>Two divergent histories, both durable,<br/>both already promised to somebody.<br/>No automatic merge rule can be correct."]
+    BW --> M
+    style M fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Read the two middle branches as **identical reasoning from identical evidence**: neither side has a bug,
+because "the other nodes are dead" and "the other nodes are unreachable" produce exactly the same
+observations. That is why the fix cannot be smarter detection. A quorum rule makes the minority side
+refuse writes even though it believes it is right, and fencing tokens stop the deposed leader's
+in-flight writes from landing after the new one starts — both work by removing the ambiguity, not by
+resolving it.
 
 ## 25. Without it → With it → New problem → Next
 

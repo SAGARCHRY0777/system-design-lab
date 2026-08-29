@@ -29,6 +29,28 @@ A customer wants the last item. Each shop has two options:
 There is no third option. You cannot phone the other shop; that is what "partition" means. **CAP is
 just this, formalised.**
 
+```mermaid
+flowchart TD
+    S["Two shops, one shared stock ledger.<br/>One item left."] --> P["The phone line dies.<br/>Neither shop can reach the other."]
+    P --> A["Shop A: a customer wants it"]
+    P --> B["Shop B: a customer wants it"]
+    A --> Q["Each shop, alone, must answer now"]
+    B --> Q
+    Q --> SELL["<b>SELL</b><br/>stays open — available<br/><i>both shops may sell the same item</i>"]
+    Q --> REF["<b>REFUSE</b><br/>stays correct — consistent<br/><i>the customer is turned away</i>"]
+    Q --> THIRD["Check with the other shop first"]
+    THIRD --> X["Not available to you.<br/>That is what <b>partition</b> means."]
+
+    style THIRD fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style X fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The third branch is the content of this diagram. It is the option everyone reaches for on first
+encountering CAP, and the picture shows why it is not there: the one mechanism that would let a shop
+be available *and* consistent is precisely the mechanism the partition has removed. Read the other
+two boxes as live options rather than as a right and a wrong answer — which of them you want depends
+entirely on what the item is.
+
 ## 3. Real-world analogy
 
 Two air traffic controllers who lose radio contact with each other. Either they keep issuing
@@ -96,6 +118,29 @@ R + W > N   →  reads and writes overlap on at least one node  →  strongly co
 R + W ≤ N   →  a read can miss the latest write               →  eventually consistent
 ```
 
+```mermaid
+flowchart TD
+    subgraph OK["W = 2, R = 2, N = 3 · the sum is 4, which is greater than 3"]
+        W1["Write acked by<br/>node 1 and node 2"] --> N2["<b>node 2</b><br/>is in both sets"]
+        R1["Read answered by<br/>node 2 and node 3"] --> N2
+        N2 --> G["Overlap is forced by counting alone.<br/>The read cannot miss the write."]
+    end
+    subgraph WEAK["W = 1, R = 1, N = 3 · the sum is 2, which is not greater than 3"]
+        W2["Write acked by node 1"] --> Z["No node is in both sets"]
+        R2["Read answered by node 3"] --> Z
+        Z --> H["The read can miss the write.<br/>Eventually consistent."]
+    end
+
+    style G fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style H fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+`R + W > N` is the pigeonhole principle in a costume: if the two sets between them name more nodes
+than exist, at least one node must appear in both, and that node is holding the latest write. Read
+the lower half as the same rule failing rather than as a system misbehaving — the two sets are simply
+not obliged to intersect, so a read may land entirely on replicas that never heard about the write.
+The inequality is the whole mechanism; there is no further protocol beneath it.
+
 With `N=3`:
 
 | W | R | Behaviour |
@@ -151,6 +196,26 @@ regions that is ~150ms you cannot optimise away.
 
 Two rows there are the *same product*. That is the point: PACELC describes configurations, not
 brands.
+
+```mermaid
+flowchart TD
+    START["One dataset. What should it do?"] --> P{"Is the network<br/>partitioned right now?"}
+    P -->|"yes — rare and brief"| PA{"Refuse, or answer with<br/>possibly stale data?"}
+    PA -->|"refuse"| PC["<b>PC</b> — ledgers, locks, uniqueness"]
+    PA -->|"answer"| PAV["<b>PA</b> — carts, feeds, DNS, presence"]
+    P -->|"no — 99.9% of the time"| E{"Pay a coordination round trip<br/>on every operation?"}
+    E -->|"yes"| EC["<b>EC</b> — correct always<br/>~1 ms in one datacentre<br/>50 to 150 ms across regions"]
+    E -->|"no"| EL["<b>EL</b> — fast local reads<br/>replication lag"]
+
+    style EC fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style EL fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+Compare the two branches out of the first decision by how often you actually take them. CAP describes
+only the upper one, which fires rarely and briefly; the lower branch is where the system spends its
+life, and it is an entirely separate choice that a CAP label does not record. Read your answer off as
+a **pair** — PC/EC and PC/EL are identical partition behaviour with completely different everyday
+costs, which is why "we chose CP" is not yet a decision.
 
 ## 13. When to choose CP
 

@@ -52,6 +52,31 @@ difference in a sentence, the foundations have done their job.
 | Consistency vs correctness | All copies agreeing vs the value being right. Replicas can agree on garbage. |
 | Availability vs durability | Being up vs not losing committed data. A system can be up and quietly losing writes. |
 
+```mermaid
+flowchart TD
+    Q["Something is not working.<br/>Which number is it?"] --> POP["A question about<br/>the whole population"]
+    Q --> ONE["A question about<br/>one request"]
+    POP --> THRU["<b>Throughput</b> — completions per second<br/><i>adding servers helps</i>"]
+    ONE --> LATN["<b>Latency</b> — how long this one took<br/><i>adding servers does not help</i>"]
+    ONE --> G1{"Did it respond<br/>at all?"}
+    G1 -->|"no"| AV["<b>Availability</b> lost"]
+    G1 -->|"yes"| G2{"Was the answer<br/>right?"}
+    G2 -->|"no"| RL["<b>Reliability</b> lost<br/><i>availability still scores a perfect 100</i>"]
+    G2 -->|"yes"| G3{"Would another replica<br/>have said the same?"}
+    G3 -->|"no"| CN["<b>Consistency</b> lost<br/><i>and both copies could still be wrong</i>"]
+    G3 -->|"yes"| G4{"Does the committed write<br/>survive the next crash?"}
+    G4 -->|"no"| DURA["<b>Durability</b> lost<br/><i>the system never went down</i>"]
+    G4 -->|"yes"| FINE["Nothing on this list is broken"]
+
+    style RL fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style DURA fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Read it as a triage order. The first fork is the one people skip: throughput is a property of the
+population and latency is a property of a single request, so no quantity of the first ever buys you
+the second. The two red boxes are the failures your status dashboard reports as success — a fast
+wrong answer and a quietly lost write both return `200`.
+
 ## Where estimation lives
 
 Capacity estimation is a foundation too, but it is a *method* rather than a concept, so it has its

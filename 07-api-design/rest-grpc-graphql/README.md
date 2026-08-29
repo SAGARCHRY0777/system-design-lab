@@ -98,6 +98,24 @@ dozen related resources is GraphQL- or BFF-shaped, high-frequency internal RPC i
 stream is gRPC-shaped. If the consumer and the call shape disagree, the consumer wins — you can work
 around an awkward call shape, but you cannot work around a caller who physically cannot connect.
 
+```mermaid
+flowchart TD
+    S["One call to design"]
+    S --> CO["The CONSUMER axis says:<br/>public or unknown, REST.<br/>your own services, gRPC is available.<br/>many diverging clients, GraphQL.<br/>a browser, anything except gRPC."]
+    S --> CS["The CALL SHAPE axis says:<br/>one resource fetch, REST.<br/>a screen of a dozen resources, GraphQL or BFF.<br/>a long-lived bidirectional stream, gRPC.<br/>high-rate internal RPC, gRPC."]
+    CO --> X{"Do the two axes agree?"}
+    CS --> X
+    X -->|"yes, which is<br/>most of the time"| DONE["Take that answer and move on.<br/>The protocol is the cheap decision."]
+    X -->|"no"| WIN["The CONSUMER axis wins.<br/>An awkward call shape is fixable later with a<br/>compound endpoint or a Backend-for-Frontend.<br/>A caller that cannot physically connect is not."]
+    style WIN fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The value is entirely in the bottom-right box, because that is the case the two tables above cannot
+settle on their own. A composed mobile screen calling a *public* API is exactly this conflict: the
+call shape points at GraphQL and the consumer points at REST, and the resolution is REST plus a
+compound endpoint rather than a public query language. Read the asymmetry as the reason: call-shape
+mistakes are fixed with an extra endpoint, consumer mistakes are fixed with a migration.
+
 ## 5. Engineering at scale
 
 **gRPC under an L4 load balancer sends all your traffic to one backend.** This is the single most
@@ -120,6 +138,31 @@ permanent property of resolver-per-field execution; batching is a discipline you
 every resolver anyone ever adds. Compare with the same problem in
 [databases](../../05-databases/fundamentals/#19-failure-scenarios), where at least the ORM is the
 only place it hides.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as GraphQL server
+    participant D as Database
+    C->>G: one query - 100 posts and each post author
+    G->>D: SELECT the 100 posts
+    D-->>G: 100 rows
+    Note over G: The author resolver now runs once PER POST,<br/>and each invocation can see only its own post.
+    G->>D: SELECT author for post 1
+    G->>D: SELECT author for post 2
+    G->>D: and 98 more, one per post
+    D-->>G: 100 single-row results
+    G-->>C: one tidy response
+    Note over C,D: The client sees 1 request.<br/>The rate limiter sees 1 request.<br/>The database sees 101.
+```
+
+The cause is visible in the middle note, and it is architectural rather than careless: **a field
+resolver is invoked per parent object and is given only that parent**, so it is structurally incapable
+of noticing that 99 near-identical queries are about to run beside it. Batching loaders work by
+deferring resolution to the end of a tick and collapsing what accumulated — which is why they only
+help within one request, and only where every resolver on the path opted in. The last note is the
+monitoring consequence: every layer above the database counts this as one request, so the only signal
+that catches a new N+1 is **database queries per API request**.
 
 **A public GraphQL endpoint without query-cost limits is a denial-of-service endpoint you built and
 hosted for the attacker.** Nested traversal makes request cost superlinear in request *size*:

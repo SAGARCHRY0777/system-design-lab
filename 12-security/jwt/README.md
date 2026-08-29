@@ -65,6 +65,28 @@ used. So the rule is blunt: **do not put anything in a JWT that you would not pr
 No email addresses you would rather not leak into a log aggregator, no internal identifiers you
 consider sensitive, no permission structures you would prefer attackers not to map.
 
+```mermaid
+flowchart TD
+    H["Header<br/>alg, typ, kid"] --> HB["base64url<br/>— an encoding, reversible by anyone"]
+    P["Payload<br/>sub, aud, exp, scope, email, roles"] --> PB["base64url<br/>— an encoding, reversible by anyone"]
+    HB --> J["header dot payload<br/>— the bytes that get signed"]
+    PB --> J
+    J --> SIG["Signature = sign the bytes<br/>with the private key"]
+    J --> TOK["header dot payload dot signature<br/>— the token on the wire"]
+    SIG --> TOK
+    TOK --> R["Anyone holding it READS<br/>every claim, with no key at all"]
+    TOK --> V["Only the key holder could have<br/>WRITTEN it, and any edit breaks it"]
+
+    style R fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style V fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The two leaves are both true of the same bytes at the same time, and that is the thing people cannot
+hold in their heads from prose alone. The signature is computed **over** the encoded payload, not
+instead of it — it proves origin and integrity and adds exactly zero confidentiality. Every claim in
+the red leaf is visible in your access logs, your log aggregator, and any support ticket the token is
+pasted into.
+
 ### Registered claims, and what breaks if you skip one
 
 | Claim | Meaning | Skip the check and |
@@ -120,6 +142,31 @@ finally exceeds the limit fails in a way that looks nothing like "the token got 
 You cannot un-issue a signed token. Every option is a way of adding just enough state to make the
 signature not the last word.
 
+```mermaid
+sequenceDiagram
+    participant U as Employee, now former
+    participant AS as Authorisation server
+    participant API as Your API
+    participant HR as Offboarding process
+
+    U->>AS: log in at 09:55
+    AS-->>U: access token, exp 60 minutes away
+    U->>API: request with the token
+    API->>API: verify signature, exp, iss, aud — all pass
+    API-->>U: 200
+    HR->>AS: disable the account at 10:00
+    Note over HR,AS: the ticket is closed.<br/>Everyone believes access has ended.
+    U->>API: request with the same token at 10:05
+    API->>API: verify signature, exp, iss, aud — all pass
+    API-->>U: 200
+    Note over U,API: The API never asked anyone anything.<br/>Access continues until 10:55, and nothing<br/>in any log looks wrong.
+```
+
+The gap between the two `10:0x` requests is the entire subject of this section, and it exists because
+of a missing arrow rather than a broken one: **there is no line from the authorisation server to the
+API.** Removing that line is precisely what a self-contained token buys, so every row of the table
+below is a way of drawing some cheaper version of it back in.
+
 | Strategy | Revocation latency | State kept | Honest verdict |
 |---|---|---|---|
 | **Short expiry only** (5–15 min) | Up to the TTL | None | The only genuinely stateless option. Accept the window in writing, or do not use JWTs. |
@@ -146,6 +193,31 @@ rules for it: rotate on every use, and detect reuse. If a refresh token that has
 exchanged is presented again, either it was stolen or the legitimate client raced — treat it as
 theft, revoke the entire token family, and force a fresh login. That single mechanism converts
 "attacker has indefinite silent access" into "attacker gets one window and then everybody notices".
+
+```mermaid
+sequenceDiagram
+    participant C as Legitimate client
+    participant AS as Authorisation server
+    participant A as Whoever stole a copy of RT1
+
+    C->>AS: refresh using RT1
+    AS->>AS: RT1 unspent — rotate
+    AS-->>C: new access token plus RT2, and RT1 is now spent
+    A->>AS: refresh using RT1
+    AS->>AS: RT1 was already spent.<br/>Two holders exist. That is theft, not a race.
+    AS-->>A: invalid_grant
+    AS->>AS: revoke the whole family — RT1, RT2,<br/>and every token descended from them
+    C->>AS: refresh using RT2
+    AS-->>C: invalid_grant — family revoked
+    Note over C,AS: Both parties are logged out. The user re-authenticates<br/>with a password and a second factor. The thief cannot.
+```
+
+The mechanism works because a refresh token is meant to have exactly one holder, so **two
+presentations of the same token are evidence on their own** — no anomaly detection, no heuristics,
+no false-positive tuning. Read off the ordering carefully: the server has no way to tell which arrow
+came from the real user, which is why the correct response is to revoke both and let
+re-authentication sort it out. That is also why this is the one JWT control that *detects* theft
+rather than merely bounding it.
 
 ### Keys and clocks
 
@@ -230,6 +302,24 @@ working against production is the friendly version of this bug.
 - **Inherently short-lived, single-purpose artefacts**: email verification links, password reset
   tokens, signed download URLs, one-time invitations. Bounded lifetime, single use, no revocation
   requirement — the sweet spot, and an underused one.
+
+```mermaid
+flowchart TD
+    A{"Does anything outside your own<br/>deployment have to verify this<br/>credential?"} -->|"no — one app, one domain,<br/>and you already run a cache"| SESS["Session cookie.<br/>Opaque, small, revocable by DELETE."]
+    A -->|"yes — other services, other teams,<br/>other organisations"| B{"How quickly must a suspension<br/>or a permission change<br/>take effect?"}
+    B -->|"minutes are fine, and a named<br/>person has accepted that in writing"| SHORT["Short expiry only.<br/>The one genuinely stateless option."]
+    B -->|"immediately, for everything<br/>one user holds"| VER["Per-user token version<br/>or not-before. One integer,<br/>cached. Best value here."]
+    B -->|"immediately, for one<br/>specific token"| DENY["jti denylist, entries dropped<br/>at each token's own expiry."]
+    B -->|"immediately, plus idle timeout,<br/>device list and log-out-everywhere"| LOOP["You have described a session.<br/>Start again at the top."]
+
+    style SESS fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style LOOP fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The first question is the only one that decides between the two families, and it is about deployment
+topology rather than performance. Everything below it is choosing **how much state you are adding
+back**, in order of cost — which is the honest way to read §5. The amber node is a real destination,
+reached more often than teams expect, and arriving at it is a good outcome as long as you notice.
 
 ## 14. When NOT to
 

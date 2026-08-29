@@ -101,6 +101,33 @@ everything, and there is no signal — not a count mismatch, not an error, nothi
 If that traversal was a data export, a reconciliation job, or a sync to another system, you now have
 silent data loss with a clean success log.
 
+The layout above shows *where* the rows move. This shows *when*, which is the half that explains why
+nobody catches it:
+
+```mermaid
+sequenceDiagram
+    participant C as Client traversing
+    participant A as API and database
+    participant W as A different user, writing
+    C->>A: GET limit 3 offset 0
+    A-->>C: I, H, G
+    W->>A: insert J at the head
+    Note over A: The list is now J I H G F E D C B A.<br/>Nothing here knows a traversal is in progress.
+    C->>A: GET limit 3 offset 3
+    A-->>C: G, F, E
+    Note over C,A: G arrives a second time. Status 200,<br/>full page, no warning, no metric.
+    W->>A: delete H, above the window
+    C->>A: GET limit 3 offset 6
+    A-->>C: C, B, A
+    Note over C,A: D was never sent and never will be.<br/>The loop terminates normally and<br/>the job logs a successful sync.
+```
+
+Every single response on that timeline is **correct for the state at the instant it was asked**, which
+is why there is nothing to raise an error about. The bug lives entirely in the writer's two arrows, and
+neither the client nor the server can observe them: the client cannot know the list moved, and the
+server cannot know a traversal is underway. That is what makes offset pagination a *silent* bug rather
+than a wrong one — there is no participant in the diagram in a position to notice.
+
 ### The second problem: offset does not scale
 
 Independently of correctness, `OFFSET` is **O(offset)**, not O(limit). The database cannot jump to
@@ -148,6 +175,30 @@ Three properties follow, and they are the reasons to do this:
   precisely why the cursor must encode the sort values rather than a reference to a row.
 - **Cost is constant per page.** With an index on `(user_id, created_at DESC, id DESC)` it is a seek
   plus a scan of 20 rows, whether it is page 2 or page 20,000.
+
+The same traversal, the same two concurrent writes, a different second request:
+
+```mermaid
+sequenceDiagram
+    participant C as Client traversing
+    participant A as API and database
+    participant W as A different user, writing
+    C->>A: GET limit 3, no cursor
+    A-->>C: I, H, G plus a cursor anchored on G
+    W->>A: insert J at the head
+    W->>A: delete H, above the anchor
+    Note over A: Both edits are above the anchor.<br/>The anchor is a VALUE, not a position,<br/>so nothing about it has moved.
+    C->>A: GET limit 3, after the cursor for G
+    A-->>C: F, E, D
+    Note over C,A: No duplicate, no gap. J is simply not<br/>part of this traversal, which is what<br/>continue where I was ought to mean.
+```
+
+Compare it arrow for arrow with the offset timeline above: **the writer does exactly the same two
+things, and the only line that differs is the client's second request.** "Give me what follows these
+sort values" has an answer that does not depend on how many rows precede them, so edits above the
+anchor cannot reach it. The property is stronger than the diagram shows, too — deleting the anchor row
+`G` itself would also be harmless, because the cursor carries `G`'s values rather than a reference to
+`G`, which is precisely why cursors must encode sort values and not a row pointer.
 
 The tie-break column is not optional. `ORDER BY created_at DESC` alone is not a total order: two rows
 with identical timestamps have no defined relative position, so one of them can appear on both pages
@@ -330,6 +381,25 @@ The last two rows matter more than they look. **A large fraction of pagination p
 problem being solved with a list endpoint.** If the caller's real goal is "keep a copy of everything
 in sync", pagination is the wrong tool no matter how good your cursors are — they want a change feed
 or an export, and giving them one removes the problem instead of managing it.
+
+```mermaid
+flowchart TD
+    Q["A caller needs a large result set"]
+    Q --> G{"What are they actually doing?"}
+    G -->|"browsing a feed,<br/>an inbox, a log"| CU["Cursor pagination on an immutable key.<br/>hasMore, and no total count."]
+    G -->|"looking for one<br/>specific thing"| SE["Search, or a narrower filter.<br/>Nobody wants page 47."]
+    G -->|"keeping a copy of<br/>everything in sync"| CD["Change feed or CDC.<br/>Repeated full traversals are<br/>the wrong shape entirely."]
+    G -->|"taking a one-off copy<br/>of everything"| EX["A file in object storage and a<br/>signed URL, not 500,000 requests."]
+    G -->|"the set is genuinely<br/>small and static"| NO["Return it in one response.<br/>No cursor, no page metadata."]
+    style CU fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style CD fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+Only the first branch is a pagination problem at all. Read the other four as the places where deep
+offsets, `COUNT(*)` timeouts and rate-limit exhaustion actually come from — a bulk, search or sync
+requirement being pushed through a list endpoint because a list endpoint was what existed. Asking the
+question at the top of the tree before tuning cursors is the difference between removing the problem
+and managing it forever.
 
 ## 19. Failure scenarios
 

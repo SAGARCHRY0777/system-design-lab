@@ -14,7 +14,7 @@ import { readFile } from 'node:fs/promises'
 import { buildQuiz } from '../src/lib/quiz.js'
 import { buildTimeline } from '../src/lib/timeline.js'
 
-const SCENES = ['url-shortener', 'social-feed']
+const SCENES = ['url-shortener', 'social-feed', 'ticket-booking']
 
 let fail = 0
 const bad = m => { console.log('  FAIL ' + m); fail++ }

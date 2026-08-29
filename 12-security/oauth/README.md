@@ -82,6 +82,28 @@ resource server's concern and may change without notice.
 | ~~Implicit~~ | — | **Dead.** Returned tokens in the URL fragment: browser history, referrers, logs. Removed in OAuth 2.1. |
 | ~~Resource owner password credentials~~ | — | **Dead.** The client handles the password, which defeats the entire purpose of the framework. |
 
+```mermaid
+flowchart TD
+    A{"Is a human present<br/>to grant consent?"} -->|"no — machine to machine"| CC["Client credentials"]
+    A -->|"yes"| B{"Can the device render a browser<br/>and take keyboard input?"}
+    B -->|"no — TV, console, headless CLI"| DEV["Device authorisation grant.<br/>The user finishes it on a phone."]
+    B -->|"yes — web, SPA, mobile, desktop"| AC["Authorisation code + PKCE"]
+    AC --> ID{"Do you need to know WHO<br/>the user is, or only what<br/>the application may do?"}
+    ID -->|"who they are"| OIDC["Add OIDC. Request the openid scope,<br/>consume the ID token, verify aud and nonce."]
+    ID -->|"only what it may do"| SC["The access token alone is the answer."]
+    AC --> RT["Renewing silently later?<br/>Refresh token, rotated on every use,<br/>with reuse detection."]
+    DEAD["Implicit and password grants —<br/>removed in OAuth 2.1.<br/>Not branches. Not options."]
+
+    style AC fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style DEAD fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The tree is deliberately lopsided: almost every real application walks two questions and lands on the
+same green node, which is what "use this and stop reading the others" means in picture form. The red
+box has no edges into it on purpose — the two dead grants are not a branch you weigh, and drawing
+them as one would imply a judgement call that no longer exists. The genuine decision left is the one
+below the green node, and it is about identity rather than about grants.
+
 OAuth 2.1 is a consolidation rather than a new protocol, and its changes are a good summary of two
 decades of incidents: PKCE required for *all* clients including confidential ones, implicit and
 password grants removed, exact string matching on redirect URIs, and refresh tokens either rotated
@@ -152,6 +174,31 @@ application now holds a valid access token **for the victim's account**. The att
 token to your "log in with X" endpoint; your server calls the provider's `/userinfo` with it, is
 truthfully told it belongs to the victim, and signs the attacker in as them. Nothing was forged. The
 token was valid — it was simply never meant for you, and you had no way to tell.
+
+```mermaid
+sequenceDiagram
+    participant V as Victim
+    participant M as Attacker app, legitimately registered with the provider
+    participant P as Provider
+    participant Y as Your sign-in-with-X backend
+
+    V->>M: signs in, consents to a harmless-looking scope
+    M->>P: ordinary authorisation code flow
+    P-->>M: access token for the VICTIM account
+    Note over M,P: Nothing is forged. The provider did exactly its job,<br/>and the victim really did consent — to the attacker app.
+    M->>Y: POST /login, presenting that access token
+    Y->>P: GET /userinfo with the token
+    P-->>Y: sub u_1234, the victim, truthfully
+    Y-->>M: session cookie for the victim
+    Note over Y: A valid token from the right provider,<br/>describing a real user. Nothing to reject on.
+    Note over Y,P: With OIDC the client sends an ID TOKEN instead, whose aud claim<br/>names the client it was minted for. That name is not yours, so it fails.
+```
+
+The attack has no forged message in it, which is what makes it hard to see in prose: read the arrows
+and every one is honest. The flaw is in the *shape* — an access token travels from the party it was
+issued to, to a party it says nothing about, and `/userinfo` answers questions about the **user**
+rather than about the **recipient**. `valid` and `intended for me` are different questions, and only
+the second is a security check.
 
 **This is what the ID token's `aud` claim fixes**, and it is the reason OIDC had to exist rather
 than being a convention. An ID token names the client it was minted for. An access token does not.

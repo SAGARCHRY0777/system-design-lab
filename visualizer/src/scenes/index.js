@@ -8,5 +8,6 @@
  */
 import urlShortener from '../../../19-diagrams/scenes/url-shortener.json'
 import socialFeed from '../../../19-diagrams/scenes/social-feed.json'
+import ticketBooking from '../../../19-diagrams/scenes/ticket-booking.json'
 
-export const SCENES = [urlShortener, socialFeed]
+export const SCENES = [urlShortener, socialFeed, ticketBooking]

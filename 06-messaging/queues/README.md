@@ -118,6 +118,29 @@ which is exactly why at-least-once is what you get, and exactly why idempotency 
 **Acking before processing turns at-least-once into at-most-once** and silently loses work on every
 crash. It is a one-line change and a data-loss bug.
 
+```mermaid
+sequenceDiagram
+    participant Q as Queue
+    participant W as Worker
+    participant D as Database
+    Note over Q,D: ACK FIRST - this is at-most-once
+    Q->>W: deliver message
+    W->>Q: ack, so the queue deletes it now
+    W->>D: apply the work
+    Note over W,D: A crash in this window loses the work<br/>permanently. No copy exists anywhere,<br/>nothing retries, nothing is logged,<br/>and queue depth looks perfectly healthy.
+    Note over Q,D: ACK LAST - this is at-least-once
+    Q->>W: deliver message
+    W->>D: apply the work
+    D-->>W: durable
+    W->>Q: ack, so the queue deletes it now
+    Note over W,D: A crash in this window redelivers.<br/>The work may be applied twice, which<br/>is what idempotency is for.
+```
+
+The crash window is the same size in both halves — moving the ack does not shrink it. What changes is
+**which side of the ack the durable copy is on**, and therefore what a crash costs you: lost work on
+top, duplicated work below. Only one of those is recoverable, and only one of them is visible: the
+top half produces no error, no retry and no metric, which is why this bug survives for months.
+
 ## 10. Internal components
 
 - **Durable store** — messages must survive a broker restart
@@ -125,6 +148,34 @@ crash. It is a one-line change and a data-loss bug.
 - **Delivery counter** — how many attempts, so poison messages can be capped
 - **Dead letter queue** — where messages go after the cap
 - **Ack / nack** — completion signal
+
+Those five components are one state machine, and it is the diagram worth memorising for this topic:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Visible: producer enqueues
+    Visible --> Invisible: a worker receives it, lease starts
+    Invisible --> Deleted: worker acks, work already durable
+    Invisible --> Visible: visibility timeout expires, no ack seen
+    Invisible --> Visible: worker nacks explicitly
+    Visible --> DeadLetter: delivery count passes the cap
+    Deleted --> [*]
+    DeadLetter --> [*]
+    note left of Invisible
+      Nothing observable distinguishes a crashed
+      worker from a slow one. Both are silence.
+      So a visibility timeout shorter than the
+      real work puts a second worker on the same
+      job while the first is still running it.
+    end note
+```
+
+Two things to read off it. **Exactly one transition deletes a message** — the ack — and every other
+way out of `Invisible` puts it back on the queue, which is the whole reason at-least-once is what you
+get. And the `Invisible → Visible` timeout edge is a *bet*, not a guarantee: set it below your slowest
+job and you manufacture duplicates on healthy workers; set it far above and a genuinely crashed
+worker's message sits undelivered for that long. The `DeadLetter` edge is the only thing stopping a
+message that can never succeed from looping through this machine forever.
 
 ## 11. The dead letter queue
 
@@ -142,6 +193,23 @@ processed in order, while different users proceed in parallel.
 
 Choose the key so that ordering is preserved where it matters and parallelism survives everywhere
 else. A key with poor distribution recreates the single-consumer bottleneck.
+
+```mermaid
+flowchart LR
+    IN["Events arrive interleaved<br/>user 42 create, user 7 create,<br/>user 42 update, user 7 delete"]
+    IN --> H["Partition by user id"]
+    H --> P0["Partition A takes every user 42 event.<br/>Create then update, in that order,<br/>one consumer at a time."]
+    H --> P1["Partition B takes every user 7 event.<br/>Create then delete, in that order,<br/>one consumer at a time."]
+    P0 --> C["Maximum parallelism is now the<br/>partition count. Order holds only<br/>WITHIN a partition, never across."]
+    P1 --> C
+    style C fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The guarantee you buy is narrower than it looks, and that is the point: user 42's update can never
+overtake user 42's create, while **nothing whatsoever orders user 42 against user 7** — which is fine,
+because no invariant spanned them. The amber box is the bill. Your consumer count can never usefully
+exceed your partition count, and a key with poor distribution funnels most traffic into one partition,
+which is the single-consumer bottleneck you were trying to escape, now with extra machinery.
 
 ---
 

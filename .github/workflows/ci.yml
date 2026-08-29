@@ -25,6 +25,11 @@ jobs:
       - name: Every scene validates against the schema
         run: python scripts/check_scenes.py
 
+      # A broken Mermaid block does not fail loudly -- GitHub renders it as a
+      # grey error box that only someone scrolling to that exact spot ever sees.
+      - name: Every Mermaid diagram parses
+        run: python scripts/check_mermaid.py
+
       - name: No committed diagram is stale versus its scene
         run: python scripts/render_diagrams.py --check
 

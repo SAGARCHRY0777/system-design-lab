@@ -75,6 +75,27 @@ migration*.
 If your workload is write-dominated and you picked a B-tree engine, you will be fighting random I/O
 forever. That decision is made once, and it is nearly impossible to reverse later.
 
+```mermaid
+flowchart TD
+    W["One small write to a random key"]
+    W --> B["B-tree engine"]
+    W --> L["LSM engine"]
+    B --> B1["Locate the leaf page.<br/>Read it from disk if it is not<br/>already in the buffer pool."]
+    B1 --> B2["Modify it in place and write<br/>the whole page back to its<br/>own fixed location."]
+    B2 --> B3["Cost paid NOW, on the write path:<br/>a random seek plus a full page<br/>written for a few changed bytes."]
+    L --> L1["Append to the in-memory memtable<br/>and one sequential log append.<br/>Acknowledge."]
+    L1 --> L2["Later, flush the memtable to a new<br/>immutable sorted file. Nothing<br/>on disk is ever modified."]
+    L2 --> L3["Cost paid LATER, in the background:<br/>compaction rewrites the same data<br/>several times over its lifetime."]
+    style B3 fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style L3 fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+Both bottom boxes are amber because **neither engine avoids the work** — they differ only in when it
+is paid and who waits for it. The B-tree charges every write synchronously and predictably; the LSM
+charges nothing on the request path until compaction falls behind, at which point the bill arrives all
+at once as a latency spike. That is the real trade: a steady tax versus a cheap write with a
+background process that can lose a race with your write rate.
+
 ## 6. The problem it solves
 
 Durable, queryable, concurrent access to shared state — with guarantees strong enough that
@@ -117,6 +138,21 @@ for [replication](../replication/) and for change data capture.
 
 **Durability is the WAL and the `fsync`.** A database configured with `fsync` off is fast and is
 lying to you about what it has saved.
+
+```mermaid
+flowchart LR
+    T["Transaction commits"] --> W["Write-ahead log<br/>append-only, fsynced BEFORE<br/>any data page is touched"]
+    W --> R1["Crash recovery<br/>replay the log forward to rebuild<br/>whatever the buffer pool lost"]
+    W --> R2["Replication<br/>ship the same records to a replica<br/>and apply them in the same order"]
+    W --> R3["Change data capture<br/>decode the same records into an<br/>event stream for search, cache, warehouse"]
+    style W fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+Durability, replication and CDC are not three features — they are **three readers of one append-only
+sequence**, which is why they share consequences that look unrelated in a feature list. Replication
+lag is literally "how many log records behind"; a replica cannot diverge from an ordering the log
+already fixed; CDC can never see a change that was not logged; and turning `fsync` off does not
+degrade one of the three, it silently removes the guarantee under all of them at once.
 
 ## 10. Indexing
 
@@ -164,6 +200,29 @@ The practical rule: **read committed is fine until you do read-modify-write**. `
 `UPDATE balance = x` is a lost-update bug at read committed, and no amount of care in application
 code fixes it. Use `SELECT ... FOR UPDATE`, an atomic `UPDATE ... SET balance = balance - 10`, or
 serializable.
+
+```mermaid
+sequenceDiagram
+    participant A as Transaction A
+    participant D as Database at read committed
+    participant B as Transaction B
+    A->>D: SELECT balance
+    D-->>A: 100
+    B->>D: SELECT balance
+    D-->>B: 100
+    Note over A,B: Read committed permits this overlap.<br/>Neither transaction can see the other,<br/>and neither has done anything wrong.
+    A->>D: UPDATE balance to 90
+    D-->>A: OK, committed
+    B->>D: UPDATE balance to 90
+    D-->>B: OK, committed
+    Note over D: Two debits of 10 were applied.<br/>Balance is 90. It should be 80.<br/>No error was raised anywhere.
+```
+
+The anomaly is in the **overlap**, not in either transaction — read the two reads returning the same
+value as the moment the bug is already certain, several milliseconds before either write. This is why
+adding validation, retries or careful code inside A or B cannot help: each is individually correct.
+Only something that makes the read-and-write a single indivisible step removes it, which is exactly
+what the row lock, the atomic in-place `UPDATE`, and serializable each do in a different way.
 
 ---
 

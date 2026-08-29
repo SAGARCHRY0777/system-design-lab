@@ -30,6 +30,26 @@ More topics belong here — event-driven architecture, layering, the strangler f
 right — and are not written yet. What exists is deliberately the one that gets decided earliest and
 regretted longest.
 
+```mermaid
+flowchart LR
+    M["Monolith<br/>one deploy, one database.<br/>A transaction across any two<br/>features is free."]
+    MM["Modular monolith<br/>enforced module boundaries,<br/>still one deploy, still one database.<br/>Transactions still free."]
+    MS["Microservices<br/>independent deploys,<br/>a network between modules,<br/>a database each."]
+    DM["Distributed monolith<br/>services that must be<br/>released together"]
+    M -->|"cost: discipline and a tool<br/>that fails the build on a<br/>cross-module import"| MM
+    MM -->|"cost: partial failure, a round trip<br/>per hop, multiplied availability,<br/>tracing, and an on-call rota each.<br/>gain: teams stop blocking each other"| MS
+    MM -.->|"split by noun<br/>rather than by<br/>the atomicity test"| DM
+    style MM fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style DM fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Two things to read off it. The first arrow is cheap and **reversible** — a module boundary that turns
+out to be wrong is a refactor, which is why the modular monolith is where you discover whether the
+boundary was real before you make it permanent. The second arrow buys exactly one thing, the
+independent deploy, and everything listed on it is the price of that one thing. The dashed arrow is
+not a separate architecture you would ever choose; it is what the second arrow becomes when the
+boundary was never tested, and it costs everything on the solid arrow while buying nothing.
+
 ## Three claims this section will defend
 
 Stated up front, because they are the parts most treatments get wrong:

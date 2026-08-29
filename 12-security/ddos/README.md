@@ -55,6 +55,38 @@ same graph, and often you cannot tell which you have until well after you must a
 | **L7 application** | HTTP flood, slowloris, cache-buster query strings, expensive search | Requests/s **and cost per request** | 50K rps of `/search?q=<random>` | Your edge, then your application |
 | **Logic / resource** | Login flood against a slow password hash, report generation, unbounded pagination, catastrophic regex backtracking | **CPU-seconds per request** | 10 rps can be fatal | Your application design — nothing else can help |
 
+```mermaid
+flowchart TD
+    subgraph RENT["Rented — capacity you could never buy alone"]
+        AN["Anycast scrubbing<br/>tens of Tbps, shared across customers"]
+        CDN["Edge cache"]
+    end
+    subgraph MINE["Yours — you have paid for every packet that arrives"]
+        LINK["Transit link"]
+        LB["Load balancer<br/>conntrack, SYN table, TLS handshakes"]
+        APP["Application"]
+    end
+
+    L34["L3 or L4 volumetric<br/>Tbps of amplified UDP"] --> AN
+    L7["L7 flood<br/>50K rps of cache-busted URLs"] --> CDN
+    L4S["L4 state exhaustion<br/>SYN flood, slowloris"] --> LB
+    LOG["Logic attack<br/>10 rps of a 4-second report"] --> APP
+
+    AN --> LINK
+    CDN --> LINK
+    LINK --> LB
+    LB --> APP
+
+    style LINK fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style APP fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+Each attack arrow points at the component that **runs out first**, not at where the packets enter,
+and the two arrows that reach inside the lower box are the ones no purchase can fix. The red node is
+the reason volumetric defence has to be rented: everything downstream of a full link is irrelevant.
+The amber node is the reason the bottom row of the table above exists — the logic attack arrives as
+ordinary, well-formed, authenticated traffic and every layer above waves it through.
+
 **The number that matters is not requests per second. It is cost asymmetry:** what one request costs
 the attacker versus what it costs you. An attacker spending 200 bytes to trigger a 200 ms uncached
 database query holds an advantage of roughly five orders of magnitude and does not need a botnet at
@@ -109,6 +141,25 @@ your database connection pool, your third-party quotas and your licence limits d
 your web tier. Set a maximum. Prefer shedding to scaling. An honest 429 costs almost nothing to
 serve; an autoscaled fleet grinding through attack traffic costs money *and* still fails.
 
+```mermaid
+flowchart LR
+    REQ["One request<br/>200 bytes on the wire"] --> T["Attacker pays 200 bytes.<br/>No connection state.<br/>No CPU. No money."]
+    REQ --> U["You pay a connection, a TLS<br/>handshake, and 200 ms of<br/>uncached database time."]
+    U --> OPT{"What you do<br/>under saturation"}
+    OPT -->|"queue it"| Q["Your cost per request RISES.<br/>Clients time out, retry, and<br/>you serve work nobody wants."]
+    OPT -->|"autoscale"| S["Your cost per request is unchanged.<br/>You simply bought more of them.<br/>Their side of the ledger did not move."]
+    OPT -->|"shed with 429"| D["Your cost per request collapses<br/>to microseconds. The asymmetry<br/>flips, and you stay up."]
+
+    style S fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style D fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+Read the two branches off the same node: only one of them changes the **ratio**, which is the only
+quantity that decides the outcome. Autoscaling and queueing both accept the attacker's price per
+request and try to buy more capacity at yours; shedding is the only move that makes a request cheap
+for you while staying exactly as expensive for them. This is also why "fix the expensive endpoint"
+outranks every purchase on this page — it moves the same ratio, permanently.
+
 **Shed load, and shed it in the right order.** Under saturation the instinct is to queue, and
 queueing is the classic amplifier: latency climbs, clients time out and retry, the queue grows with
 work whose requesters have already left, and the system spends 100% of its capacity on requests
@@ -147,6 +198,26 @@ more mundanely, surviving the legitimate traffic spike that looks identical.
   them in the first ten minutes, and here is the useful part: **the correct first action is the same
   either way** — protect the origin, shed cheaply, serve what you can from the edge. Build for the
   spike and you have largely built for the attack.
+
+```mermaid
+flowchart TD
+    A["Your product is on the front page<br/>of a news site"] --> G["The only thing you can see:<br/>3,000 rps to 90,000 rps<br/>in ninety seconds"]
+    B["A distributed HTTP flood"] --> G
+    G --> Q{"Which one is it?"}
+    Q -->|"the graph cannot tell you,<br/>and will not for a while"| ACT["Act on the traffic, now.<br/>Cache harder, disable search and export,<br/>shed at the edge with 429 and Retry-After,<br/>exempt health checks and payments."]
+    ACT --> INV["Investigate intent on a second track:<br/>referrers, ASN spread, user-agent diversity,<br/>plausible navigation sequences"]
+    INV --> R1["Real traffic — scale carefully,<br/>turn the features back on"]
+    INV --> R2["Attack — provider mitigation,<br/>lock the origin down"]
+
+    style G fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style ACT fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The two causes converge on one observable and then diverge again only *after* you have already
+acted, which is the practical point: the branch you cannot resolve is not on the critical path. Read
+the green node as the answer to "what do I do in minute one" and the split at the bottom as the
+answer to "what do I do in minute twenty". Building for the spike and building for the attack are
+the same project, because the first two nodes are shared.
 - **It does not fix an origin that is one 20-rps endpoint away from death.** If a single expensive,
   uncached, unbounded endpoint can be triggered by anyone, no amount of scrubbing helps. That is an
   application design problem wearing a DDoS costume.
@@ -172,6 +243,23 @@ IP is reachable directly, an attacker simply skips the entire stack. The address
 historical DNS records, mail headers from your own servers, certificate transparency logs,
 misconfigured subdomains, and error pages that echo an internal hostname. Lock the origin firewall to
 the provider's published ranges and verify from outside that nothing else answers.
+
+```mermaid
+flowchart LR
+    A["Attacker"] -->|"the path you pay for"| SC["Anycast scrubbing"]
+    SC --> ED["Edge cache"]
+    ED --> WAF["WAF and bot management"]
+    WAF --> LB["L4 load balancer"]
+    LB --> O["Origin"]
+    A -->|"one direct request, once the address is known from<br/>historical DNS, certificate transparency, a Received header,<br/>an unproxied monitoring subdomain, or an error page"| O
+
+    style O fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The lower arrow is the whole diagram: it is one hop, it costs nothing, and it renders the four boxes
+above it decorative. This is why origin hiding belongs in the same conversation as the provider
+contract rather than as a hardening task afterwards — and why the verification step is *from
+outside* your network, because from inside, everything answers.
 
 Two smaller items worth naming because they take services down on their own: **your DNS is part of
 the attack surface** — a provider-level DNS outage takes you offline with your servers perfectly

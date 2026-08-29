@@ -67,6 +67,28 @@ while the database connection is gone. A **deep** check tests the dependency —
 blip marks your entire fleet unhealthy at once and takes you down. Both extremes fail; the usual
 answer is a shallow check for load balancing and a deep check for alerting.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Healthy
+    Healthy --> Suspect: one probe fails
+    Suspect --> Healthy: next probe passes
+    Suspect --> Ejected: N consecutive failures
+    Ejected --> Recovering: a probe passes again
+    Recovering --> Healthy: M consecutive passes
+    Recovering --> Ejected: any probe fails
+    note right of Suspect
+      Suspect is the state that stops flapping.
+      Without it, one GC pause ejects a healthy
+      server, it is re-added, it pauses again,
+      and capacity oscillates while load rises.
+    end note
+```
+
+Read the two thresholds off that, not the boxes. **N** decides how long you keep sending traffic to a
+dead server; **M** decides how fast a recovered one is trusted again. Collapsing `Suspect` and
+`Recovering` into a single edge — eject on the first failure, re-add on the first pass — is what turns
+a transient pause into a server flapping in and out of the pool under exactly the load that caused it.
+
 ## 6. The problem it solves
 
 One server has a throughput ceiling and is a single point of failure. A load balancer lets you add
@@ -134,6 +156,25 @@ the reason the next step in the chain is caching or replication.
 every request costs the same. Real traffic has a long tail — one request rebuilds a report while a
 hundred serve a cached page — and round robin will happily hand a second expensive request to the
 server still working on the first. Least-connections approximates "least loaded" for free.
+
+```mermaid
+flowchart TD
+    Q["Four requests arrive in order<br/>R1 costs 4s, R2 costs 2ms,<br/>R3 costs 4s, R4 costs 2ms"]
+    Q --> RR["Round robin<br/>picks by position in the rotation"]
+    Q --> LC["Least connections<br/>picks by requests in flight"]
+    RR --> RRA["Server A gets R1 then R3<br/>8 seconds of work queued"]
+    RR --> RRB["Server B gets R2 then R4<br/>4 milliseconds, then idle"]
+    LC --> LCA["Server A gets R1<br/>4 seconds of work"]
+    LC --> LCB["Server B gets R2, R3, R4<br/>4 seconds of work"]
+    style RRA fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style LCB fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The two algorithms see identical traffic and split it identically **by count** — two requests each on
+the left, and the fleet is still only half loaded. What diverges is *work*: round robin puts both
+expensive requests behind each other on Server A because position 3 in the rotation comes back round
+to A, while B finishes in milliseconds and idles. Least-connections never sends R3 to A because A is
+still holding R1. The p99 gap between those two rows is the entire argument.
 
 **Consistent hashing deserves special mention** because it is what makes cache affinity survive
 scaling. With plain `hash(key) % N`, adding one server remaps roughly *every* key and invalidates the

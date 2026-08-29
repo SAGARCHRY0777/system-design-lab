@@ -68,6 +68,25 @@ must physically move before the system is correct again.
 Adding a node steals a contiguous arc from exactly one neighbour, so only ~1/N of keys move. Virtual
 nodes (each physical node appearing many times on the ring) smooth the distribution.
 
+```mermaid
+flowchart TD
+    ADD["Add one machine: 4 shards becomes 5"]
+    ADD --> MOD["hash mod N<br/>N is inside the mapping function"]
+    ADD --> RING["Consistent hash ring<br/>N is NOT in the mapping function"]
+    MOD --> M1["Every key is now divided by a<br/>different number, so every key<br/>gets a fresh answer"]
+    M1 --> M2["Roughly 4 keys in 5 move.<br/>The migration is the entire dataset,<br/>and every cache keyed by shard<br/>is cold in the same instant."]
+    RING --> R1["The new machine takes one position<br/>on the ring and owns the arc between<br/>itself and its clockwise neighbour"]
+    R1 --> R2["Only that one arc moves, about 1/N.<br/>Every other key keeps its owner,<br/>because no other arc changed at all."]
+    style M2 fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style R2 fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+**This is the key insight of the whole page, and it is one line of the diagram: whether `N` appears in
+the mapping function.** With modulo, the shard of a key is defined relative to how many shards exist,
+so changing that count redefines every key at once. On the ring, a key maps to a fixed *position* and
+a machine owns a range of positions — adding a machine perturbs one neighbour's range and nothing
+else. Same goal, same even distribution; completely different blast radius when the fleet changes.
+
 ## 5. Engineering at scale
 
 **The shard key is the most consequential and least reversible decision in the whole design.** It
@@ -196,6 +215,27 @@ takes a week.
 user, one popular product, one tenant ten times bigger than the rest — and a perfectly balanced hash
 gives you a badly balanced system.
 
+```mermaid
+flowchart TD
+    H["Uniform hash over 4 shards<br/>1 million customer keys"]
+    H --> S0["Shard 0<br/>250,000 keys"]
+    H --> S1["Shard 1<br/>250,000 keys"]
+    H --> S2["Shard 2<br/>250,000 keys"]
+    H --> S3["Shard 3<br/>250,000 keys<br/>one of which is the celebrity"]
+    S0 --> L0["about 120 requests per second"]
+    S1 --> L1["about 130 requests per second"]
+    S2 --> L2["about 125 requests per second"]
+    S3 --> L3["about 9,000 requests per second<br/>CPU pinned, this shard is the outage"]
+    style S3 fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style L3 fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Illustrative numbers, but the shape is the real one. **The middle row is perfectly balanced and the
+bottom row is not** — and the hash function only ever promised you the middle row. Nothing in the key
+distribution is wrong, no rebalancing will help, and re-hashing moves the celebrity to a different
+shard which then becomes the hot one. Note also that an aggregate CPU dashboard averages the bottom
+row into something unremarkable, which is why per-shard monitoring is not a nice-to-have here.
+
 ## 20. Resharding
 
 The operation everyone underestimates. The safe shape is roughly:
@@ -206,6 +246,30 @@ The operation everyone underestimates. The safe shape is roughly:
 4. Verify — compare row counts and checksums
 5. Cut reads over, shard by shard
 6. Stop dual-writing, decommission
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Old as Old shard
+    participant New as New shard
+    participant Job as Backfill job
+    Note over App,New: Step 2 - dual write starts FIRST
+    App->>Old: write, still authoritative
+    App->>New: write, shadow copy
+    Note over Job: Step 3 - only now backfill history
+    Job->>Old: read historical rows
+    Job->>New: write historical rows
+    Note over Old,New: Step 4 - compare counts and checksums.<br/>This is the step people skip.
+    Note over App,New: Step 5 - move reads over, shard by shard
+    App->>New: read
+    Note over App,Old: Step 6 - stop dual-writing LAST. Until this<br/>point the old shard is still complete,<br/>so rollback is one configuration change.
+```
+
+Read the ordering, because that is where the correctness lives, not in the steps themselves. Dual-write
+must begin **before** the backfill, or every row written during the backfill window falls into the gap
+between the snapshot and the cutover and is silently missing. And dual-writing must stop **last**,
+because for as long as the old shard is still receiving every write it remains a complete copy — which
+is the only thing making steps 2 to 5 reversible at all.
 
 Every step must be reversible, and step 4 is the one people skip. Some systems avoid this entirely by
 **over-sharding at the start**: create 1,024 logical shards on 4 physical machines, and "resharding"

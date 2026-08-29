@@ -170,6 +170,36 @@ Session fixation deserves a line of its own: **always issue a brand-new session 
 moment privilege changes** — at login, and again at any step-up. Reusing the pre-login identifier
 lets an attacker who planted it earlier ride the upgrade.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Anonymous
+    Anonymous --> Proving: credential presented
+    Proving --> Anonymous: rejected — same error, same latency
+    Proving --> Active: verified — issue a BRAND NEW id
+    Active --> Elevated: step-up factor · new id again
+    Elevated --> Active
+    Active --> Idle: idle window starts
+    Idle --> Active: request arrives in time
+    Idle --> Expired: idle window exceeded
+    Active --> Expired: absolute lifetime reached
+    Active --> Revoked: logout or account disabled
+    Idle --> Revoked: logged out elsewhere
+    Expired --> [*]
+    Revoked --> [*]
+
+    note right of Revoked
+        Nothing comes back out.
+        No presented cookie may
+        reactivate a dead session.
+    end note
+```
+
+The transitions that are **absent** are the point. There is no arrow from `Anonymous` straight to
+`Active` — every session id is minted by a verification, which is what closes session fixation. There
+is no arrow out of `Expired` or `Revoked` back into `Active`; a system that lets a presented cookie
+resurrect a dead session has re-implemented "log out" as a suggestion. And `Elevated` decays back to
+`Active` on its own, because a step-up that never expires is just a longer session.
+
 ### Sessions versus tokens — the actual trade
 
 This is a genuine engineering choice with a defensible answer on both sides, presented almost
@@ -187,6 +217,43 @@ everywhere as a settled question in favour of tokens. It is not settled.
 | Data exposure | None — the id means nothing | Anyone holding it reads every claim |
 | Works across orgs / services | Awkward | The actual reason to use it |
 | Hard failure mode | Store down: nobody can log in | Key compromised: anyone can be anyone, for the token lifetime |
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Service
+    participant ST as Session store
+    participant AD as Admin or Support
+
+    Note over U,ST: Path A — server-side session
+    U->>S: correct credentials
+    S->>ST: create a row under a fresh opaque id
+    S-->>U: Set-Cookie sid, HttpOnly Secure SameSite
+    U->>S: request carrying the cookie
+    S->>ST: look up sid
+    ST-->>S: active, principal 42
+    AD->>ST: disable the account at 10:00
+    U->>S: request carrying the cookie, 10:00 and one second
+    S->>ST: look up sid
+    ST-->>S: no such session
+    S-->>U: 401 — the very next request
+
+    Note over U,ST: Path B — self-contained token
+    U->>S: correct credentials
+    S-->>U: signed token, exp 60 minutes away
+    U->>S: request carrying the token
+    S->>S: verify signature — no store is consulted
+    AD->>S: disable the account at 10:00
+    U->>S: request carrying the token, 10:00 and one second
+    S->>S: verify signature — still valid, still principal 42
+    S-->>U: 200, and again for the next 59 minutes
+```
+
+The two paths are identical up to the admin's action, and the diagram exists to place that action in
+**time**. In path A the store is on the request path, so revocation lands on the next request. In
+path B the store was removed from the request path — which is the whole benefit — and the same
+removal is why there is nowhere for the revocation to be noticed. **Speed and revocability are the
+same lookup.** You cannot delete it and keep both.
 
 **Sessions are underrated, and "stateless" is not free.** What you buy is one lookup removed from
 the request path. What you sell is the ability to change your mind — about a session, about a
@@ -223,6 +290,31 @@ better behaviour. Use tokens when you are crossing a boundary that a shared stor
 convincing website can simply ask for. This is not a small distinction — it is the difference
 between raising the cost of an attack and removing a whole class of it.
 
+```mermaid
+sequenceDiagram
+    participant V as Victim
+    participant P as Attacker proxy on a look-alike domain
+    participant S as Your login service
+
+    V->>P: username and password
+    P->>S: username and password, relayed within a second
+    S-->>P: correct — now send the second factor
+    P-->>V: correct — now send the second factor
+    V->>P: six-digit TOTP code, valid for 30 seconds
+    P->>S: the same code, comfortably inside its window
+    S-->>P: Set-Cookie session — login succeeded
+    Note over S: Every control fired and every control passed.<br/>From here this is a textbook good login.
+    P-->>V: a plausible error page
+    Note over P: The attacker now holds the session.<br/>The victim retries and succeeds, and notices nothing.
+    Note over V,S: With a passkey, the authenticator signs the origin the browser<br/>is actually on. The signature is for the proxy domain,<br/>your server rejects it, and no user decision is involved.
+```
+
+What to read off is the direction of every arrow: nothing is forged and nothing is replayed out of
+order, so no server-side check has anything to fail on. TOTP is a secret converted into a short
+string, and a convincing page can simply ask for a string. The last note is the only line in the
+diagram that breaks the relay, and it does so by binding the credential to something the proxy
+cannot lie about.
+
 Then the part that undoes all of it: **account recovery is the real MFA bypass.** If "lost my
 device" drops back to an emailed link, your authentication strength is the strength of that email
 account, and every hour of MFA design was spent building a door next to an open window.
@@ -239,6 +331,27 @@ account, and every hour of MFA design was spent building a door next to an open 
   changes, exports, permission grants.
 - **Step-up authentication** — re-prove immediately before a dangerous action rather than making
   every session paranoid.
+
+```mermaid
+flowchart TD
+    Q1{"Is the caller a browser,<br/>on a domain you control?"} -->|"no — mobile SDK, CLI,<br/>another company's service"| TOK["Self-contained token"]
+    Q1 -->|"yes"| Q2{"Does anything outside your<br/>own deployment have to<br/>verify the credential?"}
+    Q2 -->|"yes — separate teams,<br/>separate organisations"| TOK
+    Q2 -->|"no"| Q3{"Do you already operate a<br/>store every instance can read?"}
+    Q3 -->|"no, and you do not want one"| TOK
+    Q3 -->|"yes — the usual answer,<br/>you have a cache"| SESS["Session cookie<br/>HttpOnly, Secure, SameSite=Lax,<br/>id regenerated at login"]
+    TOK --> Q4{"Must a permission change or an<br/>account suspension take effect<br/>before the token expires?"}
+    Q4 -->|"no, and someone with authority<br/>has signed that window off"| OK["Short expiry, and write<br/>the window down"]
+    Q4 -->|"yes"| STATE["Add server state anyway —<br/>token version, denylist, introspection.<br/>Price it against a session first."]
+
+    style SESS fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style STATE fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The tree is shaped the way it is because **the question is never "which is more modern"** — it is
+whether a credential has to be verified by something you do not deploy. Notice that the amber node
+is where most token migrations actually land: having removed the shared store, you add a smaller one
+back, which is a defensible design but a different one from the one that was proposed.
 
 ## 14. When NOT to
 

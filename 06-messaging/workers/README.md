@@ -52,6 +52,26 @@ magnitude.** Twenty workers each with concurrency 50 is a thousand simultaneous 
 whatever they call. The request path had a connection pool and a load balancer implicitly limiting
 it; the worker fleet has neither unless you add them.
 
+```mermaid
+flowchart TD
+    A["Autoscaler adds workers, keyed on queue depth"]
+    A --> W["20 worker processes"]
+    W --> C["each configured with concurrency 50"]
+    C --> T["1,000 simultaneous operations<br/>arriving at the shared database"]
+    RP["Request path reaches the same database<br/>through a load balancer, a sized connection<br/>pool, and clients that time out and give up"]
+    T --> DB[("Shared database<br/>pool sized for the request path,<br/>unaware the worker fleet exists")]
+    RP --> DB
+    style T fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style RP fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The number that reaches the database is a **product, not a count** — nobody ever configured 1,000; two
+different people configured 20 and 50, in two different files, probably in different quarters. Read the
+two paths into the store side by side: the request path passes through three separate implicit limits
+before it arrives, and the worker path passes through none. That asymmetry is why draining a backlog
+takes out the request path as collateral — they are competing for the same pool, and only one of them
+is throttled.
+
 **Scale on queue depth, not CPU.** CPU tells you how hard the existing workers are working; depth
 tells you whether the fleet is keeping up. A worker fleet at 30% CPU with a growing backlog needs
 more workers, and a CPU-based policy will never add them — the work is I/O-bound, which is the normal
@@ -122,6 +142,32 @@ flowchart LR
 | Fleet overwhelms the database | Connection exhaustion; the request path dies too | Bound total concurrency; separate connection pool |
 | Scaled on CPU | Backlog grows while workers look idle | Scale on queue depth |
 | Slow consumer, fast producer | Unbounded backlog | Backpressure; shed load |
+
+The third row is the one that fires on every deploy, so it is worth seeing both shapes:
+
+```mermaid
+sequenceDiagram
+    participant K as Orchestrator
+    participant W as Worker
+    participant Q as Queue
+    Note over K,Q: UNGRACEFUL - exit immediately on the signal
+    K->>W: SIGTERM
+    W--xQ: process exits, 50 in-flight messages abandoned
+    Note over Q: All 50 stay invisible until their visibility<br/>timeout expires. Every deploy silently delays<br/>a slice of work by minutes, and any<br/>half-applied job stays half-applied.
+    Note over K,Q: GRACEFUL - drain on the signal
+    K->>W: SIGTERM
+    W->>Q: stop receiving new messages
+    W->>W: finish the 50 already in flight
+    W->>Q: ack each one as it completes
+    W->>K: exit before the kill deadline
+    Note over K,W: Nothing is redelivered. The deploy costs<br/>one drain, not one visibility timeout<br/>per in-flight message.
+```
+
+The step that does the work is the second one, **stop receiving** — without it a draining worker keeps
+pulling new messages and never reaches a quiet point to exit from. Note the last arrow too: the
+orchestrator sends `SIGKILL` after a grace period, so a drain timeout longer than that grace period
+converts the bottom half straight back into the top half, which is the usual way a correctly written
+handler still loses work.
 
 ## 25. Without it → With it → New problem → Next
 

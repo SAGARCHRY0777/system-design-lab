@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1752 382" width="1752" height="382" role="img" aria-label="Ticket Booking version 6: Payment in the loop">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="1752" height="382"/>
+<text class="tag" x="40" y="26">V6</text>
+<text class="title" x="70" y="26">Ticket Booking</text>
+<text class="sub" x="40" y="46">Payment in the loop · p50 18ms · p99 160ms</text>
+<g transform="translate(0 62)">
+<path id="e0" class="edge sync" d="M172.0,115.0 C211.5,115.0 211.5,160.0 251.0,160.0"/>
+<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">HTTPS</textPath></text>
+<path id="e1" class="edge sync" d="M392.0,160.0 C431.5,160.0 431.5,160.0 471.0,160.0"/>
+<path id="e2" class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,160.0 691.0,160.0"/>
+<path id="e3" class="edge sync" d="M832.0,160.0 C871.5,160.0 871.5,160.0 911.0,160.0"/>
+<path id="e4" class="edge sync" d="M1052.0,160.0 C1091.5,160.0 1091.5,70.0 1131.0,70.0"/>
+<path id="e5" class="edge sync" d="M1052.0,160.0 C1091.5,160.0 1091.5,160.0 1131.0,160.0"/>
+<text class="elbl" dy="-6"><textPath href="#e5" startOffset="50%" text-anchor="middle">lease</textPath></text>
+<path id="e6" class="edge async" d="M1052.0,160.0 C1091.5,160.0 1091.5,250.0 1131.0,250.0"/>
+<text class="elbl" dy="-6"><textPath href="#e6" startOffset="50%" text-anchor="middle">order placed</textPath></text>
+<path id="e7" class="edge async" d="M1272.0,250.0 C1311.5,250.0 1311.5,160.0 1351.0,160.0"/>
+<path id="e8" class="edge sync" d="M1492.0,160.0 C1531.5,160.0 1531.5,205.0 1571.0,205.0"/>
+<text class="elbl" dy="-6"><textPath href="#e8" startOffset="50%" text-anchor="middle">charge, idempotency key</textPath></text>
+<path id="e9" class="edge sync" d="M1492.0,160.0 C1531.5,160.0 1531.5,115.0 1571.0,115.0"/>
+<text class="elbl" dy="-6"><textPath href="#e9" startOffset="50%" text-anchor="middle">confirm on success</textPath></text>
+<path id="e10" class="edge async" d="M172.0,205.0 C651.5,205.0 651.5,160.0 1131.0,160.0"/>
+<path id="e11" class="edge async" d="M172.0,205.0 C871.5,205.0 871.5,115.0 1571.0,115.0"/>
+<rect class="shape client" x="40" y="85.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="120.0" text-anchor="middle">Client</text>
+<polygon class="shape edge" points="276,130.0 376,130.0 392,190.0 260,190.0"/>
+<text class="lbl" x="326.0" y="157.0" text-anchor="middle">CDN / Edge</text>
+<text class="note" x="326.0" y="174.0" text-anchor="middle">event pages, seat maps</text>
+<rect class="shape queue" x="480" y="130.0" width="132" height="60" rx="4"/><line class="shape queue" x1="524.0" y1="138.0" x2="524.0" y2="182.0" opacity="0.35"/><line class="shape queue" x1="568.0" y1="138.0" x2="568.0" y2="182.0" opacity="0.35"/>
+<text class="lbl" x="546.0" y="157.0" text-anchor="middle">Waiting Room</text>
+<text class="note" x="546.0" y="174.0" text-anchor="middle">admits N per second</text>
+<polygon class="shape lb" points="718,130.0 814,130.0 832,160.0 814,190.0 718,190.0 700,160.0"/>
+<text class="lbl" x="766.0" y="165.0" text-anchor="middle">Load Balancer</text>
+<rect class="shape service" x="920" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="986.0" y="165.0" text-anchor="middle">App Servers</text>
+<rect class="shape cache" x="1140" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1206.0" y="67.0" text-anchor="middle">Cache</text>
+<text class="note" x="1206.0" y="84.0" text-anchor="middle">seat map, read-only</text>
+<path class="shape store" d="M1140,139.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1140,139.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1206.0" y="157.0" text-anchor="middle">Hold Store</text>
+<text class="note" x="1206.0" y="174.0" text-anchor="middle">seat leases, TTL 10 min</text>
+<path class="shape store" d="M1580,94.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1580,94.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1646.0" y="112.0" text-anchor="middle">Seat Inventory</text>
+<text class="note" x="1646.0" y="129.0" text-anchor="middle">the source of truth</text>
+<rect class="shape queue" x="1140" y="220.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1184.0" y1="228.0" x2="1184.0" y2="272.0" opacity="0.35"/><line class="shape queue" x1="1228.0" y1="228.0" x2="1228.0" y2="272.0" opacity="0.35"/>
+<text class="lbl" x="1206.0" y="255.0" text-anchor="middle">Order Queue</text>
+<rect class="shape service" x="1360" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1426.0" y="165.0" text-anchor="middle">Order Workers</text>
+<rect class="shape external" x="1580" y="175.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1646.0" y="202.0" text-anchor="middle">Payment Provider</text>
+<text class="note" x="1646.0" y="219.0" text-anchor="middle">you do not control this</text>
+<rect class="shape service" x="40" y="175.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="106.0" y="202.0" text-anchor="middle">Expiry Sweeper</text>
+<text class="note" x="106.0" y="219.0" text-anchor="middle">releases dead holds</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="9.51s" repeatCount="indefinite" path="M106.0,115.0 L326.0,160.0 L546.0,160.0 L766.0,160.0 L986.0,160.0 L1206.0,160.0 L986.0,160.0 L1206.0,250.0 L1426.0,160.0 L1646.0,205.0 L1426.0,160.0 L1646.0,115.0"/></g>
+</g></svg>

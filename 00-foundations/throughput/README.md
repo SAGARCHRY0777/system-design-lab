@@ -60,6 +60,23 @@ Rearranged, it sizes your thread and connection pools without guessing:
 So you need ~50 workers. Configure 10 and you have capped throughput at 200 rps no matter how much
 hardware you add. Configure 5000 and you have wasted memory and moved the bottleneck downstream.
 
+```mermaid
+flowchart TD
+    N["Requirement: 1000 rps, 50 ms each<br/>L = λ × W = 1000 × 0.05 = <b>50 in flight</b>"] --> P10["Pool of <b>10</b><br/>ceiling = 10 / 0.05 = 200 rps<br/><i>no quantity of hardware raises this</i>"]
+    N --> P50["Pool of <b>50</b><br/>ceiling = 1000 rps<br/><i>the requirement, exactly</i>"]
+    N --> P5K["Pool of <b>5000</b><br/>ceiling far above any demand<br/><i>memory spent, bottleneck pushed downstream</i>"]
+
+    style P10 fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style P5K fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The formula is not the interesting part — the two failures either side of it are. Read off the left
+branch: a pool of 10 caps you at 200 rps, and every server you add afterwards simply queues in front
+of the same 10 slots. That is why "we added capacity and nothing happened" so often ends in a config
+file rather than on the architecture diagram. The right branch fails silently instead: you never
+reach the ceiling, so you never learn that the bottleneck has moved to whatever the small pool was
+inadvertently protecting.
+
 ## 5. Engineering at scale
 
 **Throughput scales horizontally; latency does not.** Doubling servers roughly doubles throughput.
@@ -154,6 +171,25 @@ The clearest example of the two axes in opposition:
 Both columns move, always in opposite directions. There is no batch size that improves both, which is
 why "how big should the batch be?" is a product question, not a technical one.
 
+```mermaid
+flowchart LR
+    I1["item 1<br/><i>arrives first</i>"] --> BUF["Buffer<br/>holds items until<br/>1000 have arrived"]
+    I2["items 2 to 999"] --> BUF
+    I3["item 1000<br/><i>arrives last</i>"] --> BUF
+    BUF -->|"one round trip<br/>carries all 1000"| DB[("Store")]
+    BUF --> L["<b>Latency</b><br/>item 1 sat here for the whole<br/>fill time, and so did the other 999"]
+    DB --> T["<b>Throughput</b><br/>1000 items per round trip<br/>instead of 1"]
+
+    style T fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style L fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+One mechanism, two consequences — and it is genuinely the *same* mechanism, because the wait that
+makes the round trip efficient is the wait the item experiences. Read off that both outputs hang
+from the buffer: no batch size improves the green box without worsening the amber one. The diagram
+also shows a cost the table above hides — a batch shares fates, so one poison item drags the other
+999 through the retry with it.
+
 ---
 
 ## 25. Without it → With it → New problem → Next
@@ -191,6 +227,24 @@ chain after caching.
 Requests/sec **and** the corresponding latency percentiles, always together. Track queue depth — a
 growing queue is the earliest signal that demand has passed capacity, and it leads the latency graph
 by minutes. Watch utilisation per stage to see where the bottleneck currently sits, because it moves.
+
+```mermaid
+flowchart LR
+    IN["Arrivals<br/>1200 rps and rising"] --> Q["Queue<br/>growing by 200 every second"]
+    Q --> S["Service<br/>pinned at its ceiling"]
+    S --> OUT["Completions<br/><b>1000 rps, perfectly flat</b><br/><i>the throughput graph looks healthy</i>"]
+    Q --> W["Queue wait<br/>climbing every second"]
+    Q --> M["Nothing pushes back<br/>ends in memory exhaustion,<br/>not in a slowdown"]
+
+    style OUT fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style M fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The amber box is why this incident is normally noticed late. Throughput is flat because it is
+**pinned at the ceiling**, not because demand is satisfied — so the first graph anyone checks reports
+maximum health at precisely the moment the system stops coping. Read the queue instead: it is the
+only quantity here that moves before latency does, and it is the one that decides whether overload
+ends as a slowdown or as an out-of-memory kill.
 
 ## 31. Exercises
 

@@ -35,6 +35,27 @@ version until a runner carries the update over.
 disagree about which of two updates came last. That is the genuinely hard part, and no notice-board
 intuition prepares you for it.
 
+```mermaid
+sequenceDiagram
+    participant L as Writer in London
+    participant A as Replica A
+    participant B as Replica B
+    participant S as Writer in Sydney
+    L->>A: set title to Draft
+    S->>B: set title to Final
+    A->>B: replicate Draft
+    B->>A: replicate Final
+    Note over A: applied Draft, then Final<br/>A believes Final is the newer value
+    Note over B: applied Final, then Draft<br/>B believes Draft is the newer value
+    Note over A,B: the same two writes, two different winners.<br/>Neither replica is lagging or broken.
+```
+
+Neither replica has dropped a message and neither is behind — both have applied both writes. Read
+the two notes: the disagreement is about **order**, which is exactly what a notice board cannot
+model, because a board has one reading position and a distributed system has one per replica. This
+is the thing conflict resolution exists to settle, and it is why the settlement cannot simply be
+"whichever arrived last".
+
 ## 4. Technical explanation
 
 Consistency is a spectrum, not a switch. From strongest to weakest:
@@ -88,6 +109,24 @@ is what [PACELC](../cap-theorem/#pacelc) formalises:
 | Session | Read-your-writes | Users must see their own changes |
 
 Choosing one model for a whole system is a design smell. Choose per dataset.
+
+```mermaid
+flowchart LR
+    A["<b>Linearizable</b><br/>every read sees the latest write<br/>cost: coordination on every operation<br/><i>payment balance, the last seat</i>"] --> B["<b>Sequential</b><br/>one order, agreed by everyone<br/>cost: ordering, but not real time<br/><i>audit and event logs</i>"]
+    B --> C["<b>Causal</b><br/>related operations stay in order<br/>cost: version tracking<br/><i>a comment under its post</i>"]
+    C --> D["<b>Read-your-writes</b><br/>you see your own writes, others lag<br/>cost: session pinning<br/><i>profile edits, drafts</i>"]
+    D --> E["<b>Eventual</b><br/>converges once writes stop<br/>cost: conflict resolution<br/><i>follower counts, feeds</i>"]
+
+    style A fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style E fill:#2a2317,stroke:#d9a441,color:#e4ecea
+```
+
+The two tables above describe the same axis from opposite ends, and this is that axis: the models on
+one line, the data that belongs at each point on the next. Read it left to right as a price list —
+every step right deletes a coordination round trip and hands you back a class of bug to handle in
+application code. The italic line is the one that matters here, because a mature product sits at
+**several** points at once; a system sitting at exactly one has overpaid on some of its data and
+under-protected the rest.
 
 ## 7. The problem it does NOT solve
 
@@ -146,6 +185,23 @@ That is a legitimate answer until scale or availability forces otherwise.
 **Last-write-wins based on wall-clock time is a data-loss mechanism dressed as a conflict-resolution
 strategy.** Two servers whose clocks differ by 50ms will silently discard the write that actually
 came second.
+
+```mermaid
+sequenceDiagram
+    participant A as Server A - clock runs 40 ms fast
+    participant K as The replica holding the key
+    participant B as Server B - clock correct
+    A->>K: write OLD. Really at 0 ms. Stamped 40 ms.
+    B->>K: write NEW. Really at 30 ms. Stamped 30 ms.
+    Note over K: last-write-wins compares the stamps.<br/>40 beats 30, so it keeps OLD.
+    Note over A,B: the write that genuinely came second was discarded.<br/>No error was raised and no metric moved.
+```
+
+Read the two arrows in the order they are drawn — that is real time — then read the stamps, which
+are the only thing the resolver ever sees. The 30 ms between the writes is smaller than the 40 ms of
+skew between the clocks, and the moment that is true, last-write-wins is choosing at random. Nothing
+on this diagram is a bug in the replica, which is why the defence is a logical clock rather than
+tighter time synchronisation.
 
 ## 25. Without it → With it → New problem → Next
 

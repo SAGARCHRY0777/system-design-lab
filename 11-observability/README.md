@@ -50,6 +50,24 @@ They are not interchangeable and the failure is using the wrong one:
 - Skipping **traces** in a microservice system means you can see that a request was slow and never
   which of eleven hops caused it
 
+```mermaid
+flowchart TD
+    Q["A question at 3am"]
+    Q --> M["Metrics<br/>CAN say: it is happening now, how often,<br/>and whether it is worse than yesterday.<br/>CANNOT say: which request, or why."]
+    Q --> L["Logs<br/>CAN say: exactly what happened in this<br/>one case, in full detail.<br/>CANNOT say: how often, at any sane cost."]
+    Q --> T["Traces<br/>CAN say: which of eleven hops spent the<br/>time, and in what order.<br/>CANNOT say: anything about unsampled requests."]
+    M --> A["Metrics detect. Traces localise. Logs explain.<br/>Each pillar's blind spot is the next one's<br/>strength, which is why none substitutes."]
+    L --> A
+    T --> A
+    style A fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The **CANNOT** lines are the half worth reading. Every misuse listed above is an attempt to make one
+pillar answer a question sitting in its CANNOT row — counting log lines to get a rate, or labelling a
+metric with a user id to recover a single case — and each of those costs an order of magnitude more
+than asking the pillar built for it. The bottom box is also the shape of a real investigation: you
+almost never start in the right one, you start in metrics and move down.
+
 ### The cardinality trap
 
 A metric with a label having `N` distinct values creates `N` time series. Labels multiply:
@@ -65,6 +83,25 @@ add user_id (1,000,000 users)
 **Never put an unbounded value in a metric label** — user id, request id, email, full URL path with
 parameters. Those belong in logs or traces, which are built for it. This single mistake takes down
 more Prometheus installations than anything else.
+
+```mermaid
+flowchart LR
+    B["one metric named http_requests"]
+    B --> M1["times 4 methods<br/>4 series"]
+    M1 --> M2["times 6 statuses<br/>24 series"]
+    M2 --> M3["times 50 endpoints<br/>1,200 series"]
+    M3 --> OK["Every factor so far has a ceiling<br/>you could name in advance.<br/>That is what bounded means."]
+    M3 --> M4["times 1,000,000 user ids"]
+    M4 --> BAD["1,200,000,000 series.<br/>The unbounded label did not ADD a million,<br/>it MULTIPLIED the 1,200 that were fine.<br/>The backend dies during the very incident<br/>that made someone add the label."]
+    style OK fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style BAD fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The chain is the part the arithmetic above does not show: **series count is a product, so the damage a
+label does depends on every other label already there.** The same `user_id` label on a metric with no
+other dimensions would cost a million series — survivable. Added here it costs 1.2 billion, and
+nothing at the call site distinguishes the two. That is also why removing *other* labels is a real
+mitigation, and why the ceiling must be checked before the label ships, not after.
 
 ## 5. Engineering at scale
 
@@ -176,6 +213,25 @@ learned its pager is usually noise will miss the one that is not.
 | **Page** | Wake a human now | Error budget burning fast; checkout is down |
 | **Ticket** | Business hours | Disk 70% full; certificate expires in 20 days |
 | **Dashboard only** | No notification | Everything else |
+
+```mermaid
+flowchart TD
+    S["A signal crosses a threshold"]
+    S --> U{"Are users affected now,<br/>or certainly within the hour?"}
+    U -->|"no, this is a cause<br/>not a symptom"| D["Dashboard only.<br/>No notification at all."]
+    U -->|"yes"| A{"Is there something a human<br/>can actually do right now?"}
+    A -->|"no, the runbook says<br/>see whether it recovers"| D
+    A -->|"yes"| B{"Does waiting until<br/>business hours cost anything?"}
+    B -->|"no"| TK["Ticket."]
+    B -->|"yes"| PG["Page. Wake someone up."]
+    style D fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style PG fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Three gates, and only the third one pages — read it as a filter, not a router. Almost every alert in
+a 40-pages-a-week rotation fails gate one (CPU is a cause, not a symptom) or gate two (nothing to do
+but watch), and both of those exits land on the same green box. Note which node is green: **dashboard
+is the default destination**, and a page is the rare thing you have to argue your way to.
 
 ## 13. The four golden signals
 

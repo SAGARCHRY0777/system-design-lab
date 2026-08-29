@@ -60,6 +60,32 @@ Authorization — first on that list because it is first in reality. Question 2 
 gateway or a decorator. Question 3 cannot, because nothing outside the data layer knows which object
 the request will touch.
 
+```mermaid
+sequenceDiagram
+    participant A as Logged-in user 7
+    participant GW as Gateway
+    participant S as Service
+    participant DB as Database
+
+    A->>GW: GET /api/invoices/8842, valid token
+    GW->>GW: signature, exp, iss, aud — all correct
+    GW->>GW: route policy — may a logged-in user call this operation? yes
+    GW->>S: forward, caller identified as user 7
+    S->>DB: select the invoice with id 8842
+    DB-->>S: invoice 8842, owner is user 91
+    S-->>A: 200, with the whole invoice
+    Note over A,DB: No participant asked whether 8842 belongs to user 7.<br/>Nothing failed. Nothing is in an error log.
+    A->>GW: GET /api/invoices/8843
+    A->>GW: GET /api/invoices/8844
+    Note over A,GW: The exploit is a for-loop over one integer.
+```
+
+This is the single most important diagram on the page, and what earns it a place is the **absence**
+rather than the presence. Every arrow succeeds; every control behaves exactly as designed; the
+attacker sends a well-formed authenticated request and receives a normal `200`. Trace it for the
+owner of invoice 8842 and the sequence is byte-identical, which is why this ships through review and
+through tests and is found by a pentester.
+
 ### Authorisation models
 
 | Model | Decision based on | Fits | Breaks when |
@@ -132,6 +158,24 @@ anything that can make a local HTTP request, so a "fetch this URL for me" featur
 exfiltration primitive unless it is locked down. Beware DNS rebinding — a hostname that resolves to
 a public address at validation time and a private one when the request is made.
 
+```mermaid
+flowchart LR
+    A["Attacker"] -->|"1 · a URL parameter pointing at<br/>the link-local address 169.254.169.254"| S["Your service<br/>— an import, a webhook tester,<br/>a thumbnail fetcher"]
+    S -->|"2 · an ordinary outbound request,<br/>made from inside the network"| M["Instance metadata endpoint<br/>— authorises by network position,<br/>which the request now has"]
+    M -->|"3 · temporary role credentials"| S
+    S -->|"4 · returned in the response body,<br/>or in the error message"| A
+    A -->|"5 · calls the cloud API<br/>as your workload"| C["Your cloud account"]
+
+    style M fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style C fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Read off step 2: the privilege escalation happens because your service **lends the attacker its
+network position**, and the metadata endpoint has no other notion of who is calling. That is why an
+allowlist of destination hosts is the control and "validate the URL looks reasonable" is not — and
+why the check has to be re-applied after every redirect, since step 1 can be a public hostname that
+redirects into step 2.
+
 ### CORS is not access control
 
 **CORS is a rule that a browser applies to scripts it is running. It is not enforced anywhere else,
@@ -144,6 +188,24 @@ stating as a table:
 | "`Allow-Origin: *` exposes my data" | Not by itself. It cannot be combined with credentials, so it exposes only what an unauthenticated caller could already fetch. Missing authorisation exposes data. |
 | "Locking down CORS secures the endpoint" | It secures nothing on the server. It protects *other sites' users* from having your API read with their cookies. |
 | "A CORS error means I am blocked" | It means the browser refused to show the response to the script. The request may well have executed on your server. |
+
+```mermaid
+flowchart LR
+    B["Browser script on<br/>another origin"] -->|"the request"| S["Your API<br/>— runs the handler,<br/>commits the side effect,<br/>builds the response"]
+    K["curl, Postman, a mobile app,<br/>a server-side script"] -->|"the identical request"| S
+    S -->|"response"| BC["The BROWSER compares Origin<br/>against Access-Control-Allow-Origin"]
+    S -->|"response"| NC["No browser is involved.<br/>There is nothing to do the comparing."]
+    BC -->|"origin not on the list"| X["The script is refused the body.<br/>Your handler already ran."]
+    NC --> Y["Body read in full, as normal"]
+
+    style X fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style Y fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+The enforcement point is on the wrong side of the wire, and the diagram puts it there. CORS is
+evaluated **after** your code has run, by software the attacker chooses to use or not — so the amber
+outcome is the best case and the red one is always available. Note also that even in the browser
+lane the write already happened; CORS withheld the response, not the effect.
 
 The genuinely dangerous configuration is **reflecting the `Origin` header back in
 `Access-Control-Allow-Origin` together with `Access-Control-Allow-Credentials: true`**. That
@@ -219,6 +281,24 @@ invoice 8842 belongs to you, because it does not know what invoice 8842 is. Serv
 gateway must not treat their input as trusted: internal callers are compromised in the interesting
 incidents, which is the whole argument for mTLS between services and for authorising internal calls
 too.
+
+```mermaid
+flowchart TD
+    Q1{"What does this decision<br/>actually depend on?"} -->|"the request alone — method,<br/>path, token claims, caller role"| GW["Gateway or route middleware.<br/>Correct place. Cheap, central,<br/>and it rejects before you do work."]
+    Q1 -->|"which row, document, tenant<br/>or file is being touched"| DL["Only where the object is loaded.<br/>Nothing upstream knows what<br/>invoice 8842 is."]
+    DL --> Q2{"Can somebody ship a new<br/>endpoint that simply<br/>does not call it?"}
+    Q2 -->|"yes — it is an if statement<br/>every developer must remember,<br/>on every route, forever"| BAD["Not a control.<br/>A hope with a code review attached."]
+    Q2 -->|"no — scoped query, row-level security,<br/>or a repository that will not<br/>load without a subject"| GOOD["Fails closed. Forgetting the check<br/>returns nothing instead of<br/>returning someone else's row."]
+
+    style BAD fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style GOOD fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The tree has two questions and the second one is the one teams never ask. Getting the *placement*
+right and leaving it as a remembered call still produces an IDOR eventually, because the failure mode
+of "remembered" is a new endpoint written in a hurry by someone who did not know the convention. Read
+the bottom row as the actual design goal: not "the check is present" but "**absence of the check
+cannot return data**".
 
 Finally, an organisational control that outperforms most technical ones: **make "has an authorisation
 policy" a property the framework enforces**, so a new endpoint without one fails a test rather than

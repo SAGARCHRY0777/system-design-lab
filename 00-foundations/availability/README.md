@@ -61,6 +61,23 @@ Service (99.9%) → Database (99.9%) → Cache (99.9%)
 This is the strongest technical argument against gratuitous microservices, and the reason each
 synchronous dependency you add has a real cost.
 
+```mermaid
+flowchart LR
+    C["Client"] --> S["Service · 99.9%<br/><i>path so far 99.9%</i>"]
+    S --> A["Auth · 99.9%<br/><i>path so far 99.8%</i>"]
+    A --> D[("Database · 99.9%<br/><i>path so far 99.7%</i>")]
+    D --> X["Search · 99.9%<br/><i>path so far 99.6%</i>"]
+    X --> R["<b>99.6%</b> — 35 hours a year<br/><i>four times the downtime<br/>of any single link</i>"]
+
+    style R fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Watch the second line of each box. It never improves — the running product falls by the same 0.1% at
+every hop, and it falls by that amount regardless of how good the hop is. Read off the consequence:
+adding a synchronous dependency has a price you can compute **before** you add it, and paying that
+price does not require the dependency to be bad. Four excellent services in series are less available
+than any one of them alone.
+
 ### Redundancy in parallel adds nines
 
 ```
@@ -71,6 +88,24 @@ Two independent servers at 99% each:
 The word doing the work is **independent**. Two servers in the same rack share a power supply; two
 availability zones share a region; two regions share your deployment pipeline and your DNS. Correlated
 failure is what turns a calculated 99.99% into a real 99.5%.
+
+```mermaid
+flowchart TD
+    T["Three components, each 99% available"] --> Q["<b>In series</b><br/>all three must work"]
+    T --> Z["<b>In parallel</b><br/>any one working is enough"]
+    Q --> SER["availability multiplies<br/>0.99 × 0.99 × 0.99 = <b>97.0%</b><br/><i>worse than any single link</i>"]
+    Z --> PAR["<b>un</b>availability multiplies<br/>1 − 0.01 × 0.01 × 0.01 = <b>99.9999%</b><br/><i>better than any single copy</i>"]
+
+    style SER fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style PAR fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The same three components and the same multiplication produce answers three orders of magnitude
+apart in downtime. Read off what actually differs: the branch you are on decides *which* number gets
+multiplied. Series multiplies availability, so it can only fall; parallel multiplies unavailability,
+so it can only rise. Nearly all availability engineering is an attempt to move one component from the
+top branch to the bottom — and the whole value of the bottom branch rests on that word
+**independent**.
 
 ## 5. Engineering at scale
 
@@ -155,6 +190,25 @@ mistake: adding an LB to remove a single point of failure and creating one in th
 
 **Untested failover is not failover.** A standby nobody has ever failed over to is a hypothesis, and
 the outage is a poor time to test it.
+
+```mermaid
+flowchart TD
+    A["Replica A · 99%"] -->|"sits in"| RK["The same rack<br/>one power feed, one switch"]
+    B["Replica B · 99%"] -->|"sits in"| RK
+    RK -->|"sits in"| AZ["The same availability zone<br/>one building, one network fabric"]
+    AZ -->|"sits in"| RG["The same region"]
+    RG -->|"is changed by"| PIPE["The same deploy pipeline, config store,<br/>DNS and certificate authority"]
+    PIPE --> OUT["The formula said <b>99.99%</b>.<br/>The deepest shared layer sets the real number."]
+
+    style PIPE fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+Read downwards and stop at the first layer the two replicas share: that layer, not the replicas, is
+your availability. The stack is drawn with the physical couplings on top and the organisational one
+at the bottom, which is the order in which people worry about them and the exact reverse of the order
+in which they cause outages. A power feed at least fails one rack at a time; a config push reaches
+every replica in every region within seconds, which is why staged rollout buys more nines per pound
+than another standby.
 
 ## 25. Without it → With it → New problem → Next
 

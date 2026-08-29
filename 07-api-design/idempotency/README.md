@@ -92,6 +92,30 @@ The same reasoning applies everywhere in a distributed system:
 **"Exactly-once delivery" does not exist. Exactly-once *effect* does, and idempotency is how you get
 it.** That sentence is the whole reason the concept has a name.
 
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Payment service
+    participant P as Card network
+    C->>S: POST charge 40 pounds, no key
+    S->>P: charge
+    P-->>S: approved
+    S--xC: the response is lost on the way back
+    Note over C: The client now has a timeout, which is<br/>NOT a failure. A lost request and a lost<br/>response look identical from here,<br/>and one of them must be retried.
+    C->>S: POST charge 40 pounds, retry
+    S->>P: charge - nothing marks this as a repeat
+    P-->>S: approved
+    S-->>C: 201, and the client believes it paid once
+    Note over C,P: Two real charges. Every component<br/>did exactly what it was asked.
+```
+
+Nothing on that timeline is a bug, which is the point worth extracting: the damage is done by the
+retry, the retry is the correct thing to do, and no amount of care at either end removes the
+ambiguity. **The client is not choosing between right and wrong, it is choosing between a possible
+duplicate and a possible loss** — and it must choose blind. An idempotency key is simply the one piece
+of information that makes the second request distinguishable from a new one, which is why it has to
+come from the caller and has to be identical across attempts.
+
 ### The mechanism
 
 The client generates a key — a UUID — **once per logical operation**, and sends it on every attempt,
@@ -159,6 +183,30 @@ provider (every serious payment API accepts one — this is exactly why); and ru
 that finds intents with no recorded outcome and queries the provider for the true state. **The
 provider's idempotency key is what makes the retry safe; your reconciliation is what makes the
 crash-in-between safe.** Both are required.
+
+```mermaid
+sequenceDiagram
+    participant S as Your service
+    participant D as Your database
+    participant P as Payment provider
+    participant R as Reconciliation job
+    S->>D: commit the intent and the key, state in_progress
+    Note over S,D: This commits BEFORE the call out, so a crash<br/>anywhere after it still leaves evidence that<br/>an attempt existed and what its key was.
+    S->>P: charge, carrying that same key
+    Note over S,P: This gap is unavoidable. No transaction<br/>can span your database and their system.
+    P-->>S: approved
+    S->>D: commit the outcome, state completed
+    Note over R: Later, sweeping for intents<br/>still marked in_progress
+    R->>P: what happened to this key
+    P-->>R: approved, or never seen
+    R->>D: record the true outcome
+```
+
+Two separate mechanisms are doing two separate jobs here, and the common mistake is to build one and
+assume it covers the other. The key you pass to the provider makes a **retry** safe. The intent
+committed in advance, plus the sweep, makes a **crash in the gap** safe — and the ordering of the
+first arrow is what makes the sweep possible at all: commit the intent after the call out instead, and
+a crash leaves no record that a charge was ever attempted, so nothing can ever go and ask.
 
 **Deduplication is not idempotency.** A dedupe filter drops the repeat and returns nothing useful.
 Idempotency returns *the original result* — the order ID, the payment status, the receipt. The client

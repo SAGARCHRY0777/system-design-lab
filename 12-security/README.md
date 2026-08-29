@@ -30,6 +30,23 @@ read any other user's invoice by changing a number in the URL. Every control wor
 impersonated. The data left anyway, because *authenticated* was checked and *authorised for this
 object* never was.
 
+```mermaid
+flowchart LR
+    R["GET /api/invoices/8842<br/>valid token, user 7"] --> A["Authentication<br/>who is this?"]
+    A -->|"user 7"| Z1["Authorise the ROUTE<br/>may a logged-in user<br/>call this endpoint?"]
+    Z1 -->|"yes"| L1["Load invoice 8842"]
+    L1 --> OUT1["200 — invoice 8842,<br/>owned by user 91"]
+    A -->|"user 7"| Z2["Authorise the OBJECT<br/>does 8842 belong to user 7?"]
+    Z2 -->|"no"| OUT2["404 — identical to the answer<br/>for an invoice that does not exist"]
+
+    style OUT1 fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style OUT2 fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+Read off the fork: the two paths are identical until a single node, and both return `200` when the
+invoice really is user 7's — so every test passes on the broken branch. Only a request for someone
+*else's* record separates them, and nothing in the upper path ever asks that question.
+
 Hold the two questions apart and most of this section becomes obvious. Let them merge and no amount
 of cryptography helps.
 
@@ -47,6 +64,26 @@ The order is a dependency chain, not a difficulty ramp. Authentication produces 
 is how you get that credential from someone else; JWT is the format the credential usually arrives
 in; API security is everything you still have to do *after* the credential checks out; DDoS is the
 case where the attacker never needed a credential at all.
+
+```mermaid
+flowchart LR
+    C["One request"] --> D["Absorb volumetric traffic<br/>5 · DDoS"]
+    D --> RL["Reject cheaply — rate limit<br/>5 · DDoS and 4 · API security"]
+    RL --> T["A credential arrives<br/>2 · OAuth obtained it<br/>3 · JWT is its format"]
+    T --> AN["Who is this?<br/>1 · Authentication"]
+    AN --> AZ["May they use this operation?<br/>4 · API security"]
+    AZ --> OBJ["May they use it on THIS object?<br/>4 · API security"]
+    OBJ --> H["Handler runs"]
+
+    style D fill:#2a2317,stroke:#d9a441,color:#e4ecea
+    style OBJ fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The five pages are five gates on one request, and the useful thing to read off is the ordering
+constraint. Everything to the left of the credential can be pushed upstream to an edge or a gateway
+and rejected before you pay for it; the last gate cannot move, because nothing upstream knows which
+object the request will touch. That asymmetry is why the cheap controls are also the ones people
+over-trust.
 
 ## The six confusions that cause most of the damage
 

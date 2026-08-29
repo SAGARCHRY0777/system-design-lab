@@ -1,0 +1,300 @@
+{
+  "id": "ticket-booking",
+  "title": "Ticket Booking",
+  "summary": "Sell a fixed number of seats, exactly once each. The only common system design problem where eventual consistency is not a trade you may make — a double-sold seat is not lag, it is a refund and an apology.",
+  "nodes": {
+    "client":  { "kind": "client",   "label": "Client" },
+    "cdn":     { "kind": "edge",     "label": "CDN / Edge", "note": "event pages, seat maps" },
+    "room":    { "kind": "queue",    "label": "Waiting Room", "note": "admits N per second" },
+    "lb":      { "kind": "lb",       "label": "Load Balancer" },
+    "app":     { "kind": "service",  "label": "App Servers" },
+    "cache":   { "kind": "cache",    "label": "Cache", "note": "seat map, read-only" },
+    "holds":   { "kind": "store",    "label": "Hold Store", "note": "seat leases, TTL 10 min" },
+    "seats":   { "kind": "store",    "label": "Seat Inventory", "note": "the source of truth" },
+    "queue":   { "kind": "queue",    "label": "Order Queue" },
+    "worker":  { "kind": "service",  "label": "Order Workers" },
+    "payment": { "kind": "external", "label": "Payment Provider", "note": "you do not control this" },
+    "sweeper": { "kind": "service",  "label": "Expiry Sweeper", "note": "releases dead holds" }
+  },
+  "versions": [
+    {
+      "v": 1,
+      "label": "One small venue",
+      "trigger": "Launch. A single transaction reads the seat and marks it sold — correct, and it will stay correct until two people click at the same moment.",
+      "traffic": { "rps": 3, "label": "200 seats · ~3 rps" },
+      "active": ["client", "app", "seats"],
+      "edges": [
+        { "from": "client", "to": "app",   "kind": "sync", "label": "HTTPS" },
+        { "from": "app",    "to": "seats", "kind": "sync", "label": "SELECT then UPDATE" }
+      ],
+      "metrics": { "p50_ms": 40, "p99_ms": 130 },
+      "bottleneck": null,
+      "note": "Read-then-write in two statements. At three requests a second nobody collides, so the race is invisible — which is exactly why it ships."
+    },
+    {
+      "v": 2,
+      "label": "Overselling found",
+      "trigger": "Two customers bought seat 14A four milliseconds apart. Both reads saw it free; both writes succeeded.",
+      "traffic": { "rps": 40, "label": "several venues · ~40 rps" },
+      "active": ["client", "lb", "app", "seats"],
+      "edges": [
+        { "from": "client", "to": "lb",    "kind": "sync", "label": "HTTPS" },
+        { "from": "lb",     "to": "app",   "kind": "sync" },
+        { "from": "app",    "to": "seats", "kind": "sync", "label": "UPDATE ... WHERE status='free'" }
+      ],
+      "metrics": { "p50_ms": 35, "p99_ms": 120 },
+      "bottleneck": null,
+      "note": "The fix is not a lock, it is a conditional write: one statement that only succeeds if the seat is still free, and a row count of zero means someone beat you. This is the single most important line in the whole design."
+    },
+    {
+      "v": 3,
+      "label": "Browsing swamps writes",
+      "trigger": "Ninety-nine people browse the seat map for every one who buys, and every one of those reads was hitting the inventory table.",
+      "traffic": { "rps": 900, "label": "~900 rps, 99:1 browse:buy" },
+      "active": ["client", "cdn", "lb", "app", "cache", "seats"],
+      "edges": [
+        { "from": "client", "to": "cdn",   "kind": "sync", "label": "HTTPS" },
+        { "from": "cdn",    "to": "lb",    "kind": "sync", "label": "on miss" },
+        { "from": "lb",     "to": "app",   "kind": "sync" },
+        { "from": "app",    "to": "cache", "kind": "sync", "label": "seat map, ~2s stale" },
+        { "from": "app",    "to": "seats", "kind": "sync", "label": "purchase only" }
+      ],
+      "metrics": { "p50_ms": 12, "p99_ms": 90 },
+      "bottleneck": null,
+      "note": "The split that makes this tractable: READS may be stale, WRITES may never be. A seat map two seconds behind is fine — the conditional write is what actually decides, and it is the only thing that touches the truth."
+    },
+    {
+      "v": 4,
+      "label": "Checkout takes minutes",
+      "trigger": "Customers picked a seat, then spent four minutes entering card details — and lost it to someone else at the last step.",
+      "traffic": { "rps": 900, "label": "~900 rps" },
+      "active": ["client", "cdn", "lb", "app", "cache", "holds", "seats", "sweeper"],
+      "edges": [
+        { "from": "client",  "to": "cdn",   "kind": "sync", "label": "HTTPS" },
+        { "from": "cdn",     "to": "lb",    "kind": "sync" },
+        { "from": "lb",      "to": "app",   "kind": "sync" },
+        { "from": "app",     "to": "cache", "kind": "sync", "label": "seat map" },
+        { "from": "app",     "to": "holds", "kind": "sync", "label": "lease seat, TTL 10 min" },
+        { "from": "app",     "to": "seats", "kind": "sync", "label": "confirm" },
+        { "from": "sweeper", "to": "holds", "kind": "async", "label": "expire abandoned" },
+        { "from": "sweeper", "to": "seats", "kind": "async", "label": "release" }
+      ],
+      "metrics": { "p50_ms": 14, "p99_ms": 95 },
+      "bottleneck": null,
+      "note": "A hold is a lease with a deadline, not a lock. The distinction matters: a lock held by a customer who closed their laptop is held forever, whereas a lease expires on its own. Every hold needs a sweeper, and the sweeper is the part people forget."
+    },
+    {
+      "v": 5,
+      "label": "On-sale: 100K for 10K seats",
+      "trigger": "A stadium tour went on sale. Ten times more people arrived in the first second than there were seats in total, and every one of them hit the inventory.",
+      "traffic": { "rps": 100000, "label": "~100K rps in second one" },
+      "active": ["client", "cdn", "room", "lb", "app", "cache", "holds", "seats", "sweeper"],
+      "edges": [
+        { "from": "client",  "to": "cdn",   "kind": "sync", "label": "HTTPS" },
+        { "from": "cdn",     "to": "room",  "kind": "sync", "label": "everyone queues" },
+        { "from": "room",    "to": "lb",    "kind": "sync", "label": "admit N per second" },
+        { "from": "lb",      "to": "app",   "kind": "sync" },
+        { "from": "app",     "to": "cache", "kind": "sync" },
+        { "from": "app",     "to": "holds", "kind": "sync" },
+        { "from": "app",     "to": "seats", "kind": "sync" },
+        { "from": "sweeper", "to": "holds", "kind": "async" },
+        { "from": "sweeper", "to": "seats", "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 16, "p99_ms": 140 },
+      "bottleneck": "room",
+      "note": "The waiting room is admission control, and it is the only honest answer here. You cannot serve 100K simultaneous buyers for 10K seats — 90% of them are going to leave disappointed no matter what you build. A queue that tells someone they are 40,000th is a better experience than a site that times out."
+    },
+    {
+      "v": 6,
+      "label": "Payment in the loop",
+      "trigger": "Charging the card is a call to someone else's system that can be slow, fail, or succeed without telling you.",
+      "traffic": { "rps": 100000, "label": "on-sale peak" },
+      "active": ["client", "cdn", "room", "lb", "app", "cache", "holds", "seats", "queue", "worker", "payment", "sweeper"],
+      "edges": [
+        { "from": "client",  "to": "cdn",     "kind": "sync",  "label": "HTTPS" },
+        { "from": "cdn",     "to": "room",    "kind": "sync" },
+        { "from": "room",    "to": "lb",      "kind": "sync" },
+        { "from": "lb",      "to": "app",     "kind": "sync" },
+        { "from": "app",     "to": "cache",   "kind": "sync" },
+        { "from": "app",     "to": "holds",   "kind": "sync",  "label": "lease" },
+        { "from": "app",     "to": "queue",   "kind": "async", "label": "order placed" },
+        { "from": "queue",   "to": "worker",  "kind": "async" },
+        { "from": "worker",  "to": "payment", "kind": "sync",  "label": "charge, idempotency key" },
+        { "from": "worker",  "to": "seats",   "kind": "sync",  "label": "confirm on success" },
+        { "from": "sweeper", "to": "holds",   "kind": "async" },
+        { "from": "sweeper", "to": "seats",   "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 18, "p99_ms": 160 },
+      "bottleneck": null,
+      "note": "Hold the seat, charge the card, confirm the seat — three steps across two systems that cannot share a transaction. This is a saga, and its compensating action is a refund. Every charge carries an idempotency key, because a retried payment without one is a second charge."
+    },
+    {
+      "v": 7,
+      "label": "Global audience",
+      "trigger": "Buyers were worldwide, but seat allocation cannot be, because two regions independently allocating the same seat is the bug this whole design exists to prevent.",
+      "traffic": { "rps": 100000, "label": "global · writes stay in one region" },
+      "active": ["client", "cdn", "room", "lb", "app", "cache", "holds", "seats", "queue", "worker", "payment", "sweeper"],
+      "edges": [
+        { "from": "client",  "to": "cdn",     "kind": "sync",  "label": "seat map, cached at edge" },
+        { "from": "cdn",     "to": "room",    "kind": "sync" },
+        { "from": "room",    "to": "lb",      "kind": "sync" },
+        { "from": "lb",      "to": "app",     "kind": "sync",  "label": "purchase: home region only" },
+        { "from": "app",     "to": "cache",   "kind": "sync" },
+        { "from": "app",     "to": "holds",   "kind": "sync" },
+        { "from": "app",     "to": "queue",   "kind": "async" },
+        { "from": "queue",   "to": "worker",  "kind": "async" },
+        { "from": "worker",  "to": "payment", "kind": "sync" },
+        { "from": "worker",  "to": "seats",   "kind": "sync",  "label": "single writer" },
+        { "from": "sweeper", "to": "holds",   "kind": "async" },
+        { "from": "sweeper", "to": "seats",   "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 22, "p99_ms": 240 },
+      "bottleneck": "seats",
+      "note": "Reads go everywhere; writes go to one place. A buyer in Sydney pays 150ms extra to reach the home region, and that is the correct trade — CAP says that under a partition this system must choose C, so it is CP by construction and the latency is the price."
+    },
+    {
+      "v": 8,
+      "label": "Payment provider degraded",
+      "trigger": "Design review: the payment provider slows to eight seconds. Holds are ten minutes. What happens?",
+      "traffic": { "rps": 100000, "label": "on-sale · payment at 8s" },
+      "active": ["client", "cdn", "room", "lb", "app", "cache", "holds", "seats", "queue", "worker", "payment", "sweeper"],
+      "edges": [
+        { "from": "client",  "to": "cdn",     "kind": "sync" },
+        { "from": "cdn",     "to": "room",    "kind": "sync" },
+        { "from": "room",    "to": "lb",      "kind": "sync" },
+        { "from": "lb",      "to": "app",     "kind": "sync" },
+        { "from": "app",     "to": "cache",   "kind": "sync" },
+        { "from": "app",     "to": "holds",   "kind": "sync" },
+        { "from": "app",     "to": "queue",   "kind": "async", "label": "backlog growing" },
+        { "from": "queue",   "to": "worker",  "kind": "async" },
+        { "from": "worker",  "to": "payment", "kind": "sync",  "label": "8s per charge" },
+        { "from": "worker",  "to": "seats",   "kind": "sync" },
+        { "from": "sweeper", "to": "holds",   "kind": "async", "label": "expiring held seats" },
+        { "from": "sweeper", "to": "seats",   "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 20, "p99_ms": 260 },
+      "bottleneck": "payment",
+      "note": "The dangerous interaction: the order backlog grows while the sweeper keeps expiring holds on time. Seats get released and resold while their original buyer is still being charged for them. Two independent timers with no knowledge of each other is how a slow dependency turns into a double-sale — the exact bug the whole design was built to prevent."
+    }
+  ],
+  "flows": [
+    {
+      "id": "v1-buy",
+      "label": "Buy a seat (racy)",
+      "minVersion": 1,
+      "maxVersion": 1,
+      "path": ["client", "app", "seats", "app", "client"],
+      "outcome": "Read then write, two statements. Two buyers four milliseconds apart both see the seat as free."
+    },
+    {
+      "id": "v2-buy",
+      "label": "Buy a seat (conditional write)",
+      "minVersion": 2,
+      "maxVersion": 2,
+      "path": ["client", "lb", "app", "seats", "app", "client"],
+      "outcome": "One statement that only succeeds if the seat is still free. A row count of zero means you lost the race, and that is a correct answer rather than an error."
+    },
+    {
+      "id": "v3-browse",
+      "label": "Browse the seat map",
+      "minVersion": 3,
+      "path": ["client", "cdn", "client"],
+      "outcome": "Served stale from the edge, and that is fine — nothing is decided by a read."
+    },
+    {
+      "id": "v4-hold",
+      "label": "Hold a seat for checkout",
+      "minVersion": 4,
+      "maxVersion": 5,
+      "path": ["client", "cdn", "lb", "app", "holds", "app", "client"],
+      "outcome": "A ten-minute lease. Not a lock: a customer who closes their laptop releases it automatically."
+    },
+    {
+      "id": "v4-confirm",
+      "label": "Confirm the purchase",
+      "minVersion": 4,
+      "maxVersion": 5,
+      "path": ["client", "cdn", "lb", "app", "seats", "app", "client"],
+      "outcome": "The conditional write against the real inventory. Everything before this was provisional."
+    },
+    {
+      "id": "v5-queue",
+      "label": "Arrive during an on-sale",
+      "minVersion": 5,
+      "path": ["client", "cdn", "room", "lb", "app", "client"],
+      "outcome": "Admission control. You are 40,000th, and being told so beats a page that times out."
+    },
+    {
+      "id": "v6-order",
+      "label": "Place an order (saga)",
+      "minVersion": 6,
+      "path": ["client", "cdn", "room", "lb", "app", "holds", "app", "queue", "worker", "payment", "worker", "seats"],
+      "outcome": "Hold, charge, confirm — three steps across two systems with no shared transaction. If the charge fails, the compensating action is releasing the hold; if the confirm fails after a successful charge, it is a refund."
+    },
+    {
+      "id": "v8-slow",
+      "label": "Order while payment is degraded",
+      "minVersion": 8,
+      "path": ["client", "cdn", "room", "lb", "app", "queue", "worker", "payment"],
+      "outcome": "The order sits behind a growing backlog while the sweeper, which knows nothing about payment latency, expires its seat on schedule."
+    }
+  ],
+  "failures": [
+    {
+      "id": "seats-down",
+      "node": "seats",
+      "minVersion": 1,
+      "effect": "Nothing can be sold. Browsing may still work from cache, which is arguably worse — customers pick seats they cannot buy.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "cache-down",
+      "node": "cache",
+      "minVersion": 3,
+      "effect": "Every seat-map view hits the inventory table, which is also serving the conditional writes that actually matter. The browse traffic is 99:1, so this is a read outage becoming a write outage.",
+      "bottleneck": "seats",
+      "survivable": true
+    },
+    {
+      "id": "holds-down",
+      "node": "holds",
+      "minVersion": 4,
+      "effect": "Nobody can reserve a seat for checkout. Purchases fall back to whoever completes a conditional write first, which is correct but a much worse experience.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "sweeper-down",
+      "node": "sweeper",
+      "minVersion": 4,
+      "effect": "Abandoned holds are never released. Inventory silently drains until the event appears sold out while thousands of seats sit in expired leases — a slow leak nobody notices until it is severe.",
+      "bottleneck": "holds",
+      "survivable": true
+    },
+    {
+      "id": "room-down",
+      "node": "room",
+      "minVersion": 5,
+      "effect": "Admission control disappears and the full on-sale surge reaches the application directly. This is the component whose whole job is preventing that.",
+      "bottleneck": "seats",
+      "survivable": false
+    },
+    {
+      "id": "payment-down",
+      "node": "payment",
+      "minVersion": 6,
+      "effect": "Orders queue and nothing is charged. Survivable while holds outlast the outage — after that, seats are released and the queued orders become invalid.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "worker-down",
+      "node": "worker",
+      "minVersion": 6,
+      "effect": "Orders accumulate unprocessed. Customers believe they have bought a seat and have not been charged, and the holds are expiring while they wait.",
+      "bottleneck": "queue",
+      "survivable": true
+    }
+  ]
+}

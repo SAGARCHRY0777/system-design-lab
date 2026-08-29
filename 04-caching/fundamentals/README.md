@@ -73,6 +73,24 @@ With 100 servers and a local cache, each server must independently miss on a key
 it, so your effective hit rate for a given key is roughly `1 - (1/100)` worse than a shared cache
 would give. **Local caches get worse as you scale out**, which is precisely when you need them most.
 
+```mermaid
+flowchart TD
+    K["One hot key, one TTL window,<br/>a fleet of 100 servers"]
+    K --> L["Local cache, one per server"]
+    K --> S["Shared cache tier"]
+    L --> LN["Server 1 misses and fills its own copy.<br/>So does server 2. So does server 100."]
+    S --> SN["Server 1 misses and fills the shared entry.<br/>Servers 2 to 100 hit it."]
+    LN --> LO["Origin sees 100 misses per key per TTL.<br/>100 copies exist, so they can disagree,<br/>and no invalidation can reach them all."]
+    SN --> SO["Origin sees 1 miss per key per TTL.<br/>One copy exists, so invalidating it<br/>is a single operation."]
+    style LO fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+    style SO fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+```
+
+The load on the origin from a local cache scales with **fleet size**, not with traffic — doubling the
+fleet doubles the misses for the same request rate. Read the bottom row as two separate costs, because
+they are usually discussed separately and arrive together: 100 misses is the performance problem, 100
+copies that cannot be invalidated is the correctness one.
+
 **Cache memory is not free capacity.** A cache sized at 20% of the dataset with uniformly random
 access gives you a 20% hit rate. The same cache over a Zipf-distributed workload can give 95%. Check
 the distribution before sizing.
@@ -134,6 +152,26 @@ flowchart LR
 
 That is cache-aside. Note step 5 is the application's responsibility — which is the whole difference
 from read-through, where the cache does it.
+
+The write paths are where the strategies actually diverge, and one number separates them: **where the
+acknowledgement sits relative to the database commit.**
+
+```mermaid
+flowchart LR
+    W["Write arrives"] --> CA["Cache-aside<br/>write DB, then invalidate key"]
+    W --> WT["Write-through<br/>write cache and DB together"]
+    W --> WB["Write-behind<br/>write cache, ack, flush later"]
+    CA --> CAD["ack AFTER the DB commit.<br/>Durable. Stale window if any<br/>write path forgets to invalidate."]
+    WT --> WTD["ack AFTER the DB commit.<br/>Durable. Slowest write, because<br/>every write pays both stores."]
+    WB --> WBD["ack BEFORE the DB commit.<br/>A crash in the flush window loses<br/>a write the user was told was saved."]
+    style WTD fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
+    style WBD fill:#2b1c17,stroke:#e0705a,color:#e4ecea
+```
+
+All three branches look symmetric until the last row. Cache-aside and write-through can only serve
+*wrong* data; write-behind can serve *no* data, because the only copy of an acknowledged write lived
+in a component that is by definition allowed to lose everything. That is why the choice is not a
+performance tuning knob — it is a durability decision wearing one.
 
 ## 10. Internal components
 
@@ -224,6 +262,29 @@ finished thinking.**
 doing so make the database permanently incapable of serving that traffic unaided. The cache stops
 being an optimisation and becomes a load-bearing dependency — while still being labelled "safe to
 lose" on the diagram.
+
+The second row deserves its own picture, because the shape of the load is the surprising part:
+
+```mermaid
+sequenceDiagram
+    participant R as 5000 concurrent readers
+    participant C as Cache
+    participant D as Database
+    Note over C: the hot key crosses its TTL
+    R->>C: GET hot key, 5000 times
+    C--xR: MISS, 5000 times
+    R->>D: byte-identical query, 5000 times
+    Note over D: 1 query was needed.<br/>4999 are self-inflicted.
+    D-->>R: the same row, 5000 times
+    R->>C: populate with the same value, 5000 times
+    Note over R,C: Single-flight instead: 1 reader fetches,<br/>4999 wait on that one in-progress fetch.
+```
+
+Read the timeline, not the arrow count. Origin load was **flat and near zero one millisecond earlier**
+— the spike is created by the cache expiring, not by any change in traffic, which is why it is
+invisible in request-rate graphs and shows up only as a periodic origin spike at the TTL interval. The
+requests are also byte-identical, and that is exactly what makes single-flight and probabilistic early
+expiry work: there is only ever one useful query in the herd.
 
 ## 21. Performance
 
