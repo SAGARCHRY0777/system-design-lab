@@ -116,4 +116,4 @@ cannot.
 - [System design thinking](SYSTEM-DESIGN-THINKING.md) — the long form
 - [Trade-off framework](TRADEOFF-FRAMEWORK.md) — decision trees
 - [Estimation guide](ESTIMATION-GUIDE.md) — the arithmetic
-- [Interview guide](20-system-design-interview/) — timing and communication
+- Interview guide — timing and communication

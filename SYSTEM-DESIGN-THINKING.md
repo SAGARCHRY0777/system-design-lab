@@ -46,7 +46,7 @@ preference; each step was the cheapest available answer to a specific failure.
 **Two rules follow from the chain, and they matter more than anything else on this page:**
 
 1. **Never add a component before its problem exists.** A queue added at step 1 is not foresight, it
-   is [premature architecture](anti-patterns/) — you pay the complexity now and get the benefit
+   is premature architecture — you pay the complexity now and get the benefit
    never. The step is correct *only* at the point where the arrow above fires.
 2. **Every component you add introduces the next problem.** If you cannot name the problem your new
    component creates, you do not understand it yet. A cache buys latency and sells you staleness. A
@@ -84,7 +84,7 @@ the three that define the product and explicitly defer the rest.
 
 **4. Non-functional requirements.** What the system *guarantees*: latency, availability, consistency,
 durability, cost. **This is where most designs are won or lost**, because these are what force every
-later decision. See [non-functional requirements](00-foundations/) and
+later decision. See non-functional requirements and
 [the trade-off framework](TRADEOFF-FRAMEWORK.md).
 
 **5. Constraints.** Budget, team size, existing stack, compliance, deadline. A design that ignores
@@ -188,7 +188,7 @@ The happy path is the easy half. Run this list against every design:
 
 **Slow is worse than down.** A dead dependency fails fast and you route around it. A dependency at
 5-second latency holds every thread that touches it and takes down services that do not even depend
-on it. This is why [timeouts](08-reliability/) are not optional.
+on it. This is why timeouts are not optional.
 
 ---
 
@@ -216,4 +216,4 @@ Working checklist: [DESIGN-CHECKLIST.md](DESIGN-CHECKLIST.md).
 - [Estimation guide](ESTIMATION-GUIDE.md) — putting numbers on step 6
 - [Design checklist](DESIGN-CHECKLIST.md) — the interview-time short form
 - [Diagram notation](19-diagrams/README.md) — how to draw any of this
-- [Anti-patterns](anti-patterns/) — the chain applied too early, or not at all
+- Anti-patterns — the chain applied too early, or not at all

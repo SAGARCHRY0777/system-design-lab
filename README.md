@@ -61,12 +61,12 @@ both the app and the diagrams committed here. They cannot drift apart.
 1. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
 2. [Estimation Guide](ESTIMATION-GUIDE.md) — how to put numbers on a problem in your head
 3. [Trade-off Framework](TRADEOFF-FRAMEWORK.md) — how to *choose*, with decision trees
-4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
+4. Foundations — latency, availability, consistency, CAP
 5. Open the [visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) and scrub the URL shortener from V1 to V8
 
 **Already comfortable** — go straight to
-[component combinations](14-component-combinations/), which is the part most material skips, or to
-[real-world problems](15-real-world-problems/) and their V1→V8 evolution.
+component combinations, which is the part most material skips, or to
+real-world problems and their V1→V8 evolution.
 
 **Preparing for an interview** — [Design Checklist](DESIGN-CHECKLIST.md) is the 45-minute short form.
 
@@ -94,16 +94,16 @@ systems are made of.
 
 | Where | What |
 |---|---|
-| [00-foundations/](00-foundations/) | Scalability, availability, consistency, CAP, estimation |
-| [03-load-balancing/](03-load-balancing/) · [04-caching/](04-caching/) | ★ Flagship components, full depth |
-| [05-databases/](05-databases/) · [06-messaging/](06-messaging/) | ★ Storage and asynchrony |
-| [08-reliability/](08-reliability/) | Retries, circuit breakers, rate limiting, backpressure |
-| [09-scalability/](09-scalability/) | Batching, async processing |
-| [14-component-combinations/](14-component-combinations/) | **How components behave together** |
-| [15-real-world-problems/](15-real-world-problems/) | Full designs, V1→V8 |
+| 00-foundations/ | Scalability, availability, consistency, CAP, estimation |
+| 03-load-balancing/ · 04-caching/ | ★ Flagship components, full depth |
+| 05-databases/ · 06-messaging/ | ★ Storage and asynchrony |
+| 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
+| 09-scalability/ | Batching, async processing |
+| 14-component-combinations/ | **How components behave together** |
+| 15-real-world-problems/ | Full designs, V1→V8 |
 | [18-implementations/](18-implementations/) | Working Python code + measured benchmarks |
 | [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated diagrams |
-| [ADRs/](ADRs/) · [anti-patterns/](anti-patterns/) · [comparisons/](comparisons/) | Judgment |
+| ADRs/ · anti-patterns/ · comparisons/ | Judgment |
 
 ## Conventions
 
