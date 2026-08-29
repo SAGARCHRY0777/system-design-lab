@@ -85,10 +85,18 @@ because in practice it is never traded alone — always against write latency.
 - [ ] Replication `[I]`
 - [ ] Asynchronous processing `[I]`
 
-## Phase 5 — Combinations
+## Phase 5 — Combinations & patterns
 
-The part most material skips, and the reason this repository exists. Knowing what a cache is and what
-a queue is does not tell you what happens when a queue backs up behind a cache-miss storm.
+The part most material skips, and the reason this repository exists.
+
+- [x] [Combination matrix](14-component-combinations/MATRIX.md) — **all 153 pairs** classified, every
+      CORE/REAL pair with a real system and a public source `[I]`
+- [x] [Pattern catalogue](13-design-patterns/CATALOGUE.md) — **101 patterns**, five families; all 23
+      Gang of Four with full entries and distributed counterparts `[I]`
+- [x] [GAPS.md](GAPS.md) — what the original plan never included, tracked separately from what is
+      merely unbuilt
+
+The 10 `CORE` pairs below still need their own pages:
 
 - [ ] Load balancer + cache `[I]`
 - [ ] Cache + database `[I]`

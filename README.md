@@ -6,7 +6,7 @@
 systems, scalability patterns, real-world problems, working implementations, and an interactive
 visualizer for watching architectures evolve.
 
-[Start learning](#where-to-start) · [Open the visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) · [Roadmap](ROADMAP.md) · [Glossary](GLOSSARY.md)
+[Start learning](#where-to-start) · [Open the visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) · [Patterns](13-design-patterns/CATALOGUE.md) · [Combinations](14-component-combinations/MATRIX.md) · [Roadmap](ROADMAP.md) · [Gaps](GAPS.md)
 
 </div>
 
@@ -64,9 +64,9 @@ both the app and the diagrams committed here. They cannot drift apart.
 4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
 5. Open the [visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) and scrub the URL shortener from V1 to V8
 
-**Already comfortable** — go straight to
-component combinations, which is the part most material skips, or to
-real-world problems and their V1→V8 evolution.
+**Already comfortable** — go straight to the [combination matrix](14-component-combinations/MATRIX.md),
+which is the part most material skips, or the [pattern catalogue](13-design-patterns/CATALOGUE.md).
+What is deliberately **not** covered is listed in [GAPS.md](GAPS.md).
 
 **Preparing for an interview** — [Design Checklist](DESIGN-CHECKLIST.md) is the 45-minute short form.
 
@@ -99,7 +99,8 @@ systems are made of.
 | 05-databases/ · 06-messaging/ | ★ Storage and asynchrony |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
 | 09-scalability/ | Batching, async processing |
-| 14-component-combinations/ | **How components behave together** |
+| [13-design-patterns/](13-design-patterns/) | **101 patterns**, incl. all 23 Gang of Four with distributed counterparts |
+| [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |
 | 15-real-world-problems/ | Full designs, V1→V8 |
 | [18-implementations/](18-implementations/) | Working Python code + measured benchmarks |
 | [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated diagrams |

@@ -28,6 +28,15 @@ jobs:
       - name: No committed diagram is stale versus its scene
         run: python scripts/render_diagrams.py --check
 
+      # The matrix and catalogue are generated from data. A hand-edit to the
+      # markdown would be silently reverted on the next regeneration, so the
+      # build refuses to let the two drift apart.
+      - name: Combination matrix matches its generator
+        run: python scripts/gen_combination_matrix.py --check
+
+      - name: Pattern catalogue matches its generator
+        run: python scripts/gen_pattern_catalogue.py --check
+
   visualizer:
     name: Visualizer · lint + build
     runs-on: ubuntu-latest
