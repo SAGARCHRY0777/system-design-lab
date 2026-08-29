@@ -95,7 +95,7 @@ systems are made of.
 | Where | What |
 |---|---|
 | [00-foundations/](00-foundations/) | Latency, throughput, scalability, availability, reliability, consistency, CAP |
-| 03-load-balancing/ · 04-caching/ | ★ Flagship components, full depth |
+| [03-load-balancing/](03-load-balancing/fundamentals/) · [04-caching/](04-caching/fundamentals/) | ★ Flagship components, full depth |
 | 05-databases/ · 06-messaging/ | ★ Storage and asynchrony |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
 | 09-scalability/ | Batching, async processing |

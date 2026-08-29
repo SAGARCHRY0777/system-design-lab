@@ -65,8 +65,8 @@ because in practice it is never traded alone — always against write latency.
 
 ★ = flagship, full 33-section treatment; these are the worked examples of the template.
 
-- [ ] ★ Load balancer `[B]`
-- [ ] ★ Cache `[B]`
+- [x] ★ [Load balancer](03-load-balancing/fundamentals/) `[B]`
+- [x] ★ [Cache](04-caching/fundamentals/) `[B]`
 - [ ] ★ Database `[I]`
 - [ ] ★ Queue `[I]`
 - [ ] Worker `[B]`

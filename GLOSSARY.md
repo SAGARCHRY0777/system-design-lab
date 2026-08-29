@@ -31,10 +31,13 @@ Fixing anything else changes nothing. → [SYSTEM-DESIGN-THINKING.md](SYSTEM-DES
 ### Cache
 A faster, smaller copy of data kept nearer the reader. Buys latency, sells **staleness**. Worth having
 only when access is **skewed** — a cache over uniformly random reads hits almost never.
+→ [04-caching/fundamentals/](04-caching/fundamentals/)
 
 ### Cache invalidation
 Deciding when a cached copy is no longer true. Genuinely one of the hardest problems in the field,
 because the cache has no way to know the source changed unless something tells it.
+→ [04-caching/fundamentals/](04-caching/fundamentals/)
+
 ### CAP theorem
 Under a network **partition** you must choose availability or consistency. It says nothing about
 normal operation — which is why [PACELC](#pacelc) exists. Widely misquoted as "pick two of three".
@@ -84,6 +87,8 @@ your least happy users, and at scale a 1% tail is a lot of people.
 Spreads requests across servers. Also buys zero-downtime deploys, which is usually the benefit that
 actually forces the change. Make it redundant, or it becomes the single point of failure it was meant
 to remove.
+→ [03-load-balancing/fundamentals/](03-load-balancing/fundamentals/)
+
 ### Partition (data)
 Splitting a dataset into pieces. See [sharding](#sharding) for splitting it across *machines*.
 
@@ -135,6 +140,8 @@ worse.
 ### Thundering herd
 A cached key expires and every waiting request hits the database at once. The most common way a cache
 outage becomes a full outage.
+→ [04-caching/fundamentals/](04-caching/fundamentals/)
+
 ### Timeout
 A cap on how long you wait. **Slow is worse than down**: a dead dependency fails fast and you route
 around it; a slow one holds every thread that touches it.
