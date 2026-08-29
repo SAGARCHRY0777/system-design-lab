@@ -17,6 +17,7 @@ and the distributed version has neither.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -25,6 +26,8 @@ from patterns_data import GOF_BEHAVIORAL, GOF_CREATIONAL, GOF_STRUCTURAL  # noqa
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "13-design-patterns" / "CATALOGUE.md"
+# The visualizer imports this, so the app and the markdown cannot drift.
+OUT_JSON = ROOT / "13-design-patterns" / "patterns.json"
 
 EIP = [
     ("Message Channel", "A named conduit between producer and consumer", "queue, topic"),
@@ -249,24 +252,68 @@ def build() -> str:
     return "\n".join(L)
 
 
+def build_json() -> str:
+    """Machine-readable form for the visualizer.
+
+    Emitted from the same tables that produce the markdown, so a pattern cannot
+    be described one way on the page and another way in the app.
+    """
+    out = {"families": []}
+    for title, blurb, group in GOF_GROUPS:
+        out["families"].append({
+            "id": f"gof-{title.lower()}",
+            "name": f"Gang of Four — {title}",
+            "blurb": blurb,
+            "patterns": [
+                {"name": n, "what": p["what"], "where": p["where"], "how": p["how"],
+                 "why": p["why"], "adv": p["adv"], "dis": p["dis"],
+                 "tradeoff": p["tradeoff"], "top1": p["top1"],
+                 "bridge": p.get("bridge"), "harder": p.get("harder")}
+                for n, p in group.items()
+            ],
+        })
+    for fid, name, blurb, rows, keys in [
+        ("eip", "Enterprise integration", "Messages between services.", EIP, ("what", "where")),
+        ("distributed", "Distributed systems", "Nodes and data.", DISTRIBUTED, ("what", "level")),
+        ("resilience", "Resilience", "Behaviour under failure.", RESILIENCE, ("what",)),
+        ("deployment", "Deployment", "Change without downtime.", DEPLOYMENT, ("what",)),
+    ]:
+        pats = []
+        for row in rows:
+            d = {"name": row[0], "what": row[1]}
+            if len(row) > 2:
+                d[keys[1]] = row[2]
+            pats.append(d)
+        out["families"].append({"id": fid, "name": name, "blurb": blurb, "patterns": pats})
+    return json.dumps(out, indent=2, ensure_ascii=False) + chr(10)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
     content = build()
+    payload = build_json()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     current = OUT.read_text(encoding="utf-8") if OUT.exists() else None
+    current_json = OUT_JSON.read_text(encoding="utf-8") if OUT_JSON.exists() else None
 
     if args.check:
-        if current != content:
-            print("CATALOGUE.md is stale -- run: python scripts/gen_pattern_catalogue.py")
+        stale = [name for name, a, b in (
+            ("CATALOGUE.md", current, content),
+            ("patterns.json", current_json, payload),
+        ) if a != b]
+        if stale:
+            print(f"stale: {', '.join(stale)} -- run: python scripts/gen_pattern_catalogue.py")
             return 1
-        print("CATALOGUE.md matches the generator")
+        print("CATALOGUE.md and patterns.json match the generator")
         return 0
 
     OUT.write_text(content, encoding="utf-8", newline="\n")
+    OUT_JSON.write_text(payload, encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(content.splitlines())} lines)")
+    print(f"wrote {OUT_JSON.relative_to(ROOT)}")
     return 0
 
 

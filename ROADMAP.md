@@ -41,6 +41,12 @@ every diagram.
 - [x] Bottleneck highlighting
 - [x] CI (lint + build) and Pages deploy workflow
 - [x] First scene: [url-shortener](19-diagrams/scenes/url-shortener.json), 8 versions, 12 flows, 5 failure modes
+- [x] Light / dark / system theme, remembered per viewer
+- [x] Simulated-time animation — the packet dwells inside each component for what
+      that component costs, so a database visit visibly takes ~30x a cache lookup
+- [x] Request stops at a downed component instead of passing through it
+- [x] Running latency readout, speeds from 0.1x, step-by-step and scrub
+- [x] Patterns browser, fed from the same data as CATALOGUE.md
 - [ ] Keyboard navigation and a reduced-motion still mode
 - [ ] Scene picker populated as more systems land
 
@@ -91,7 +97,7 @@ The part most material skips, and the reason this repository exists.
 
 - [x] [Combination matrix](14-component-combinations/MATRIX.md) — **all 153 pairs** classified, every
       CORE/REAL pair with a real system and a public source `[I]`
-- [x] [Pattern catalogue](13-design-patterns/CATALOGUE.md) — **101 patterns**, five families; all 23
+- [x] [Pattern catalogue](13-design-patterns/CATALOGUE.md) — **78 patterns**, five families; all 23
       Gang of Four with full entries and distributed counterparts `[I]`
 - [x] [GAPS.md](GAPS.md) — what the original plan never included, tracked separately from what is
       merely unbuilt

@@ -1,22 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1532 292" width="1532" height="292" role="img" aria-label="URL Shortener version 6: 1B req/day">
-<style>
-.bg{fill:#0e1414}
-.shape{fill:#111818;stroke:#344544;stroke-width:1.6}
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
 .shape.cache{stroke-dasharray:7 5}
-.shape.bottleneck{stroke:#d9a441;stroke-width:2.2}
-.lbl{fill:#e4ecea;font:500 12.5px system-ui,sans-serif}
-.note{fill:#6f817d;font:10px system-ui,sans-serif}
-.edge{fill:none;stroke:#344544;stroke-width:1.6}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
 .edge.async{stroke-dasharray:6 5}
 .edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
-.elbl{fill:#6f817d;font:10px system-ui,sans-serif}
-.head{fill:#344544}
-.title{fill:#e4ecea;font:600 14px system-ui,sans-serif}
-.sub{fill:#9fb0ac;font:12px system-ui,sans-serif}
-.tag{fill:#4fc3a1;font:600 11px ui-monospace,monospace}
-.halo{fill:#4fc3a1;opacity:.2}
-.core{fill:#4fc3a1}
-</style>
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
 <rect class="bg" width="1532" height="292"/>
 <text class="tag" x="40" y="26">V6</text>
 <text class="title" x="70" y="26">URL Shortener</text>

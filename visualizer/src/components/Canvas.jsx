@@ -95,7 +95,7 @@ function edgePath(a, b) {
 
 export default function Canvas({
   scene, version, positions, width, height,
-  packet, activeHopEdge, downNodes, bottleneck, edges,
+  packet, activeNode, activeHopEdge, downNodes, bottleneck, edges,
 }) {
   return (
     <svg
@@ -144,8 +144,15 @@ export default function Canvas({
         if (!n || !p) return null
         const down = downNodes.has(id)
         const isBottleneck = bottleneck === id && !down
-        const cls = ['node', `node-${n.kind}`, down && 'node-down', isBottleneck && 'node-bottleneck']
-          .filter(Boolean).join(' ')
+        // The node currently doing work is lit. Without this the packet looks
+        // like it is gliding past components rather than being processed by them.
+        const working = activeNode === id
+        const cls = [
+          'node', `node-${n.kind}`,
+          down && 'node-down',
+          isBottleneck && 'node-bottleneck',
+          working && 'node-active',
+        ].filter(Boolean).join(' ')
         return (
           <g key={id} className={cls}>
             <Shape kind={n.kind} x={p.x} y={p.y} className="node-shape" />
@@ -162,9 +169,18 @@ export default function Canvas({
       })}
 
       {packet && (
-        <g className="packet" transform={`translate(${packet.x} ${packet.y})`}>
-          <circle r="11" className="packet-halo" />
+        <g
+          className={packet.failed ? 'packet failed' : 'packet'}
+          transform={`translate(${packet.x} ${packet.y})`}
+        >
+          <circle r={packet.failed ? 14 : 11} className="packet-halo" />
           <circle r="5.5" className="packet-core" />
+          {packet.failed && (
+            <>
+              <line x1="-5" y1="-5" x2="5" y2="5" className="packet-x" />
+              <line x1="5" y1="-5" x2="-5" y2="5" className="packet-x" />
+            </>
+          )}
         </g>
       )}
     </svg>

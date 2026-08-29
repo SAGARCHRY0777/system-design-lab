@@ -6,7 +6,7 @@ difficulty: Intermediate
 
 # Design Patterns
 
-**→ [The full catalogue](CATALOGUE.md)** — 101 patterns across five families.
+**→ [The full catalogue](CATALOGUE.md)** — 78 patterns across five families.
 
 Most system design material covers architectural patterns and drops the Gang of Four on the grounds
 that they are "just object-oriented design". This repository keeps both, because the interesting

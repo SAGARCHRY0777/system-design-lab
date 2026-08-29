@@ -1,0 +1,606 @@
+{
+  "families": [
+    {
+      "id": "gof-creational",
+      "name": "Gang of Four — Creational",
+      "blurb": "How objects get made.",
+      "patterns": [
+        {
+          "name": "Singleton",
+          "what": "Exactly one instance of a type, globally reachable.",
+          "where": "Logger and config objects in almost every codebase; connection pools.",
+          "how": "A private constructor and a static accessor that lazily creates and caches the instance.",
+          "why": "Some resources genuinely must be unique — one connection pool, one metrics registry — and creating a second silently doubles the resource.",
+          "adv": "Guarantees uniqueness; avoids repeatedly constructing something expensive.",
+          "dis": "Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong.",
+          "tradeoff": "Uniqueness bought with global state and untestability.",
+          "top1": "They mostly do not use it. They register a single instance in a dependency-injection container instead — you still get one instance, but it arrives as a constructor argument, so it is visible, substitutable in tests, and has an obvious lifetime. When they *do* use the classic form, it is for something with no state worth resetting. The tell that it is being misused: a test that passes alone and fails in a suite.",
+          "bridge": "Leader election · distributed lock",
+          "harder": "One process needs a static field. A cluster needs consensus, a lease and a fencing token — and during a partition two nodes can both believe they are the singleton."
+        },
+        {
+          "name": "Factory Method",
+          "what": "A method that creates objects, letting subclasses decide the concrete type.",
+          "where": "Framework extension points; `Iterator` creation in collection libraries.",
+          "how": "Define a creation method in a base class; subclasses override it to return their own type.",
+          "why": "Callers should depend on an interface, not on a constructor for a concrete class.",
+          "adv": "Decouples construction from use; new types need no caller changes.",
+          "dis": "A class per variant. Indirection that is not worth it when there are only two cases.",
+          "tradeoff": "Flexibility bought with indirection.",
+          "top1": "They add it when the *second* variant appears, not in anticipation of one. A factory with a single implementation is speculative generality — the cost is paid now, the benefit may never arrive. They also prefer a plain function over a class hierarchy when the language allows it.",
+          "bridge": "Service discovery · DI container",
+          "harder": "'Which implementation' becomes 'which instance, and is it healthy right now'."
+        },
+        {
+          "name": "Abstract Factory",
+          "what": "Create families of related objects without naming their concrete classes.",
+          "where": "Cross-platform UI toolkits; cloud-provider abstraction layers.",
+          "how": "An interface with several creation methods; each concrete factory returns a matched set.",
+          "why": "Some objects only work together — a Windows button with a Windows scrollbar — and mixing families breaks things.",
+          "adv": "Guarantees a consistent family; swapping the whole set is one line.",
+          "dis": "Adding a new *product* to the family changes every factory. Heavy for small variation.",
+          "tradeoff": "Family consistency bought with rigidity.",
+          "top1": "They are sceptical of it for cloud abstraction specifically. Providers differ in *capability*, not only in naming, so the abstraction leaks the moment one lacks a primitive — and you end up with the intersection of every provider's features, which is worse than picking one. They use it where the families are genuinely symmetric, and accept lock-in where they are not.",
+          "bridge": "Cloud provider abstraction · driver families",
+          "harder": "The families differ in what they can do, not just in what they are called."
+        },
+        {
+          "name": "Builder",
+          "what": "Construct a complex object step by step, separating construction from representation.",
+          "where": "HTTP request builders; query builders; `StringBuilder`.",
+          "how": "A builder accumulates parameters through chained calls, then produces the object.",
+          "why": "Constructors with many optional parameters become unreadable and error-prone — two adjacent booleans are a bug waiting to happen.",
+          "adv": "Readable at the call site; supports immutability; validates once at build time.",
+          "dis": "More code than a constructor. An unbuilt builder is an easy thing to leave dangling.",
+          "tradeoff": "Call-site clarity bought with boilerplate.",
+          "top1": "They validate in `build()`, not in each setter, so the object cannot exist in an invalid state — and they make the built object immutable. The version that quietly causes bugs is a reusable builder whose state leaks between builds.",
+          "bridge": "Fluent request builders · infrastructure-as-code",
+          "harder": "A half-built distributed resource is already running and already costing money."
+        },
+        {
+          "name": "Prototype",
+          "what": "Create new objects by cloning an existing instance.",
+          "where": "Container images; VM templates; database snapshots; game entity spawning.",
+          "how": "The object exposes a `clone()` that copies its own state.",
+          "why": "Sometimes construction is expensive but copying is cheap — or the desired initial state only exists at runtime.",
+          "adv": "Avoids expensive setup; captures runtime-configured state.",
+          "dis": "Deep versus shallow copy is a persistent source of bugs. Cloning objects holding handles, locks or connections is usually wrong.",
+          "tradeoff": "Cheap creation bought with copy-semantics hazards.",
+          "top1": "They ask what the clone must *not* inherit — identity, connections, locks, caches — and explicitly reset those. The classic production bug is a cloned object that inherited the original's open connection or its ID.",
+          "bridge": "Container images · VM templates · snapshots",
+          "harder": "Cloning state is easy; cloning identity is not. The clone must not inherit leases or client connections."
+        }
+      ]
+    },
+    {
+      "id": "gof-structural",
+      "name": "Gang of Four — Structural",
+      "blurb": "How objects are composed.",
+      "patterns": [
+        {
+          "name": "Adapter",
+          "what": "Convert one interface into another the caller expects.",
+          "where": "ORM drivers; payment gateway integrations; anti-corruption layers.",
+          "how": "Wrap the incompatible object and translate calls.",
+          "why": "You do not control the third-party interface, and you do not want its shape leaking through your codebase.",
+          "adv": "Integrates incompatible code without modifying either side; contains the foreign model.",
+          "dis": "An extra layer to maintain. Can hide semantic mismatches that are not merely syntactic.",
+          "tradeoff": "Compatibility bought with a translation layer.",
+          "top1": "They use it as a boundary for the *domain model*, not just for method signatures — a true anti-corruption layer. The failure they avoid: an adapter that mirrors the vendor's model one-to-one, which spreads the vendor's concepts through your code while adding a layer.",
+          "bridge": "Anti-corruption layer · protocol translation",
+          "harder": "The adapter now fails independently of both sides it adapts."
+        },
+        {
+          "name": "Bridge",
+          "what": "Separate an abstraction from its implementation so the two can vary independently.",
+          "where": "JDBC and database drivers; rendering backends; storage interfaces.",
+          "how": "The abstraction holds a reference to an implementation interface; both hierarchies evolve separately.",
+          "why": "Without it, `N` abstractions × `M` implementations means `N×M` classes.",
+          "adv": "Collapses a combinatorial class explosion to `N+M`; either side changes alone.",
+          "dis": "Indirection, and an abstraction that must genuinely fit every implementation.",
+          "tradeoff": "Independent variation bought with an extra indirection.",
+          "top1": "They reach for it only when both axes are *actually* varying. Most codebases have one implementation and will always have one, and a bridge there is pure cost.",
+          "bridge": "Storage/driver interfaces · pluggable backends",
+          "harder": "Implementations differ in failure modes, not only in method bodies."
+        },
+        {
+          "name": "Composite",
+          "what": "Treat individual objects and compositions of them uniformly.",
+          "where": "File system trees; UI component trees; nested permission groups.",
+          "how": "Leaf and container implement the same interface; the container delegates to children.",
+          "why": "Callers should not need to know whether they hold one thing or a thousand.",
+          "adv": "Uniform treatment; recursive structures become natural.",
+          "dis": "The interface becomes the union of leaf and container needs, so leaves get methods that make no sense for them. Recursion depth and cycles are real hazards.",
+          "tradeoff": "Uniformity bought with a weakened interface.",
+          "top1": "They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting. Distributed, they know a scatter-gather composite is as slow as its slowest member — every single time.",
+          "bridge": "Scatter-gather · fan-out aggregation",
+          "harder": "A composite call takes the slowest member's latency, every time — *The Tail at Scale*."
+        },
+        {
+          "name": "Decorator",
+          "what": "Attach behaviour to an object dynamically, without changing its type.",
+          "where": "HTTP middleware; Java I/O streams; service mesh sidecars.",
+          "how": "Wrap the object in something implementing the same interface, adding behaviour around calls.",
+          "why": "Subclassing for every combination of optional behaviours explodes combinatorially.",
+          "adv": "Compose behaviour at runtime; each concern stays separate.",
+          "dis": "Deep wrapping is very hard to debug — a stack trace forty frames of wrappers deep tells you nothing. Order matters and is invisible at the call site.",
+          "tradeoff": "Composability bought with debuggability.",
+          "top1": "They keep the chain shallow and make the order explicit and reviewable, because auth-then-log and log-then-auth are different systems. In middleware they know the ordering *is* the security model.",
+          "bridge": "Middleware · service mesh sidecar · filter chain",
+          "harder": "Each decorator is now a network hop with its own latency and its own failure mode."
+        },
+        {
+          "name": "Facade",
+          "what": "One simplified interface over a complex subsystem.",
+          "where": "API gateways; SDK entry points; backend-for-frontend.",
+          "how": "A single class exposing the few operations callers actually need.",
+          "why": "Subsystems accumulate surface area that most callers should never see.",
+          "adv": "Reduces coupling; gives newcomers one obvious entry point.",
+          "dis": "Can become a god object. Hides capability that some caller eventually needs, producing pressure to leak the subsystem back out.",
+          "tradeoff": "Simplicity bought with hidden capability.",
+          "top1": "They keep the subsystem reachable for the callers who need it, rather than making the facade the only door. Distributed, they watch for the facade becoming both a single point of failure and a deployment bottleneck for every team behind it.",
+          "bridge": "API gateway · backend-for-frontend",
+          "harder": "It becomes a single point of failure and a release bottleneck for every team behind it."
+        },
+        {
+          "name": "Flyweight",
+          "what": "Share common state across many objects instead of duplicating it.",
+          "where": "String interning; glyph caches; connection pools.",
+          "how": "Split intrinsic (shared) from extrinsic (per-use) state; cache and reuse the intrinsic part.",
+          "why": "Millions of near-identical objects exhaust memory when each carries its own copy.",
+          "adv": "Large memory savings when duplication is genuinely high.",
+          "dis": "Shared state must be immutable or you have introduced a data race. Complicates the object model for what is often a modest saving.",
+          "tradeoff": "Memory bought with shared-mutability risk.",
+          "top1": "They measure first. It is a real win at millions of objects and pure complexity at thousands. Its distributed descendant — connection pooling — they *always* use, and they size it with Little's Law rather than by copying a default.",
+          "bridge": "Connection pooling · shared caches · interning",
+          "harder": "Shared state across processes needs invalidation; a pooled connection can be stale in ways an interned string never is."
+        },
+        {
+          "name": "Proxy",
+          "what": "A stand-in that controls access to another object.",
+          "where": "Reverse proxies; lazy-loading ORM entities; sidecars; read-through caches.",
+          "how": "Same interface as the subject; intercepts calls to add laziness, access control, caching or remoting.",
+          "why": "You want to intervene between caller and subject without either knowing.",
+          "adv": "Adds cross-cutting behaviour transparently.",
+          "dis": "Transparency is the danger: a call that looks local is a network round trip, or triggers a lazy load. This is exactly the N+1 query problem.",
+          "tradeoff": "Transparency bought with hidden cost.",
+          "top1": "They make the expensive case *visible* rather than seamless. An ORM lazy-loading proxy that silently issues a query per loop iteration is the single most common performance bug in web applications, and it exists because the proxy hid the cost perfectly.",
+          "bridge": "Reverse proxy · sidecar · read-through cache",
+          "harder": "A remote proxy can be reachable while its subject is not — exactly the case needing a timeout and a circuit breaker."
+        }
+      ]
+    },
+    {
+      "id": "gof-behavioural",
+      "name": "Gang of Four — Behavioural",
+      "blurb": "How objects collaborate.",
+      "patterns": [
+        {
+          "name": "Chain of Responsibility",
+          "what": "Pass a request along a chain until a handler deals with it.",
+          "where": "HTTP middleware pipelines; Netflix Zuul filters; event bubbling in UIs.",
+          "how": "Each handler either processes the request or forwards it to the next.",
+          "why": "The sender should not know which handler will act, or how many exist.",
+          "adv": "Handlers are added and reordered without touching the sender.",
+          "dis": "A request can fall off the end unhandled. Debugging means tracing the whole chain.",
+          "tradeoff": "Decoupling bought with control-flow opacity.",
+          "top1": "They always define terminal behaviour, so nothing silently falls through, and they make the chain order explicit configuration rather than registration-order accident. In middleware the order is the security model, so it gets reviewed like one.",
+          "bridge": "Middleware pipeline · filter chain",
+          "harder": "A handler mid-chain can be slow rather than absent, and the chain has no natural timeout."
+        },
+        {
+          "name": "Command",
+          "what": "Encapsulate a request as an object.",
+          "where": "Undo/redo stacks; job queues; event sourcing; CQRS write side.",
+          "how": "Wrap the action and its parameters in an object with an `execute()`.",
+          "why": "Requests need to be queued, logged, retried, scheduled or undone — none of which is possible with a bare method call.",
+          "adv": "Enables undo, queueing, retry, audit and replay.",
+          "dis": "A class per action. Serialised commands must stay compatible with future code.",
+          "tradeoff": "Deferability bought with indirection and versioning obligations.",
+          "top1": "They treat a serialised command as a **permanent public API**. A command written today may be replayed in two years by code that does not exist yet, so it is versioned from day one and never has a field's meaning quietly changed. That discipline is what makes event sourcing survivable.",
+          "bridge": "Message · job · event sourcing",
+          "harder": "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe."
+        },
+        {
+          "name": "Interpreter",
+          "what": "Represent a grammar and evaluate sentences in it.",
+          "where": "SQL engines; regular expressions; rules engines; query DSLs.",
+          "how": "Model grammar rules as a class hierarchy; evaluate recursively over the tree.",
+          "why": "Some problems are best expressed in a small language rather than in code.",
+          "adv": "Users express intent declaratively; the language can be optimised independently.",
+          "dis": "Grammars grow. A hand-rolled interpreter becomes a maintenance burden fast, and performance is usually poor without a compilation step.",
+          "tradeoff": "Expressiveness bought with a language to maintain forever.",
+          "top1": "They resist writing one. A configuration DSL becomes Turing-complete by accident, and then you own a programming language you never meant to design. When it is genuinely warranted they use an existing grammar or parser generator.",
+          "bridge": "Query planners · SQL and DSL execution",
+          "harder": "The same query has different optimal plans on different shards."
+        },
+        {
+          "name": "Iterator",
+          "what": "Traverse a collection without exposing its internal structure.",
+          "where": "Every standard library; database cursors; paginated APIs.",
+          "how": "An object holding traversal position, with `next()` and `hasNext()`.",
+          "why": "Callers should not depend on whether it is an array, a tree or a stream.",
+          "adv": "Uniform traversal; supports laziness and infinite sequences.",
+          "dis": "Concurrent modification during traversal. State that must be cleaned up.",
+          "tradeoff": "Abstraction bought with lifetime and concurrency concerns.",
+          "top1": "In distributed systems they insist on **cursor** pagination over offset pagination. Offset pagination silently skips and duplicates rows when the underlying data changes mid-traversal, and the bug is invisible in testing because test data does not move. This one distinction separates people who have run a paginated API in production from people who have not.",
+          "bridge": "Cursor pagination · scroll APIs",
+          "harder": "The collection changes mid-traversal; offset pagination silently skips and duplicates."
+        },
+        {
+          "name": "Mediator",
+          "what": "Objects communicate through a hub rather than directly with each other.",
+          "where": "Message brokers; saga orchestrators; UI dialog coordinators; air traffic control.",
+          "how": "A mediator holds the interaction rules; participants only know the mediator.",
+          "why": "`N` objects talking directly to each other is `N²` couplings, and every one is a reason to redeploy something.",
+          "adv": "Collapses `N²` couplings to `N`; interaction logic lives in one reviewable place.",
+          "dis": "The mediator accumulates all the complexity it removed from everyone else, and becomes a god object. It is also, distributed, a single point of failure.",
+          "tradeoff": "Decoupling bought by concentrating complexity in one place.",
+          "top1": "They watch for the mediator becoming the thing nobody dares change. Distributed, the critical question is one most people skip: **is the mediator itself redundant?** A message broker mediating twelve services caps all twelve at its own availability, and it is routinely the least redundant thing in the diagram.",
+          "bridge": "Message broker · orchestrator · saga coordinator",
+          "harder": "It becomes the availability ceiling for everything it mediates."
+        },
+        {
+          "name": "Memento",
+          "what": "Capture and restore an object's state without violating encapsulation.",
+          "where": "Undo stacks; database savepoints; consumer offsets; VM snapshots.",
+          "how": "The object produces an opaque snapshot only it can interpret.",
+          "why": "Rollback requires saved state, but exposing internals to save them breaks encapsulation.",
+          "adv": "Undo without leaking internals.",
+          "dis": "Memory cost per snapshot. Snapshots go stale as the class evolves.",
+          "tradeoff": "Reversibility bought with storage and versioning.",
+          "top1": "They snapshot *deltas* rather than full state where they can, and version the snapshot format. Distributed, they know a snapshot across nodes is not a moment in time unless it is coordinated — which is what Chandy–Lamport exists for, and why 'just snapshot everything at midnight' is not a backup strategy.",
+          "bridge": "Snapshots · checkpoints · consumer offsets",
+          "harder": "A distributed snapshot is not a single moment unless coordinated (Chandy–Lamport)."
+        },
+        {
+          "name": "Observer",
+          "what": "Notify dependents automatically when an object changes state.",
+          "where": "Pub/sub; webhooks; UI data binding; change data capture.",
+          "how": "Subjects keep a subscriber list and call each on change.",
+          "why": "Publishers should not need to know who cares.",
+          "adv": "Loose coupling; subscribers added without touching the publisher.",
+          "dis": "Notification order is unspecified. Cascading updates are hard to trace. **Subscribers that are never removed are a classic memory leak.**",
+          "tradeoff": "Decoupling bought with untraceable control flow.",
+          "top1": "They treat unsubscription as a lifecycle obligation, because the leak is silent and only appears under sustained load. Distributed, they know the in-process version cannot fail and the distributed version fails constantly — delivery is not guaranteed, ordering is not guaranteed, and the observer may be down. Every webhook needs retry, idempotency and a DLQ.",
+          "bridge": "Pub/sub · webhooks · change data capture",
+          "harder": "Delivery and ordering are not guaranteed and the observer may be down. In-process this was a method call that could not fail."
+        },
+        {
+          "name": "State",
+          "what": "Change an object's behaviour when its internal state changes.",
+          "where": "Order lifecycles; connection state machines; workflow engines like Temporal.",
+          "how": "Each state is an object; the context delegates and states control transitions.",
+          "why": "Large conditionals over a status field become unmaintainable and permit illegal transitions.",
+          "adv": "Illegal transitions become impossible rather than merely discouraged; each state is testable alone.",
+          "dis": "A class per state. Overkill for two or three states.",
+          "tradeoff": "Correctness bought with class count.",
+          "top1": "They draw the diagram first and treat *missing* arrows as the specification — the value is in the transitions you have made unrepresentable. Distributed, transitions must be durable and exactly-once, because a crash mid-transition leaves the machine in a state that does not appear on the diagram at all.",
+          "bridge": "Workflow engines · Step Functions · Temporal",
+          "harder": "Transitions must be durable and exactly-once, or a crash lands you in an undefined state."
+        },
+        {
+          "name": "Strategy",
+          "what": "Select an interchangeable algorithm at runtime.",
+          "where": "Load balancing algorithms; compression codec selection; pricing rules; sort comparators.",
+          "how": "Encapsulate each algorithm behind a common interface; inject the chosen one.",
+          "why": "Hard-coded conditionals over algorithm choice are rigid and untestable in isolation.",
+          "adv": "Algorithms swap without touching callers; each is testable alone.",
+          "dis": "Callers must know enough to choose. A class per algorithm.",
+          "tradeoff": "Flexibility bought with a choice the caller now has to make.",
+          "top1": "They make the *default* correct and the choice rare, rather than exposing a menu. In load balancing they know least-connections usually beats round-robin for heterogeneous request costs — and that the right strategy depends on live conditions the caller cannot see, which is an argument for choosing adaptively rather than configuring.",
+          "bridge": "Load balancing algorithms · routing and placement policy",
+          "harder": "The right strategy depends on live conditions the caller cannot observe."
+        },
+        {
+          "name": "Template Method",
+          "what": "A base class defines the skeleton; subclasses fill in steps.",
+          "where": "Framework lifecycle hooks; test setup/teardown; MapReduce.",
+          "how": "A non-overridable method calls overridable steps in a fixed order.",
+          "why": "Several variants share a sequence but differ in individual steps.",
+          "adv": "Removes duplication; the shared sequence is enforced, not merely documented.",
+          "dis": "Inheritance-based, so it is rigid — subclasses are bound to the base's shape. Deep hierarchies become opaque.",
+          "tradeoff": "Shared structure bought with inheritance coupling.",
+          "top1": "They prefer composition — pass the steps in as functions — because it composes and tests better than a hierarchy. Distributed, one slow step stalls every stage behind it, which is why pipelines need per-stage timeouts.",
+          "bridge": "Framework hooks · pipeline stages · MapReduce",
+          "harder": "One slow or failing step stalls every stage behind it."
+        },
+        {
+          "name": "Visitor",
+          "what": "Add operations to an object structure without modifying its classes.",
+          "where": "AST traversal in compilers; linters; schema migration tooling.",
+          "how": "Elements accept a visitor and dispatch to the method for their type.",
+          "why": "You need new operations over a stable structure, and editing every class for each new operation does not scale.",
+          "adv": "New operations without touching the elements; related logic stays together.",
+          "dis": "**Adding a new element type breaks every visitor.** Double dispatch is awkward in most languages and unfamiliar to most readers.",
+          "tradeoff": "Operation extensibility bought with element rigidity.",
+          "top1": "They apply the rule that decides it: use Visitor when the *structure* is stable and the *operations* churn; if new element types appear regularly, it is the wrong pattern and will punish you on every addition. In languages with pattern matching they use that instead.",
+          "bridge": "AST/query traversal · schema migration tooling",
+          "harder": "The structure is distributed, so traversal is a distributed algorithm with partial failure."
+        }
+      ]
+    },
+    {
+      "id": "eip",
+      "name": "Enterprise integration",
+      "blurb": "Messages between services.",
+      "patterns": [
+        {
+          "name": "Message Channel",
+          "what": "A named conduit between producer and consumer",
+          "where": "queue, topic"
+        },
+        {
+          "name": "Point-to-Point Channel",
+          "what": "Exactly one consumer receives each message",
+          "where": "SQS, RabbitMQ queue"
+        },
+        {
+          "name": "Publish-Subscribe",
+          "what": "Every subscriber receives every message",
+          "where": "SNS, Kafka topic"
+        },
+        {
+          "name": "Message Router",
+          "what": "Route by content or header",
+          "where": "Kafka partitioner, exchange bindings"
+        },
+        {
+          "name": "Content-Based Router",
+          "what": "Route on payload contents",
+          "where": "event routing rules"
+        },
+        {
+          "name": "Message Translator",
+          "what": "Convert between formats",
+          "where": "schema registry, adapters"
+        },
+        {
+          "name": "Message Filter",
+          "what": "Discard messages that do not match",
+          "where": "subscription filters"
+        },
+        {
+          "name": "Splitter",
+          "what": "One message into many",
+          "where": "batch fan-out"
+        },
+        {
+          "name": "Aggregator",
+          "what": "Many messages into one",
+          "where": "windowed aggregation"
+        },
+        {
+          "name": "Resequencer",
+          "what": "Restore order after out-of-order delivery",
+          "where": "sequence numbers"
+        },
+        {
+          "name": "Scatter-Gather",
+          "what": "Broadcast, then combine responses",
+          "where": "federated search"
+        },
+        {
+          "name": "Dead Letter Channel",
+          "what": "Park messages that cannot be processed",
+          "where": "DLQ"
+        },
+        {
+          "name": "Idempotent Receiver",
+          "what": "Safe to receive the same message twice",
+          "where": "idempotency keys"
+        },
+        {
+          "name": "Competing Consumers",
+          "what": "Many workers on one queue",
+          "where": "consumer groups"
+        },
+        {
+          "name": "Claim Check",
+          "what": "Store the payload, pass a reference",
+          "where": "S3 pointer in the message"
+        },
+        {
+          "name": "Guaranteed Delivery",
+          "what": "Message survives a crash",
+          "where": "persistent queues, WAL"
+        },
+        {
+          "name": "Transactional Outbox",
+          "what": "Write and publish atomically",
+          "where": "outbox table + CDC"
+        }
+      ]
+    },
+    {
+      "id": "distributed",
+      "name": "Distributed systems",
+      "blurb": "Nodes and data.",
+      "patterns": [
+        {
+          "name": "Saga",
+          "what": "Long-lived transaction as compensable local steps",
+          "level": "Advanced"
+        },
+        {
+          "name": "CQRS",
+          "what": "Separate read and write models",
+          "level": "Advanced"
+        },
+        {
+          "name": "Event Sourcing",
+          "what": "State as an append-only event log",
+          "level": "Advanced"
+        },
+        {
+          "name": "Transactional Outbox",
+          "what": "Atomically commit and publish",
+          "level": "Advanced"
+        },
+        {
+          "name": "Change Data Capture",
+          "what": "The replication log becomes the event stream",
+          "level": "Advanced"
+        },
+        {
+          "name": "Leader Election",
+          "what": "One node coordinates",
+          "level": "Expert"
+        },
+        {
+          "name": "Consensus (Raft/Paxos)",
+          "what": "Agreement despite failures",
+          "level": "Expert"
+        },
+        {
+          "name": "Quorum",
+          "what": "Majority read/write overlap",
+          "level": "Advanced"
+        },
+        {
+          "name": "Consistent Hashing",
+          "what": "Minimal reshuffling when nodes change",
+          "level": "Advanced"
+        },
+        {
+          "name": "Vector Clocks",
+          "what": "Track causality without a global clock",
+          "level": "Expert"
+        },
+        {
+          "name": "CRDT",
+          "what": "Data types that merge without coordination",
+          "level": "Expert"
+        },
+        {
+          "name": "Two-Phase Commit",
+          "what": "Atomic commit across nodes — and why it blocks",
+          "level": "Advanced"
+        },
+        {
+          "name": "Gossip",
+          "what": "Epidemic state dissemination",
+          "level": "Advanced"
+        },
+        {
+          "name": "Lease / Fencing Token",
+          "what": "Ownership that survives a stalled holder",
+          "level": "Expert"
+        },
+        {
+          "name": "Read Repair",
+          "what": "Fix stale replicas on read",
+          "level": "Advanced"
+        },
+        {
+          "name": "Hinted Handoff",
+          "what": "Hold writes for a node that is down",
+          "level": "Advanced"
+        },
+        {
+          "name": "Merkle Tree",
+          "what": "Cheaply find which replicas diverged",
+          "level": "Expert"
+        }
+      ]
+    },
+    {
+      "id": "resilience",
+      "name": "Resilience",
+      "blurb": "Behaviour under failure.",
+      "patterns": [
+        {
+          "name": "Retry with backoff + jitter",
+          "what": "Survive transient faults without synchronising clients"
+        },
+        {
+          "name": "Circuit Breaker",
+          "what": "Stop calling a failing dependency"
+        },
+        {
+          "name": "Bulkhead",
+          "what": "Isolate pools so one failure cannot exhaust everything"
+        },
+        {
+          "name": "Timeout",
+          "what": "Convert 'slow' into 'failed', the only mode you can handle"
+        },
+        {
+          "name": "Rate Limiting",
+          "what": "Cap what any one caller may consume"
+        },
+        {
+          "name": "Load Shedding",
+          "what": "Drop low-value work to protect high-value work"
+        },
+        {
+          "name": "Backpressure",
+          "what": "Tell producers to slow down instead of buffering forever"
+        },
+        {
+          "name": "Graceful Degradation",
+          "what": "Serve a reduced feature set rather than nothing"
+        },
+        {
+          "name": "Hedged Request",
+          "what": "Duplicate after p95, take the first answer — buys tail latency"
+        },
+        {
+          "name": "Health Check / Heartbeat",
+          "what": "Detect a dead instance before users do"
+        },
+        {
+          "name": "Cell-Based Architecture",
+          "what": "Partition the stack so failure has a bounded blast radius"
+        },
+        {
+          "name": "Chaos Engineering",
+          "what": "Inject failure deliberately — untested failover is not failover"
+        }
+      ]
+    },
+    {
+      "id": "deployment",
+      "name": "Deployment",
+      "blurb": "Change without downtime.",
+      "patterns": [
+        {
+          "name": "Blue-Green",
+          "what": "Two identical environments, flip traffic between them"
+        },
+        {
+          "name": "Canary",
+          "what": "Route a small percentage to the new version first"
+        },
+        {
+          "name": "Rolling Update",
+          "what": "Replace instances gradually"
+        },
+        {
+          "name": "Feature Flag",
+          "what": "Decouple deploying code from releasing behaviour"
+        },
+        {
+          "name": "Strangler Fig",
+          "what": "Replace a legacy system incrementally"
+        },
+        {
+          "name": "Expand-Contract",
+          "what": "Zero-downtime schema change in three deploys"
+        },
+        {
+          "name": "Sidecar",
+          "what": "Cross-cutting concerns in a co-located process"
+        },
+        {
+          "name": "Ambassador",
+          "what": "Proxy outbound calls on behalf of the application"
+        },
+        {
+          "name": "Backend-for-Frontend",
+          "what": "A tailored API per client type"
+        }
+      ]
+    }
+  ]
+}

@@ -1,17 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
+import Patterns from './components/Patterns.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
-import { activeEdges, flowAvailable, flowGeometry, layout, pointAt } from './lib/layout.js'
+import { activeEdges, flowAvailable, layout } from './lib/layout.js'
+import { buildTimeline, sampleTimeline } from './lib/timeline.js'
 
-const SPEED_PX_PER_S = 260
+// How many simulated milliseconds pass per real second. A database query
+// genuinely takes ~30ms, which is too fast to watch, so time is stretched.
+const SPEEDS = [
+  { label: '0.1×', factor: 12 },
+  { label: '0.25×', factor: 30 },
+  { label: '0.5×', factor: 60 },
+  { label: '1×', factor: 120 },
+  { label: '4×', factor: 480 },
+]
 
 export default function App() {
   const [sceneId, setSceneId] = useState(SCENES[0].id)
   const [vIndex, setVIndex] = useState(0)
   const [flowId, setFlowId] = useState(null)
   const [playing, setPlaying] = useState(false)
+  const [speedIdx, setSpeedIdx] = useState(3)
+  const [view, setView] = useState('architecture')
   const [down, setDown] = useState(() => new Set())
-  const [dist, setDist] = useState(0)
+  const [simMs, setSimMs] = useState(0)
 
   const scene = useMemo(() => SCENES.find(s => s.id === sceneId) ?? SCENES[0], [sceneId])
   const version = scene.versions[Math.min(vIndex, scene.versions.length - 1)]
@@ -24,9 +37,6 @@ export default function App() {
     [scene, version],
   )
 
-  // Changing scene or version can invalidate the selection: a flow that needed
-  // the cache is meaningless at V1. Fall back to the first available one rather
-  // than silently animating nothing.
   useEffect(() => {
     if (!flows.length) { setFlowId(null); return }
     if (!flows.some(f => f.id === flowId)) setFlowId(flows[0].id)
@@ -35,39 +45,41 @@ export default function App() {
   useEffect(() => { setDown(new Set()) }, [sceneId])
 
   const flow = flows.find(f => f.id === flowId) ?? null
-  const geo = useMemo(
-    () => (flow ? flowGeometry(flow.path, positions) : null),
-    [flow, positions],
+
+  const timeline = useMemo(
+    () => (flow ? buildTimeline(scene, flow, down) : null),
+    [scene, flow, down],
   )
 
-  // Animation loop. Distance-based rather than time-per-hop, so a long hop
-  // visibly takes longer than a short one — the picture should not imply that
-  // crossing an ocean costs the same as a call within a rack.
+  // Advance simulated time, not pixels. The packet dwells inside components for
+  // as long as that component costs, so a database visit visibly takes ~30x a
+  // cache lookup instead of both being a dot moving at the same speed.
   const raf = useRef(0)
   const last = useRef(0)
   useEffect(() => {
-    if (!playing || !geo || geo.total === 0) return undefined
+    if (!playing || !timeline || timeline.totalMs === 0) return undefined
     last.current = performance.now()
     const tick = now => {
       const dt = (now - last.current) / 1000
       last.current = now
-      setDist(d => {
-        const next = d + dt * SPEED_PX_PER_S
-        return next >= geo.total ? 0 : next
+      setSimMs(t => {
+        const next = t + dt * SPEEDS[speedIdx].factor
+        // A blocked request does not loop -- it stays failed until you fix it.
+        if (next >= timeline.totalMs) {
+          return timeline.blockedAt !== null ? timeline.totalMs : 0
+        }
+        return next
       })
       raf.current = requestAnimationFrame(tick)
     }
     raf.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf.current)
-  }, [playing, geo])
+  }, [playing, timeline, speedIdx])
 
-  useEffect(() => { setDist(0) }, [flowId, vIndex, sceneId])
+  useEffect(() => { setSimMs(0) }, [flowId, vIndex, sceneId, down])
 
-  const packet = geo && geo.total > 0 ? pointAt(geo, dist) : null
-  const activeHopEdge = useMemo(() => {
-    if (!flow || !packet) return null
-    return { from: flow.path[packet.hop], to: flow.path[packet.hop + 1] }
-  }, [flow, packet])
+  const sample = timeline ? sampleTimeline(timeline, positions, simMs) : null
+  const showPacket = !!sample && (playing || simMs > 0)
 
   const failures = scene.failures.filter(
     f => version.active.includes(f.node) && (!f.minVersion || version.v >= f.minVersion),
@@ -82,6 +94,18 @@ export default function App() {
     return next
   })
 
+  // Advance to the start of the next segment. Stepping hop-by-hop is the only
+  // way to actually inspect a 1ms cache lookup, however slow the playback is.
+  const step = () => {
+    if (!timeline) return
+    setPlaying(false)
+    const next = timeline.steps.find(s => s.startMs > simMs + 0.01)
+    setSimMs(next ? next.startMs : 0)
+  }
+
+  const blocked = timeline?.blockedAt !== null && timeline?.blockedNode
+  const reachedBlock = blocked && simMs >= timeline.totalMs - 1
+
   return (
     <div className="app">
       <header className="top">
@@ -89,26 +113,49 @@ export default function App() {
           <span className="dot" aria-hidden="true" />
           <h1>System Design Lab</h1>
         </div>
-        <label className="scene-pick">
-          <span>System</span>
-          <select value={sceneId} onChange={e => setSceneId(e.target.value)}>
-            {SCENES.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-          </select>
-        </label>
+        <nav className="viewnav">
+          <button
+            className={view === 'architecture' ? 'tick on' : 'tick'}
+            onClick={() => setView('architecture')}
+          >Architectures</button>
+          <button
+            className={view === 'patterns' ? 'tick on' : 'tick'}
+            onClick={() => setView('patterns')}
+          >Patterns</button>
+        </nav>
+        <div className="topright">
+          {view === 'architecture' && (
+            <label className="scene-pick">
+              <span>System</span>
+              <select value={sceneId} onChange={e => setSceneId(e.target.value)}>
+                {SCENES.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+              </select>
+            </label>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
-      <p className="summary">{scene.summary}</p>
+      {view === 'patterns' && <Patterns />}
 
+      {view === 'architecture' && <>
       <section className="stage">
         <div className="stage-head">
-          <div>
+          <div className="vwhy">
             <span className="vtag">V{version.v}</span>
             <strong>{version.label}</strong>
+            <p className="trigger">{version.trigger}</p>
           </div>
-          <div className="metrics">
-            <span><em>p50</em> {version.metrics.p50_ms} ms</span>
-            <span><em>p99</em> {version.metrics.p99_ms} ms</span>
-            <span><em>load</em> {version.traffic.label}</span>
+          <div className="readout">
+            <div className={`lat ${sample?.failed ? 'failed' : ''}`}>
+              <em>elapsed</em>
+              <strong>{sample ? Math.round(sample.elapsedMs) : 0}<span>ms</span></strong>
+            </div>
+            <div className="metrics">
+              <span><em>p50</em> {version.metrics.p50_ms} ms</span>
+              <span><em>p99</em> {version.metrics.p99_ms} ms</span>
+              <span><em>load</em> {version.traffic.label}</span>
+            </div>
           </div>
         </div>
 
@@ -116,6 +163,12 @@ export default function App() {
           <div className="banner outage">
             Total outage — no request completes. A component whose loss stops the system is never
             &ldquo;safe to lose&rdquo;, whatever the diagram says.
+          </div>
+        )}
+        {reachedBlock && !outage && (
+          <div className="banner outage">
+            Request failed at <strong>{scene.nodes[timeline.blockedNode]?.label}</strong> — it is
+            down, so nothing downstream of it is reached.
           </div>
         )}
 
@@ -126,18 +179,20 @@ export default function App() {
           width={width}
           height={height}
           edges={edges}
-          packet={playing || dist > 0 ? packet : null}
-          activeHopEdge={activeHopEdge}
+          packet={showPacket ? sample : null}
+          activeNode={showPacket ? sample.activeNode : null}
+          activeHopEdge={showPacket ? sample.edge : null}
           downNodes={down}
           bottleneck={bottleneck}
         />
+
+        <p className="simnote">
+          Timings are illustrative orders of magnitude, stretched so they are watchable — the point
+          is the <em>ratio</em> between a cache lookup and a database round trip, not the numbers.
+        </p>
       </section>
 
-      <section className="why">
-        <h2>Why this version exists</h2>
-        <p className="trigger">{version.trigger}</p>
-        {version.note && <p className="note">{version.note}</p>}
-      </section>
+      {version.note && <p className="note">{version.note}</p>}
 
       <section className="controls">
         <div className="ctl">
@@ -175,6 +230,32 @@ export default function App() {
               {flows.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
             </select>
           </div>
+          <div className="speeds">
+            {SPEEDS.map((s, i) => (
+              <button
+                key={s.label}
+                className={i === speedIdx ? 'tick on' : 'tick'}
+                onClick={() => setSpeedIdx(i)}
+              >
+                {s.label}
+              </button>
+            ))}
+            <button className="tick" onClick={step} disabled={!timeline}>Step ›</button>
+            {timeline && (
+              <span className="total">total {Math.round(timeline.totalMs)} ms</span>
+            )}
+          </div>
+          {timeline && (
+            <input
+              type="range"
+              min={0}
+              max={Math.max(1, Math.round(timeline.totalMs))}
+              value={Math.round(simMs)}
+              onChange={e => { setPlaying(false); setSimMs(Number(e.target.value)) }}
+              aria-label="Scrub through the request"
+              className="scrub"
+            />
+          )}
           {flow && <p className="hint">{flow.outcome}</p>}
           {!flows.length && <p className="hint">No flow defined at this version.</p>}
         </div>
@@ -197,8 +278,12 @@ export default function App() {
           ))}
         </div>
       </section>
+      </>}
 
       <footer>
+        <p>
+          <strong>{scene.title}.</strong> {scene.summary}
+        </p>
         <p>
           Shapes follow the notation contract — dashed means safe to lose, a cylinder means losing it
           costs data. Every architecture here is authored once as a scene file and drives both this

@@ -6,87 +6,118 @@ difficulty: n/a
 
 # Coverage Gaps
 
-What this repository does **not** cover yet, and — more usefully — what the original plan left out
-entirely. [ROADMAP.md](ROADMAP.md) tracks what is *planned and unbuilt*. This page tracks what was
-*never planned*, which is the more dangerous category, because an unplanned gap looks like coverage.
+What this repository does **not** cover, and what the original plan left out entirely.
+[ROADMAP.md](ROADMAP.md) tracks what is *planned and unbuilt*. This page tracks what was *never
+planned* — the more dangerous category, because an unplanned gap looks exactly like coverage.
 
-Every item says whether it is **missing from the plan** (nobody had thought of it) or **planned,
-unbuilt** (on the roadmap, not yet written).
+Status values: ✅ covered · ◐ partial · ❌ absent
 
 ---
 
-## Tier 1 — Missing from the plan, and they matter
+## Scorecard — the standard system design syllabus
 
-These are load-bearing topics that a serious system design resource cannot omit. None appears
-anywhere in the original 21-section tree.
+The list most interview guides and job descriptions use, scored honestly against this repository.
 
-| Gap | Why it matters | Status |
+| Topic | Status | Where it is, or why not |
 |---|---|---|
-| **API design** | REST vs gRPC vs GraphQL, versioning, pagination, error contracts, idempotency keys. The original plan says "identify the APIs" as a *step* but has no section on how to design one. It is the interface every other decision is expressed through. | Missing from plan |
-| **Schema migration** | Zero-downtime schema change — expand-contract, dual writes, backfills, and the fact that a migration is a *distributed* operation with partial failure. Enormous in real work, absent from the plan, and the single most common way a deploy causes an outage. | Missing from plan |
-| **Batch vs stream processing** | OLTP vs OLAP, ETL, windowing, watermarks, Lambda/Kappa. Half of what a data-heavy system does, and not represented at all. | Missing from plan |
-| **SLI / SLO / error budgets** | The vocabulary for deciding *how reliable is reliable enough*. Without it, availability targets are picked by feel. | Missing from plan |
-| **Multi-tenancy** | Isolation, noisy neighbours, per-tenant limits and data separation. Almost every B2B system, entirely absent. | Missing from plan |
-| **Cost** | Listed as a trade-off axis but has no section. At scale, cost *is* an architectural constraint — it kills more designs than latency does. | Missing from plan |
+| **Databases — SQL and NoSQL** | ✅ | [database](05-databases/fundamentals/) — the type table and the choose-by-access-pattern rule |
+| **Caching — strategies, eviction** | ✅ | [cache](04-caching/fundamentals/) |
+| **Redis vs Memcached** | ◐ | Named in the cache page's alternatives table; no comparison page |
+| **CDN** | ❌ | Referenced in 13 files, has no page |
+| **APIs — REST, gRPC, GraphQL, versioning** | ❌ | The word appears everywhere; API *design* is nowhere |
+| **Functional / non-functional requirements** | ◐ | Steps 3–4 of [the method](SYSTEM-DESIGN-THINKING.md); the NFRs each have a page; no page on eliciting or writing requirements |
+| **DNS** | ◐ | Mentioned in availability and load balancer; no page |
+| **TCP / UDP** | ❌ | One passing mention |
+| **HTTP / HTTP2 / HTTP3** | ❌ | Mentioned as a protocol label only |
+| **WebSockets** | ❌ | Two mentions |
+| **TLS / SSL** | ◐ | Certificate expiry as a failure mode; no page |
+| **OAuth** | ❌ | Zero occurrences |
+| **JWT** | ❌ | Zero occurrences |
+| **API security** | ❌ | — |
+| **Rate limiting** | ✅ | [Implementation](18-implementations/rate-limiter/) with measured benchmarks |
+| **DDoS protection** | ❌ | One mention |
+| **Message queues** | ✅ | [queue](06-messaging/queues/) |
+| **Kafka vs RabbitMQ** | ◐ | The queue-vs-stream distinction is covered properly; no product comparison page |
+| **Microservices vs monolith** | ❌ | Named in trade-offs; no page |
+| **Fault tolerance / fallback** | ◐ | [reliability](00-foundations/reliability/); circuit breaker and bulkhead have no pages |
+| **Redundancy** | ✅ | [availability](00-foundations/availability/) |
+| **Load balancer types and algorithms** | ✅ | [load balancer](03-load-balancing/fundamentals/) — L4/L7 and six algorithms |
+| **Observability — Prometheus, Grafana, ELK** | ❌ | **Zero occurrences.** Every concept page has a "how would you know it broke?" section pointing at nothing |
+| **Alerting — PagerDuty, on-call** | ❌ | Zero occurrences |
 
-## Tier 2 — Missing from the plan, narrower but real
+**Roughly a third covered, a third partial, a third absent.**
 
-| Gap | Why it matters | Status |
+## Scorecard — HLD deliverable
+
+What a high-level design document is expected to contain.
+
+| Element | Status | Where it is, or why not |
 |---|---|---|
-| **Search as a component** | The plan has "search-engine" as a *problem* but never teaches inverted indexes, ranking, or index/database sync as a component. | Missing from plan |
-| **Geospatial indexing** | Geohashing, quadtrees, H3. The plan includes Uber and ride-matching as problems, which cannot be answered without it. | Missing from plan |
-| **Probabilistic data structures** | Bloom filters, HyperLogLog, count-min sketch. Common in interviews, and the correct answer to several real problems. | Missing from plan |
-| **Storage engine internals** | B-tree vs LSM-tree. The plan covers indexing but not the engine, and the read-heavy/write-heavy distinction between them drives real database choices. | Missing from plan |
-| **Serialisation and schema evolution** | Protobuf, Avro, JSON; forward and backward compatibility. Every message you persist is a contract with your future self. | Missing from plan |
-| **Load shedding** | Distinct from rate limiting and from backpressure, and routinely conflated with both. See the [pattern catalogue](13-design-patterns/CATALOGUE.md#resilience-patterns). | Missing from plan |
-| **Tail-latency techniques** | Hedged requests, request cancellation, tied requests — Dean & Barroso's *The Tail at Scale*. | Missing from plan |
-| **Cell-based architecture** | Bounded blast radius by partitioning the whole stack. Modern, and how large providers actually contain failure. | Missing from plan |
-| **Fan-out on write vs read** | The decision that defines a social feed's architecture. Only present as a glossary entry. | Missing from plan |
-| **Compliance and data residency** | GDPR, PII handling, where data is legally allowed to live. A hard architectural constraint, not a legal footnote. | Missing from plan |
-| **Chaos engineering** | Testing distributed systems deliberately. The plan has per-concept "testing" but no discipline section — and untested failover is not failover. | Missing from plan |
-| **Feature flags** | Decoupling deploy from release. Named in the [catalogue](13-design-patterns/CATALOGUE.md#deployment-patterns), no page. | Missing from plan |
+| **System architecture overview** | ◐ | The [scene format](19-diagrams/scenes/SCHEMA.md) expresses one; no guide to writing one |
+| **Data flow and component interaction** | ✅ | [Combination matrix](14-component-combinations/MATRIX.md), [notation contract](19-diagrams/README.md), animated scenes |
+| **Technology stack and infrastructure** | ❌ | Deliberately technology-agnostic — but the mapping from role to real technology was supposed to be a late section on each page, and it is not there |
+| **Module responsibilities** | ❌ | No guidance on decomposition or ownership |
+| **Performance and trade-offs** | ✅ | [Trade-off framework](TRADEOFF-FRAMEWORK.md) plus a trade-off table on every page |
+| **Scalability / security / cost as NFRs** | ◐ | Scalability yes; security no; cost is an axis with no section |
+| **Architecture + component diagrams** | ✅ | [Notation contract](19-diagrams/README.md) and generated SVGs |
+| **Deployment diagrams** | ◐ | Named as a diagram type; no example |
+| **Data flow diagrams** | ✅ | Notation contract |
+| **ER / schema diagrams** | ❌ | Not a supported diagram type; data modelling is not covered |
+| **An HLD / LLD document template** | ❌ | The biggest single miss here — there is no template for the artefact itself |
+
+---
+
+## Tier 1 — Missing from the plan, and load-bearing
+
+| Gap | Why it matters |
+|---|---|
+| **Observability** | Prometheus, Grafana, ELK, tracing, alerting, on-call. Every page asks "how would you know it broke?" and answers nowhere. |
+| **Security** | OAuth, JWT, TLS, API security, secrets, DDoS. Absent entirely. |
+| **Networking** | DNS, TCP/UDP, HTTP/2/3, WebSockets, connection pooling. |
+| **API design** | REST vs gRPC vs GraphQL, versioning, pagination, error contracts, idempotency keys. The interface every other decision is expressed through. |
+| **Microservices vs monolith** | When to split, how to manage dependencies, the distributed monolith. |
+| **HLD / LLD templates** | The document people are actually asked to produce. |
+| **Schema migration** | Zero-downtime change: expand-contract, dual writes, backfills. The most common way a deploy causes an outage. |
+| **Data modelling / ER** | Normalisation, access-pattern modelling, ER diagrams. |
+| **Batch vs stream processing** | OLTP vs OLAP, ETL, windowing, Lambda/Kappa. |
+| **SLI / SLO / error budgets** | The vocabulary for deciding how reliable is reliable enough. |
+| **Multi-tenancy** | Isolation, noisy neighbours, per-tenant limits. |
+| **Cost** | A trade-off axis with no section. At scale it kills more designs than latency. |
+
+## Tier 2 — Missing from the plan, narrower
+
+Search as a component · geospatial indexing (the plan has Uber as a problem and no way to answer it)
+· probabilistic structures (Bloom, HyperLogLog, count-min) · storage engine internals (B-tree vs LSM —
+now partly covered in [database](05-databases/fundamentals/)) · serialisation and schema evolution ·
+load shedding · tail-latency techniques (hedged requests) · cell-based architecture · fan-out on write
+vs read · compliance and data residency · chaos engineering · feature flags
 
 ## Tier 3 — Planned, not yet built
 
-On [ROADMAP.md](ROADMAP.md). Listed here so the two views agree.
-
-**Components** — load balancer ★, cache ★, database ★, queue ★, worker, CDN, API gateway
-**Patterns** — batching, retries, circuit breaker, rate limiting, backpressure, sharding ★, replication, async
-**Combinations** — the 10 `CORE` pairs in [the matrix](14-component-combinations/MATRIX.md) need pages
-**Problems** — 7 of 8 (URL shortener has a scene but no prose)
-**Implementations** — 7 of 8
-**Judgment** — ADRs, anti-patterns, comparisons, interview guide
-
-## Deferred deliberately
-
-Directory-level topics from the original plan, not yet started, and a decision rather than an
-oversight: networking (§01) · architecture styles (§02) · observability (§11) · security (§12) ·
-case studies (§17) · design exercises (§16).
-
-Of these, **observability and security are the two whose absence is least defensible** — every
-concept page has a "how would you know it broke?" section pointing at a directory that does not
-exist yet.
+On [ROADMAP.md](ROADMAP.md). **Components:** CDN, API gateway. **Patterns:** batching, retries,
+circuit breaker, rate limiting page, backpressure, async. **Combinations:** the 10 `CORE` pairs need
+pages. **Problems:** 7 of 8. **Implementations:** 7 of 8. **Judgment:** ADRs, anti-patterns,
+comparisons, interview guide.
 
 ---
 
 ## What is genuinely covered
 
-So the gaps are readable against something:
-
 - [Foundations](00-foundations/) — 7 concepts, complete
-- [The method](SYSTEM-DESIGN-THINKING.md), [trade-offs](TRADEOFF-FRAMEWORK.md),
-  [estimation](ESTIMATION-GUIDE.md), [checklist](DESIGN-CHECKLIST.md)
-- [Pattern catalogue](13-design-patterns/CATALOGUE.md) — 101 patterns across 5 families; the 23
-  Gang of Four patterns have full entries
-- [Combination matrix](14-component-combinations/MATRIX.md) — all 153 component pairs classified
+- [Load balancer](03-load-balancing/fundamentals/) · [cache](04-caching/fundamentals/) ·
+  [database](05-databases/fundamentals/) · [queue](06-messaging/queues/) ·
+  [worker](06-messaging/workers/) · [sharding](05-databases/sharding/) ·
+  [replication](05-databases/replication/)
+- [The method](SYSTEM-DESIGN-THINKING.md) · [trade-offs](TRADEOFF-FRAMEWORK.md) ·
+  [estimation](ESTIMATION-GUIDE.md) · [checklist](DESIGN-CHECKLIST.md)
+- [Pattern catalogue](13-design-patterns/CATALOGUE.md) — 78 patterns; 23 GoF with full entries
+- [Combination matrix](14-component-combinations/MATRIX.md) — all 153 pairs
 - [Diagram notation](19-diagrams/README.md) and the scene format
 - One implementation with measured benchmarks; one scene with 8 versions
 
 ## How this page stays honest
 
-It is easy for a gap list to rot into a list of things that were quietly done. Two rules:
-
-1. When a Tier 1 or Tier 2 item is built, it moves to **What is genuinely covered** and the roadmap
-   entry is ticked in the same commit.
-2. New gaps get added here when noticed, **not** when planned. A gap nobody has written down is
+1. When an item is built it moves to **What is genuinely covered** and the roadmap is ticked in the
+   same commit.
+2. New gaps are added when **noticed**, not when planned. A gap nobody has written down is
    indistinguishable from coverage.
