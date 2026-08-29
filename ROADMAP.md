@@ -67,8 +67,8 @@ because in practice it is never traded alone — always against write latency.
 
 - [x] ★ [Load balancer](03-load-balancing/fundamentals/) `[B]`
 - [x] ★ [Cache](04-caching/fundamentals/) `[B]`
-- [ ] ★ Database `[I]`
-- [ ] ★ Queue `[I]`
+- [x] ★ [Database](05-databases/fundamentals/) `[I]`
+- [x] ★ [Queue](06-messaging/queues/) `[I]`
 - [ ] Worker `[B]`
 - [ ] CDN `[B]`
 - [ ] API gateway `[I]`
@@ -81,8 +81,8 @@ because in practice it is never traded alone — always against write latency.
 - [ ] Circuit breaker `[I]` — *needs retries*
 - [ ] Rate limiting `[I]`
 - [ ] Backpressure `[A]`
-- [ ] ★ Sharding `[A]` — *needs partitioning*
-- [ ] Replication `[I]`
+- [x] ★ [Sharding](05-databases/sharding/) `[A]`
+- [x] [Replication](05-databases/replication/) `[I]`
 - [ ] Asynchronous processing `[I]`
 
 ## Phase 5 — Combinations & patterns

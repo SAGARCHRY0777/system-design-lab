@@ -21,6 +21,8 @@ year, 99.99% is ~53 min. Each additional nine costs roughly an order of magnitud
 ### Backpressure
 A signal from an overloaded consumer telling producers to slow down. Without it a queue absorbs load
 until it runs out of memory, which converts a slowdown into an outage.
+→ [06-messaging/queues/](06-messaging/queues/)
+
 ### Batching
 Grouping many operations into one round trip. Raises **throughput**, raises **latency** for the first
 item in the batch. The clearest example of two goals in direct opposition.
@@ -49,6 +51,8 @@ addresses.
 ### Circuit breaker
 Stops calling a failing dependency for a cooling-off period. Without one, retries pile onto a
 struggling service and finish it off.
+→ [00-foundations/reliability/](00-foundations/reliability/)
+
 ### Consensus
 Getting a group of nodes to agree on one value despite failures. Raft and Paxos. Expensive; use a
 system that already implements it rather than writing your own. `[E]`
@@ -75,9 +79,13 @@ architecture.
 ### Hot key
 One key receiving a disproportionate share of traffic. Defeats sharding, because hashing spreads
 *keys* evenly, not *load*.
+→ [05-databases/sharding/](05-databases/sharding/)
+
 ### Idempotency
 Doing the operation twice has the same effect as once. **Mandatory wherever you retry** — and you
 always end up retrying.
+→ [06-messaging/queues/](06-messaging/queues/)
+
 ### Latency
 Time for one operation. Always quote **p99**, not the average: the average hides the experience of
 your least happy users, and at scale a 1% tail is a lot of people.
@@ -91,6 +99,7 @@ to remove.
 
 ### Partition (data)
 Splitting a dataset into pieces. See [sharding](#sharding) for splitting it across *machines*.
+→ [05-databases/fundamentals/](05-databases/fundamentals/)
 
 ### Partition (network)
 A break that stops nodes communicating while both remain alive. The **P** in CAP, and the reason the
@@ -110,18 +119,26 @@ least one node, so a read cannot miss the latest write. `[A]`
 ### Rate limiting
 Capping how much a client may consume. Protects you from one caller, whether hostile or merely
 buggy.
+→ [18-implementations/rate-limiter/](18-implementations/rate-limiter/)
+
 ### Read replica
 A copy serving reads only. Scales reads, introduces **replication lag** — so a user can write and
 then not see their own write.
+→ [05-databases/replication/](05-databases/replication/)
+
 ### Replication
 Keeping copies of data on multiple machines, for availability and read scale.
+→ [05-databases/replication/](05-databases/replication/)
 
 ### Retry storm
 Every client retrying a struggling service simultaneously, guaranteeing it stays down. Prevented by
 backoff, **jitter**, and a circuit breaker.
+→ [00-foundations/reliability/](00-foundations/reliability/)
+
 ### Sharding
 Splitting data across machines by a key. Buys write scale and unbounded storage. Sells cross-shard
 joins, and the shard key is close to permanent — choose it slowly.
+→ [05-databases/sharding/](05-databases/sharding/)
 
 ### Split brain
 A partition leaves two halves each believing it is in charge, both accepting writes. Resolving the
@@ -145,6 +162,8 @@ outage becomes a full outage.
 ### Timeout
 A cap on how long you wait. **Slow is worse than down**: a dead dependency fails fast and you route
 around it; a slow one holds every thread that touches it.
+→ [00-foundations/reliability/](00-foundations/reliability/)
+
 ---
 
 ## Related
