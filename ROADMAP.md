@@ -29,7 +29,8 @@ every diagram.
 - [x] [Design Checklist](DESIGN-CHECKLIST.md) `[B]`
 - [x] [Glossary](GLOSSARY.md) `[B]`
 - [x] [Concept dependency graph](19-diagrams/concept-dependency-graph.mmd) `[I]`
-- [ ] Concept / combination / problem / ADR templates in `_templates/`
+- [x] [Concept template](_templates/concept.md) — the 33-section shape every page follows
+- [ ] Combination / problem / ADR templates in `_templates/`
 
 ## Phase 1 — Visualizer ✅ (v1)
 
@@ -43,19 +44,22 @@ every diagram.
 - [ ] Keyboard navigation and a reduced-motion still mode
 - [ ] Scene picker populated as more systems land
 
-## Phase 2 — Foundations
+## Phase 2 — Foundations ✅
 
-Everything downstream assumes these. Do them in order — CAP before PACELC, latency before throughput.
+Everything downstream assumes these. Written in dependency order — see the
+[index](00-foundations/) for the reading path.
 
-- [ ] Scalability `[B]`
-- [ ] Availability `[B]`
-- [ ] Reliability `[B]`
-- [ ] Latency `[B]`
-- [ ] Throughput `[B]` — *needs latency*
-- [ ] Consistency `[I]`
-- [ ] ★ CAP theorem `[I]` — *needs consistency + availability*
-- [ ] PACELC `[A]` — *needs CAP*
-- [ ] Estimation practice set `[B]`
+- [x] [Latency](00-foundations/latency/) `[B]`
+- [x] [Throughput](00-foundations/throughput/) `[B]`
+- [x] [Scalability](00-foundations/scalability/) `[B]`
+- [x] [Availability](00-foundations/availability/) `[B]`
+- [x] [Reliability](00-foundations/reliability/) `[B]`
+- [x] [Consistency](00-foundations/consistency/) `[I]`
+- [x] ★ [CAP theorem + PACELC](00-foundations/cap-theorem/) `[I]`
+- [ ] Estimation practice set `[B]` — the guide exists; the exercises do not
+
+Durability is covered inside [reliability](00-foundations/reliability/) rather than as its own page,
+because in practice it is never traded alone — always against write latency.
 
 ## Phase 3 — Core components
 

@@ -28,11 +28,20 @@ LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "#", "tel:", "data:")
 SKIP_DIRS = {".git", "node_modules", "dist", "__pycache__", ".venv"}
 
+# Templates are written with the paths a COPY will need -- a concept page lives
+# two levels deep, so its links are ../../GLOSSARY.md. Resolved from the
+# template's own location those point outside the repository, correctly. The
+# template is the one file whose links are supposed to be wrong where it sits.
+SKIP_TREES = {"_templates"}
+
 
 def markdown_files() -> list[Path]:
     out = []
     for p in ROOT.rglob("*.md"):
+        parts = p.relative_to(ROOT).parts
         if any(part in SKIP_DIRS for part in p.parts):
+            continue
+        if parts and parts[0] in SKIP_TREES:
             continue
         out.append(p)
     return sorted(out)

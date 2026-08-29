@@ -61,7 +61,7 @@ both the app and the diagrams committed here. They cannot drift apart.
 1. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
 2. [Estimation Guide](ESTIMATION-GUIDE.md) — how to put numbers on a problem in your head
 3. [Trade-off Framework](TRADEOFF-FRAMEWORK.md) — how to *choose*, with decision trees
-4. Foundations — latency, availability, consistency, CAP
+4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
 5. Open the [visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) and scrub the URL shortener from V1 to V8
 
 **Already comfortable** — go straight to
@@ -94,7 +94,7 @@ systems are made of.
 
 | Where | What |
 |---|---|
-| 00-foundations/ | Scalability, availability, consistency, CAP, estimation |
+| [00-foundations/](00-foundations/) | Latency, throughput, scalability, availability, reliability, consistency, CAP |
 | 03-load-balancing/ · 04-caching/ | ★ Flagship components, full depth |
 | 05-databases/ · 06-messaging/ | ★ Storage and asynchrony |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |

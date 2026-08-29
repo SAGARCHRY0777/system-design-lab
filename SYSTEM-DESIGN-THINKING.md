@@ -84,7 +84,7 @@ the three that define the product and explicitly defer the rest.
 
 **4. Non-functional requirements.** What the system *guarantees*: latency, availability, consistency,
 durability, cost. **This is where most designs are won or lost**, because these are what force every
-later decision. See non-functional requirements and
+later decision. See [the foundations](00-foundations/) and
 [the trade-off framework](TRADEOFF-FRAMEWORK.md).
 
 **5. Constraints.** Budget, team size, existing stack, compliance, deadline. A design that ignores

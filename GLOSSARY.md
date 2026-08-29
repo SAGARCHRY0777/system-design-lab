@@ -16,15 +16,14 @@ Where a link points at a directory, that topic is not yet written; the definitio
 ### Availability
 The fraction of time a system responds successfully. Quoted in nines: 99.9% is ~8.8 h of downtime a
 year, 99.99% is ~53 min. Each additional nine costs roughly an order of magnitude more.
+→ [00-foundations/availability/](00-foundations/availability/)
 
 ### Backpressure
 A signal from an overloaded consumer telling producers to slow down. Without it a queue absorbs load
-until it runs out of memory, which converts a slowdown into an outage. → 08-reliability/
-
+until it runs out of memory, which converts a slowdown into an outage.
 ### Batching
 Grouping many operations into one round trip. Raises **throughput**, raises **latency** for the first
-item in the batch. The clearest example of two goals in direct opposition. → 09-scalability/
-
+item in the batch. The clearest example of two goals in direct opposition.
 ### Bottleneck
 The single component that saturates first. Every scaling step is: find it, fix it, find the next one.
 Fixing anything else changes nothing. → [SYSTEM-DESIGN-THINKING.md](SYSTEM-DESIGN-THINKING.md)
@@ -35,20 +34,18 @@ only when access is **skewed** — a cache over uniformly random reads hits almo
 
 ### Cache invalidation
 Deciding when a cached copy is no longer true. Genuinely one of the hardest problems in the field,
-because the cache has no way to know the source changed unless something tells it. → 04-caching/
-
+because the cache has no way to know the source changed unless something tells it.
 ### CAP theorem
 Under a network **partition** you must choose availability or consistency. It says nothing about
 normal operation — which is why [PACELC](#pacelc) exists. Widely misquoted as "pick two of three".
+→ [00-foundations/cap-theorem/](00-foundations/cap-theorem/)
 
 ### CDN
 Caches placed physically near users. The only fix for the speed of light, which no amount of hardware
-addresses. → 10-storage/cdn/
-
+addresses.
 ### Circuit breaker
 Stops calling a failing dependency for a cooling-off period. Without one, retries pile onto a
-struggling service and finish it off. → 08-reliability/circuit-breaker/
-
+struggling service and finish it off.
 ### Consensus
 Getting a group of nodes to agree on one value despite failures. Raft and Paxos. Expensive; use a
 system that already implements it rather than writing your own. `[E]`
@@ -56,48 +53,50 @@ system that already implements it rather than writing your own. `[E]`
 ### Consistency
 Whether all readers see the same data at the same time. **Strong**: every read sees the latest write.
 **Eventual**: reads converge, given time. Neither is better — they are priced differently.
+→ [00-foundations/consistency/](00-foundations/consistency/)
 
 ### Durability
 Once the system says "saved", the data survives crashes. Distinct from availability: a system can be
-down but durable, or up and losing writes. → 00-foundations/
+down but durable, or up and losing writes.
+→ [00-foundations/reliability/](00-foundations/reliability/)
 
 ### Eventual consistency
 Replicas converge if writes stop. "Eventually" without a stated bound is not a design — say
-*how* eventual, and who notices. → 00-foundations/consistency/
+*how* eventual, and who notices.
+→ [00-foundations/consistency/](00-foundations/consistency/)
 
 ### Fan-out
 One event producing many writes or messages. Writing a post to 10M followers' feeds is fan-out on
 write; assembling the feed at read time is fan-out on read. The choice defines a social feed's
-architecture. → 15-real-world-problems/
-
+architecture.
 ### Hot key
 One key receiving a disproportionate share of traffic. Defeats sharding, because hashing spreads
-*keys* evenly, not *load*. → 05-databases/sharding/
-
+*keys* evenly, not *load*.
 ### Idempotency
 Doing the operation twice has the same effect as once. **Mandatory wherever you retry** — and you
-always end up retrying. → 08-reliability/retries/
-
+always end up retrying.
 ### Latency
 Time for one operation. Always quote **p99**, not the average: the average hides the experience of
 your least happy users, and at scale a 1% tail is a lot of people.
+→ [00-foundations/latency/](00-foundations/latency/)
 
 ### Load balancer
 Spreads requests across servers. Also buys zero-downtime deploys, which is usually the benefit that
 actually forces the change. Make it redundant, or it becomes the single point of failure it was meant
-to remove. → 03-load-balancing/
-
+to remove.
 ### Partition (data)
 Splitting a dataset into pieces. See [sharding](#sharding) for splitting it across *machines*.
 
 ### Partition (network)
 A break that stops nodes communicating while both remain alive. The **P** in CAP, and the reason the
-theorem matters. → 00-foundations/cap-theorem/
+theorem matters.
+→ [00-foundations/cap-theorem/](00-foundations/cap-theorem/)
 
 ### PACELC
 The completion of CAP: if **P**artitioned, choose **A** or **C**; **E**lse, choose **L**atency or
 **C**onsistency. The second half describes normal operation, which is where systems spend all their
-time. → 00-foundations/cap-theorem/
+time.
+→ [00-foundations/cap-theorem/](00-foundations/cap-theorem/)
 
 ### Quorum
 A majority agreeing before an operation counts. With `R + W > N`, reads and writes overlap on at
@@ -105,19 +104,16 @@ least one node, so a read cannot miss the latest write. `[A]`
 
 ### Rate limiting
 Capping how much a client may consume. Protects you from one caller, whether hostile or merely
-buggy. → 08-reliability/rate-limiting/
-
+buggy.
 ### Read replica
 A copy serving reads only. Scales reads, introduces **replication lag** — so a user can write and
-then not see their own write. → 05-databases/replication/
-
+then not see their own write.
 ### Replication
 Keeping copies of data on multiple machines, for availability and read scale.
 
 ### Retry storm
 Every client retrying a struggling service simultaneously, guaranteeing it stays down. Prevented by
-backoff, **jitter**, and a circuit breaker. → 08-reliability/retries/
-
+backoff, **jitter**, and a circuit breaker.
 ### Sharding
 Splitting data across machines by a key. Buys write scale and unbounded storage. Sells cross-shard
 joins, and the shard key is close to permanent — choose it slowly.
@@ -129,19 +125,19 @@ divergence afterwards is often impossible. `[A]`
 ### Tail latency
 The slow end of the distribution — p99, p99.9. At scale it dominates user experience, because a
 request touching 100 services hits *someone's* p99 almost every time.
+→ [00-foundations/latency/](00-foundations/latency/)
 
 ### Throughput
 Operations per second. Not the inverse of latency — batching improves throughput while making latency
-worse. → 00-foundations/throughput/
+worse.
+→ [00-foundations/throughput/](00-foundations/throughput/)
 
 ### Thundering herd
 A cached key expires and every waiting request hits the database at once. The most common way a cache
-outage becomes a full outage. → 04-caching/
-
+outage becomes a full outage.
 ### Timeout
 A cap on how long you wait. **Slow is worse than down**: a dead dependency fails fast and you route
-around it; a slow one holds every thread that touches it. → 08-reliability/
-
+around it; a slow one holds every thread that touches it.
 ---
 
 ## Related
