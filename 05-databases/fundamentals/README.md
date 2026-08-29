@@ -313,6 +313,7 @@ before it matters. Lock waits and deadlock counts.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Consistency](../../00-foundations/consistency/) · [CAP](../../00-foundations/cap-theorem/)
 - [Cache](../../04-caching/fundamentals/) — step 3 of scaling reads
 - [Combination matrix](../../14-component-combinations/MATRIX.md)

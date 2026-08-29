@@ -310,6 +310,7 @@ and entirely avoidable.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Scalability](../../00-foundations/scalability/) — the property this enables
 - [Throughput](../../00-foundations/throughput/) — what it buys
 - [Availability](../../00-foundations/availability/) — why redundancy of the LB itself matters

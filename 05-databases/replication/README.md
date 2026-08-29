@@ -236,6 +236,7 @@ resolutions: a rising count means real data is being merged, or quietly dropped.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Database](../fundamentals/) — step 4 of scaling reads
 - [Sharding](../sharding/) — the answer when writes are the problem
 - [Consistency](../../00-foundations/consistency/) · [Availability](../../00-foundations/availability/)

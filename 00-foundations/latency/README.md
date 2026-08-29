@@ -231,6 +231,7 @@ by endpoint; one slow endpoint disappears inside an aggregate.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Throughput](../throughput/) — the other half; read it next
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — the latency table in context
 - [Trade-off framework](../../TRADEOFF-FRAMEWORK.md) — the "faster reads" decision tree

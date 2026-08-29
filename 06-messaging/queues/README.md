@@ -290,6 +290,7 @@ failing mid-job.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Throughput](../../00-foundations/throughput/) — arrival rate versus processing rate
 - [Reliability](../../00-foundations/reliability/) — idempotency, retries, DLQ
 - [Database](../../05-databases/fundamentals/) — the dual-write problem

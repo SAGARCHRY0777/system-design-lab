@@ -196,6 +196,7 @@ corruption.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Availability](../availability/) — up versus correct
 - [Consistency](../consistency/) — agreement between copies
 - [Glossary: idempotency](../../GLOSSARY.md#idempotency) · [retry storm](../../GLOSSARY.md#retry-storm)

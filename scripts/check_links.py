@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "#", "tel:", "data:")
-SKIP_DIRS = {".git", "node_modules", "dist", "__pycache__", ".venv"}
+SKIP_DIRS = {".git", "node_modules", "dist", "__pycache__", ".venv", ".pytest_cache"}
 
 # Templates are written with the paths a COPY will need -- a concept page lives
 # two levels deep, so its links are ../../GLOSSARY.md. Resolved from the
@@ -62,6 +62,31 @@ def check(path: Path) -> list[tuple[int, str]]:
     return bad
 
 
+def orphans(files: list[Path]) -> list[Path]:
+    """Pages that nothing links to.
+
+    A broken link is loud -- someone clicks it and complains. An orphaned page
+    is silent: it exists, it is committed, and no reader can reach it. That is
+    strictly worse, and it is exactly what happened to the observability page,
+    which sat on GitHub for a full commit with nothing pointing at it.
+    """
+    linked: set[Path] = set()
+    for path in files:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            for target in LINK.findall(line):
+                if target.startswith(SKIP_PREFIXES):
+                    continue
+                clean = unquote(target.split("#", 1)[0]).strip()
+                if not clean:
+                    continue
+                r = (path.parent / clean).resolve()
+                # A link to a directory counts as linking its README.
+                linked.add(r / "README.md" if r.is_dir() else r)
+
+    roots = {(ROOT / "README.md").resolve()}
+    return [f for f in files if f.resolve() not in linked and f.resolve() not in roots]
+
+
 def main() -> int:
     files = markdown_files()
     total_bad = 0
@@ -76,11 +101,20 @@ def main() -> int:
             for lineno, target in bad:
                 print(f"        line {lineno}: {target}")
 
+    lost = orphans(files)
+    if lost:
+        print("ORPHANED -- committed but unreachable, nothing links to these:")
+        for f in lost:
+            print(f"        {f.relative_to(ROOT)}")
+
     print()
-    if total_bad:
-        print(f"{total_bad} broken link(s) across {checked} markdown file(s)")
+    if total_bad or lost:
+        if total_bad:
+            print(f"{total_bad} broken link(s) across {checked} markdown file(s)")
+        if lost:
+            print(f"{len(lost)} orphaned page(s)")
         return 1
-    print(f"all relative links resolve ({checked} markdown file(s) checked)")
+    print(f"all relative links resolve, no orphans ({checked} markdown file(s) checked)")
     return 0
 
 

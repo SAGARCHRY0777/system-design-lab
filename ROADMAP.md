@@ -156,8 +156,10 @@ Python, stdlib-only, with tests and **executed** benchmarks.
 Directory and template only for now — real content in a later pass. Listed so the absence is a
 decision rather than an oversight.
 
-Networking (§01) · architecture styles (§02) · observability (§11) · security (§12) ·
-case studies (§17) · design exercises (§16)
+Networking (§01) · architecture styles (§02) · security (§12) · case studies (§17) ·
+design exercises (§16)
+
+[Observability](11-observability/) is now written.
 
 ---
 

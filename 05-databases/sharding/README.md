@@ -276,6 +276,7 @@ size divergence as the early signal that rebalancing is due.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Database](../fundamentals/) — step 5 of scaling, and the last one
 - [Replication](../replication/) — availability per shard
 - [Consistency](../../00-foundations/consistency/) · [CAP](../../00-foundations/cap-theorem/)

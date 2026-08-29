@@ -183,6 +183,7 @@ a direct measure of crashes and timeouts. DLQ depth, alerted at anything above z
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Queue](../queues/) — read first
 - [Throughput](../../00-foundations/throughput/) — Little's Law for sizing the fleet
 - [Reliability](../../00-foundations/reliability/) — idempotency and retries

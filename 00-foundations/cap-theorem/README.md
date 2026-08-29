@@ -257,6 +257,7 @@ a rising count means real data is being merged, or silently dropped.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Consistency](../consistency/) — read first; the spectrum CAP's C sits at the top of
 - [Availability](../availability/) — the other side of the trade
 - [Trade-off framework](../../TRADEOFF-FRAMEWORK.md) — where this fits among the seven axes

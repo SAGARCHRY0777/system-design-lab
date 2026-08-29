@@ -212,6 +212,7 @@ by minutes. Watch utilisation per stage to see where the bottleneck currently si
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Latency](../latency/) — the other half
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — computing the requirement
 - [Rate limiter implementation](../../18-implementations/rate-limiter/) — measured throughput in practice

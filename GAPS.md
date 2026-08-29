@@ -42,8 +42,8 @@ The list most interview guides and job descriptions use, scored honestly against
 | **Fault tolerance / fallback** | ◐ | [reliability](00-foundations/reliability/); circuit breaker and bulkhead have no pages |
 | **Redundancy** | ✅ | [availability](00-foundations/availability/) |
 | **Load balancer types and algorithms** | ✅ | [load balancer](03-load-balancing/fundamentals/) — L4/L7 and six algorithms |
-| **Observability — Prometheus, Grafana, ELK** | ❌ | **Zero occurrences.** Every concept page has a "how would you know it broke?" section pointing at nothing |
-| **Alerting — PagerDuty, on-call** | ❌ | Zero occurrences |
+| **Observability — Prometheus, Grafana, ELK** | ✅ | [observability](11-observability/) — three pillars, cardinality trap, the stack by role |
+| **Alerting — PagerDuty, on-call** | ✅ | [observability](11-observability/#12-alerting) — symptom-based, burn-rate, actionable-only |
 
 **Roughly a third covered, a third partial, a third absent.**
 
@@ -71,7 +71,7 @@ What a high-level design document is expected to contain.
 
 | Gap | Why it matters |
 |---|---|
-| **Observability** | Prometheus, Grafana, ELK, tracing, alerting, on-call. Every page asks "how would you know it broke?" and answers nowhere. |
+
 | **Security** | OAuth, JWT, TLS, API security, secrets, DDoS. Absent entirely. |
 | **Networking** | DNS, TCP/UDP, HTTP/2/3, WebSockets, connection pooling. |
 | **API design** | REST vs gRPC vs GraphQL, versioning, pagination, error contracts, idempotency keys. The interface every other decision is expressed through. |
@@ -80,7 +80,7 @@ What a high-level design document is expected to contain.
 | **Schema migration** | Zero-downtime change: expand-contract, dual writes, backfills. The most common way a deploy causes an outage. |
 | **Data modelling / ER** | Normalisation, access-pattern modelling, ER diagrams. |
 | **Batch vs stream processing** | OLTP vs OLAP, ETL, windowing, Lambda/Kappa. |
-| **SLI / SLO / error budgets** | The vocabulary for deciding how reliable is reliable enough. |
+| ~~SLI / SLO / error budgets~~ | Now in [observability](11-observability/#11-sli-slo-error-budget). |
 | **Multi-tenancy** | Isolation, noisy neighbours, per-tenant limits. |
 | **Cost** | A trade-off axis with no section. At scale it kills more designs than latency. |
 

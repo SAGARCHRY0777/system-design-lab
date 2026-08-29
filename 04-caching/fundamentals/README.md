@@ -319,6 +319,7 @@ the tail *is* the miss path and a good average hides it entirely.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Latency](../../00-foundations/latency/) — why the memory/disk ratio makes this work
 - [Consistency](../../00-foundations/consistency/) — a cache is a deliberate weakening, TTL is the bound
 - [Combination matrix](../../14-component-combinations/MATRIX.md)

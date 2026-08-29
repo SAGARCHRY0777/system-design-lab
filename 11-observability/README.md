@@ -276,6 +276,7 @@ Next         →  SLOs and error budgets to decide what is worth alerting on, an
 
 ## 33. Related
 
+- [Observability](../11-observability/) — how you would know any of this broke
 - [Reliability](../00-foundations/reliability/) — what you are measuring
 - [Availability](../00-foundations/availability/) — SLOs are how you express it
 - [Latency](../00-foundations/latency/) — percentiles, and why averages hide the problem

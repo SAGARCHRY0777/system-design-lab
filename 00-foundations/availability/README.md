@@ -211,6 +211,7 @@ is not paged.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Reliability](../reliability/) — availability is about being up; reliability is about being right
 - [CAP theorem](../cap-theorem/) — the choice availability forces
 - [Latency](../latency/) — slow is a form of down

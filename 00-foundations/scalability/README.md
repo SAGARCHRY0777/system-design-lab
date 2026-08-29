@@ -205,6 +205,7 @@ depth as the leading indicator; it moves before latency does.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [Throughput](../throughput/) — what scaling buys you
 - [Latency](../latency/) — what scaling does **not** buy you
 - [Availability](../availability/) — redundancy comes along with horizontal scaling

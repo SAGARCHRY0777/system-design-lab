@@ -198,6 +198,7 @@ count means your assumptions about concurrency are wrong.
 
 ## 33. Related
 
+- [Observability](../../11-observability/) — how you would know any of this broke
 - [CAP theorem](../cap-theorem/) — the formal statement of this trade-off ★
 - [Availability](../availability/) — the thing consistency is traded against
 - [Reliability](../reliability/) — agreement is not correctness

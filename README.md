@@ -99,6 +99,7 @@ systems are made of.
 | [05-databases/](05-databases/fundamentals/) · [06-messaging/](06-messaging/queues/) | ★ Storage and asynchrony |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
 | 09-scalability/ | Batching, async processing |
+| [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
 | [13-design-patterns/](13-design-patterns/) | **78 patterns**, incl. all 23 Gang of Four with distributed counterparts |
 | [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |
 | 15-real-world-problems/ | Full designs, V1→V8 |
