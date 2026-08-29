@@ -118,7 +118,7 @@ The 10 `CORE` pairs below still need their own pages:
 Each written V1→V8 with the reason for every change, and each with a scene file so it is scrubbable
 in the visualizer.
 
-- [x] URL shortener — scene only, prose pending `[B]`
+- [x] [URL shortener](15-real-world-problems/url-shortener/) — full V1→V8 worked design with exercises `[B]`
 - [ ] Notification system `[I]`
 - [ ] Chat system `[A]`
 - [ ] Social feed `[A]`

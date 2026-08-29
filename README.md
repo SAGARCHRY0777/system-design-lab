@@ -102,7 +102,7 @@ systems are made of.
 | [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
 | [13-design-patterns/](13-design-patterns/) | **78 patterns**, incl. all 23 Gang of Four with distributed counterparts |
 | [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |
-| 15-real-world-problems/ | Full designs, V1→V8 |
+| [15-real-world-problems/](15-real-world-problems/url-shortener/) | Full designs, V1→V8 — start with the URL shortener |
 | [18-implementations/](18-implementations/) | Working Python code + measured benchmarks |
 | [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated diagrams |
 | ADRs/ · anti-patterns/ · comparisons/ | Judgment |
