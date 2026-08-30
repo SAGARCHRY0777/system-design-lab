@@ -91,3 +91,13 @@ from the data. Edit the data, not the markdown.
 - [Diagnostic](../DIAGNOSTIC.md) — twelve questions that route you to the page you should read first
 - [Estimation guide](../ESTIMATION-GUIDE.md) — the arithmetic, done in your head
 - [Trade-off framework](../TRADEOFF-FRAMEWORK.md) — how to choose out loud, with decision trees
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 23 of 23 · *Interview*</sub>
+
+◀ **Previous** [Case studies](../17-case-studies/README.md) &nbsp;·&nbsp; **End of the path.** From here: [the gaps](../GAPS.md) — what this repository deliberately does not cover.
+
+<!-- PATH:END -->

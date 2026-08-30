@@ -319,3 +319,13 @@ binding constraint and nobody is waiting on an individual item — an ingestion 
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — computing the requirement
 - [Rate limiter implementation](../../18-implementations/rate-limiter/) — measured throughput in practice
 - [Glossary: backpressure](../../GLOSSARY.md#backpressure)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 6 of 23 · *Throughput*</sub>
+
+◀ **Previous** [Latency](../../00-foundations/latency/README.md) &nbsp;·&nbsp; **Next** [Scalability](../../00-foundations/scalability/README.md) ▶
+
+<!-- PATH:END -->

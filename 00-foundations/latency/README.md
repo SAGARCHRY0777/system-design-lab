@@ -352,3 +352,13 @@ to the extent that the latency was a capacity problem wearing a disguise.
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — the latency table in context
 - [Trade-off framework](../../TRADEOFF-FRAMEWORK.md) — the "faster reads" decision tree
 - [Glossary: tail latency](../../GLOSSARY.md#tail-latency)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 5 of 23 · *Latency*</sub>
+
+◀ **Previous** [Foundations](../../00-foundations/README.md) &nbsp;·&nbsp; **Next** [Throughput](../../00-foundations/throughput/README.md) ▶
+
+<!-- PATH:END -->

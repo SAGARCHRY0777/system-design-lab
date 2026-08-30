@@ -219,3 +219,13 @@ Working checklist: [DESIGN-CHECKLIST.md](DESIGN-CHECKLIST.md).
 - [Anti-patterns](anti-patterns/) — the chain applied too early, or not at all
 - [ADRs](ADRs/) — one decision per record, with the condition that reopens it
 - [Comparisons](comparisons/) — the deciding question behind each recurring choice
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 1 of 23 · *System design thinking*</sub>
+
+**Next** [Estimation](ESTIMATION-GUIDE.md) ▶
+
+<!-- PATH:END -->

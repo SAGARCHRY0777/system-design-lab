@@ -316,3 +316,13 @@ fast-failure, which is the only mode a caller can route around.
 - [Availability](../availability/) — up versus correct
 - [Consistency](../consistency/) — agreement between copies
 - [Glossary: idempotency](../../GLOSSARY.md#idempotency) · [retry storm](../../GLOSSARY.md#retry-storm)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 9 of 23 · *Reliability*</sub>
+
+◀ **Previous** [Availability](../../00-foundations/availability/README.md) &nbsp;·&nbsp; **Next** [Consistency](../../00-foundations/consistency/README.md) ▶
+
+<!-- PATH:END -->

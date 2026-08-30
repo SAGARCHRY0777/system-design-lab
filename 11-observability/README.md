@@ -397,3 +397,13 @@ decision. Set it below what users currently experience and above what they would
 - [Availability](../00-foundations/availability/) — SLOs are how you express it
 - [Latency](../00-foundations/latency/) — percentiles, and why averages hide the problem
 - [Coverage gaps](../GAPS.md)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 19 of 23 · *Observability*</sub>
+
+◀ **Previous** [Worker](../06-messaging/workers/README.md) &nbsp;·&nbsp; **Next** [Combinations](../14-component-combinations/README.md) ▶
+
+<!-- PATH:END -->

@@ -374,3 +374,13 @@ touching the consistency model at all.
 - [Availability](../availability/) — the other side of the trade
 - [Trade-off framework](../../TRADEOFF-FRAMEWORK.md) — where this fits among the seven axes
 - [Glossary: quorum](../../GLOSSARY.md#quorum) · [split brain](../../GLOSSARY.md#split-brain)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 11 of 23 · *CAP theorem*</sub>
+
+◀ **Previous** [Consistency](../../00-foundations/consistency/README.md) &nbsp;·&nbsp; **Next** [Load balancer](../../03-load-balancing/fundamentals/README.md) ▶
+
+<!-- PATH:END -->

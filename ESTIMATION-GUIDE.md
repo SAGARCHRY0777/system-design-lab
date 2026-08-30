@@ -180,3 +180,13 @@ That last table is the actual output of estimation. Not the numbers — the deci
 - [System design thinking](SYSTEM-DESIGN-THINKING.md) — step 6 of the method
 - [Trade-off framework](TRADEOFF-FRAMEWORK.md) — what to do with the numbers
 - [Design checklist](DESIGN-CHECKLIST.md)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 2 of 23 · *Estimation*</sub>
+
+◀ **Previous** [System design thinking](SYSTEM-DESIGN-THINKING.md) &nbsp;·&nbsp; **Next** [Trade-off framework](TRADEOFF-FRAMEWORK.md) ▶
+
+<!-- PATH:END -->

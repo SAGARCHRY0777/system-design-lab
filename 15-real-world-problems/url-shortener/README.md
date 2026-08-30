@@ -336,3 +336,13 @@ change the data model.
 - [System design thinking](../../SYSTEM-DESIGN-THINKING.md) — the 18-step method used here
 - [Observability](../../11-observability/) — how you would know any of this broke
 - The [scene file](../../19-diagrams/scenes/url-shortener.json) behind the diagrams
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 21 of 23 · *URL shortener, V1 to V8*</sub>
+
+◀ **Previous** [Combinations](../../14-component-combinations/README.md) &nbsp;·&nbsp; **Next** [Case studies](../../17-case-studies/README.md) ▶
+
+<!-- PATH:END -->

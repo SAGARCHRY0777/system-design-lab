@@ -417,3 +417,13 @@ nothing, then one bigger server remains the right answer — **more often than p
 - [Availability](../../00-foundations/availability/) — why redundancy of the LB itself matters
 - [Cache](../../04-caching/fundamentals/) — usually the next step in the chain
 - [Combination matrix](../../14-component-combinations/MATRIX.md)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 12 of 23 · *Load balancer*</sub>
+
+◀ **Previous** [CAP theorem](../../00-foundations/cap-theorem/README.md) &nbsp;·&nbsp; **Next** [Cache](../../04-caching/fundamentals/README.md) ▶
+
+<!-- PATH:END -->

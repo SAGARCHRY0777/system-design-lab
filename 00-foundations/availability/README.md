@@ -333,3 +333,13 @@ returning wrong answers quickly scores 100%.
 - [CAP theorem](../cap-theorem/) — the choice availability forces
 - [Latency](../latency/) — slow is a form of down
 - [Glossary: availability](../../GLOSSARY.md#availability)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 8 of 23 · *Availability*</sub>
+
+◀ **Previous** [Scalability](../../00-foundations/scalability/README.md) &nbsp;·&nbsp; **Next** [Reliability](../../00-foundations/reliability/README.md) ▶
+
+<!-- PATH:END -->

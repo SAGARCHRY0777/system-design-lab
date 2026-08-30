@@ -323,3 +323,13 @@ started: capacity arrives after the damage.
 - [Latency](../latency/) — what scaling does **not** buy you
 - [Availability](../availability/) — redundancy comes along with horizontal scaling
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — how much scale you actually need
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 7 of 23 · *Scalability*</sub>
+
+◀ **Previous** [Throughput](../../00-foundations/throughput/README.md) &nbsp;·&nbsp; **Next** [Availability](../../00-foundations/availability/README.md) ▶
+
+<!-- PATH:END -->

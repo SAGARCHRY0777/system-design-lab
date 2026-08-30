@@ -347,3 +347,13 @@ the underused version of this proposal and defends against the failure a normal 
 - [Sharding](../sharding/) — the answer when writes are the problem
 - [Consistency](../../00-foundations/consistency/) · [Availability](../../00-foundations/availability/)
 - [Glossary: read replica](../../GLOSSARY.md#read-replica)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 15 of 23 · *Replication*</sub>
+
+◀ **Previous** [Database](../../05-databases/fundamentals/README.md) &nbsp;·&nbsp; **Next** [Sharding](../../05-databases/sharding/README.md) ▶
+
+<!-- PATH:END -->

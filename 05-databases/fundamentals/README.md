@@ -442,3 +442,13 @@ another thing to fail — and it will not help at all if the cause was vacuum on
 - [Cache](../../04-caching/fundamentals/) — step 3 of scaling reads
 - [Combination matrix](../../14-component-combinations/MATRIX.md)
 - [Glossary: replication](../../GLOSSARY.md#replication) · [sharding](../../GLOSSARY.md#sharding)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 14 of 23 · *Database*</sub>
+
+◀ **Previous** [Cache](../../04-caching/fundamentals/README.md) &nbsp;·&nbsp; **Next** [Replication](../../05-databases/replication/README.md) ▶
+
+<!-- PATH:END -->

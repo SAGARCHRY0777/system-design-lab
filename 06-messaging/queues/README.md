@@ -428,3 +428,13 @@ outage.
 - [Database](../../05-databases/fundamentals/) — the dual-write problem
 - [Combination matrix](../../14-component-combinations/MATRIX.md)
 - [Glossary: idempotency](../../GLOSSARY.md#idempotency) · [backpressure](../../GLOSSARY.md#backpressure)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 17 of 23 · *Queue*</sub>
+
+◀ **Previous** [Sharding](../../05-databases/sharding/README.md) &nbsp;·&nbsp; **Next** [Worker](../../06-messaging/workers/README.md) ▶
+
+<!-- PATH:END -->

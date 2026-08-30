@@ -309,3 +309,13 @@ problems is not to have replicas.** That is legitimate until scale or availabili
 - [Availability](../availability/) — the thing consistency is traded against
 - [Reliability](../reliability/) — agreement is not correctness
 - [Glossary: eventual consistency](../../GLOSSARY.md#eventual-consistency)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 10 of 23 · *Consistency*</sub>
+
+◀ **Previous** [Reliability](../../00-foundations/reliability/README.md) &nbsp;·&nbsp; **Next** [CAP theorem](../../00-foundations/cap-theorem/README.md) ▶
+
+<!-- PATH:END -->

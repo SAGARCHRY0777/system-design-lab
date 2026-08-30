@@ -282,3 +282,13 @@ bounded value — do not remove the drain.
 - [Throughput](../../00-foundations/throughput/) — Little's Law for sizing the fleet
 - [Reliability](../../00-foundations/reliability/) — idempotency and retries
 - [Combination matrix](../../14-component-combinations/MATRIX.md)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 18 of 23 · *Worker*</sub>
+
+◀ **Previous** [Queue](../../06-messaging/queues/README.md) &nbsp;·&nbsp; **Next** [Observability](../../11-observability/README.md) ▶
+
+<!-- PATH:END -->

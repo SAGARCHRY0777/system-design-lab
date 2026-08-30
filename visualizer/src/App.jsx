@@ -4,6 +4,7 @@ const CaseStudies = lazy(() => import('./components/CaseStudies.jsx'))
 const Patterns = lazy(() => import('./components/Patterns.jsx'))
 const Interview = lazy(() => import('./components/Interview.jsx'))
 const Predict = lazy(() => import('./components/Predict.jsx'))
+const Studio = lazy(() => import('./components/Studio.jsx'))
 import StarButton from './components/StarButton.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
@@ -137,6 +138,10 @@ export default function App() {
             onClick={() => setView('predict')}
           >Predict</button>
           <button
+            className={view === 'studio' ? 'tick on' : 'tick'}
+            onClick={() => setView('studio')}
+          >Design studio</button>
+          <button
             className={view === 'patterns' ? 'tick on' : 'tick'}
             onClick={() => setView('patterns')}
           >Patterns</button>
@@ -166,6 +171,12 @@ export default function App() {
       {view === 'patterns' && (
         <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
           <Patterns />
+        </Suspense>
+      )}
+
+      {view === 'studio' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <Studio />
         </Suspense>
       )}
 
@@ -344,6 +355,13 @@ export default function App() {
           <p>
             Every question and answer is derived from the scene file — the same data that draws the
             diagram, so the quiz cannot disagree with what you are about to watch.
+          </p>
+        )}
+        {view === 'studio' && (
+          <p>
+            Every other tab asks you to recognise a good design. This one asks you to produce one —
+            and <strong>over-building is graded as harshly as under-building</strong>, because a
+            component added before its problem exists is complexity you pay for forever.
           </p>
         )}
         {view === 'cases' && (

@@ -104,3 +104,13 @@ Once you have these, the component pages stop being a catalogue and start being 
 - [Trade-off Framework](../TRADEOFF-FRAMEWORK.md) — the seven axes, which are these plus cost and operability
 - [Glossary](../GLOSSARY.md) — one-line definitions of everything
 - [Concept dependency graph](../19-diagrams/concept-dependency-graph.mmd) — the full learning order
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 4 of 23 · *Foundations*</sub>
+
+◀ **Previous** [Trade-off framework](../TRADEOFF-FRAMEWORK.md) &nbsp;·&nbsp; **Next** [Latency](../00-foundations/latency/README.md) ▶
+
+<!-- PATH:END -->

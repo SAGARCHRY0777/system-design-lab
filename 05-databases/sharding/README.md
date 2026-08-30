@@ -411,3 +411,13 @@ with 150 it owns 1.08x.
 - [Replication](../replication/) — availability per shard
 - [Consistency](../../00-foundations/consistency/) · [CAP](../../00-foundations/cap-theorem/)
 - [Glossary: hot key](../../GLOSSARY.md#hot-key) · [sharding](../../GLOSSARY.md#sharding)
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 16 of 23 · *Sharding*</sub>
+
+◀ **Previous** [Replication](../../05-databases/replication/README.md) &nbsp;·&nbsp; **Next** [Queue](../../06-messaging/queues/README.md) ▶
+
+<!-- PATH:END -->

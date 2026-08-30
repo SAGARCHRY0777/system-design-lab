@@ -179,3 +179,13 @@ little. It is **"is this worth what it costs to run for the next three years?"**
 - [Anti-patterns](anti-patterns/) — what these trade-offs look like when ignored
 - [ADRs](ADRs/) — recording a decision and the condition that would reverse it
 - [Comparisons](comparisons/) — the deciding question behind each recurring choice
+
+<!-- PATH:BEGIN -->
+
+---
+
+<sub>**The reading path** · step 3 of 23 · *Trade-off framework*</sub>
+
+◀ **Previous** [Estimation](ESTIMATION-GUIDE.md) &nbsp;·&nbsp; **Next** [Foundations](00-foundations/README.md) ▶
+
+<!-- PATH:END -->
