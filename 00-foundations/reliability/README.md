@@ -321,7 +321,7 @@ fast-failure, which is the only mode a caller can route around.
 
 ---
 
-<sub>**The reading path** · step 9 of 23 · *Reliability*</sub>
+<sub>**The reading path** · step 9 of 27 · *Reliability*</sub>
 
 ◀ **Previous** [Availability](../../00-foundations/availability/README.md) &nbsp;·&nbsp; **Next** [Consistency](../../00-foundations/consistency/README.md) ▶
 

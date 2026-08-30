@@ -455,7 +455,7 @@ origin load, which is often worth more than the first 90% was.
 
 ---
 
-<sub>**The reading path** · step 13 of 23 · *Cache*</sub>
+<sub>**The reading path** · step 13 of 27 · *Cache*</sub>
 
 ◀ **Previous** [Load balancer](../../03-load-balancing/fundamentals/README.md) &nbsp;·&nbsp; **Next** [Database](../../05-databases/fundamentals/README.md) ▶
 

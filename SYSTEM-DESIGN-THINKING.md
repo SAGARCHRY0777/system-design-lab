@@ -224,7 +224,7 @@ Working checklist: [DESIGN-CHECKLIST.md](DESIGN-CHECKLIST.md).
 
 ---
 
-<sub>**The reading path** · step 1 of 23 · *System design thinking*</sub>
+<sub>**The reading path** · step 1 of 27 · *System design thinking*</sub>
 
 **Next** [Estimation](ESTIMATION-GUIDE.md) ▶
 

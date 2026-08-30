@@ -324,7 +324,7 @@ binding constraint and nobody is waiting on an individual item — an ingestion 
 
 ---
 
-<sub>**The reading path** · step 6 of 23 · *Throughput*</sub>
+<sub>**The reading path** · step 6 of 27 · *Throughput*</sub>
 
 ◀ **Previous** [Latency](../../00-foundations/latency/README.md) &nbsp;·&nbsp; **Next** [Scalability](../../00-foundations/scalability/README.md) ▶
 

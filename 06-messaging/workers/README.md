@@ -287,8 +287,8 @@ bounded value — do not remove the drain.
 
 ---
 
-<sub>**The reading path** · step 18 of 23 · *Worker*</sub>
+<sub>**The reading path** · step 18 of 27 · *Worker*</sub>
 
-◀ **Previous** [Queue](../../06-messaging/queues/README.md) &nbsp;·&nbsp; **Next** [Observability](../../11-observability/README.md) ▶
+◀ **Previous** [Queue](../../06-messaging/queues/README.md) &nbsp;·&nbsp; **Next** [Reliability patterns](../../08-reliability/README.md) ▶
 
 <!-- PATH:END -->

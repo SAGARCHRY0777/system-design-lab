@@ -100,7 +100,7 @@ systems are made of.
 | [05-databases/](05-databases/fundamentals/) | Database, [sharding](05-databases/sharding/), [replication](05-databases/replication/), [schema migration](05-databases/schema-migration/), [data modelling](05-databases/data-modelling/) |
 | [06-messaging/](06-messaging/queues/) | Queues, workers, delivery semantics |
 | [07-api-design/](07-api-design/) | REST/gRPC/GraphQL, versioning, pagination, idempotency |
-| 08-reliability/ | *Not written yet* — retries, circuit breaker, rate limiting, backpressure. See [GAPS.md](GAPS.md) |
+| [08-reliability/](08-reliability/) | Timeouts, retries, circuit breaker, rate limiting, backpressure |
 | [09-scalability/](09-scalability/) | Batch vs stream, multi-tenancy, cost as an architectural constraint |
 | [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
 | [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |
@@ -157,9 +157,9 @@ Benchmarks are **executed, never estimated** — anything not measured says so.
 topics that were never in the original plan, which is the more dangerous category, because an
 unplanned gap looks exactly like coverage.
 
-The largest remaining hole is **`08-reliability/`**: retries, circuit breaker, rate limiting and
-backpressure appear in the catalogue and three have working implementations, but none has a concept
-page. After that, 7 of 8 real-world problems are unwritten.
+The largest remaining holes are **load shedding**, which is referenced from three reliability pages
+and has no page of its own, and the **real-world problems** — several of the eight are still
+unwritten. Both are listed in [GAPS.md](GAPS.md) rather than left implicit.
 
 ## License
 

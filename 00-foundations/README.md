@@ -109,7 +109,7 @@ Once you have these, the component pages stop being a catalogue and start being 
 
 ---
 
-<sub>**The reading path** · step 4 of 23 · *Foundations*</sub>
+<sub>**The reading path** · step 4 of 27 · *Foundations*</sub>
 
 ◀ **Previous** [Trade-off framework](../TRADEOFF-FRAMEWORK.md) &nbsp;·&nbsp; **Next** [Latency](../00-foundations/latency/README.md) ▶
 

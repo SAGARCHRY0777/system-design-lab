@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildQuiz } from '../lib/quiz.js'
+import { missedIn, record } from '../lib/progress.js'
 
 /**
  * Commit-then-reveal.
@@ -12,7 +13,18 @@ import { buildQuiz } from '../lib/quiz.js'
  * displace understanding with point-chasing.
  */
 export default function Predict({ scene, onReplay }) {
-  const questions = useMemo(() => buildQuiz(scene), [scene])
+  const all = useMemo(() => buildQuiz(scene), [scene])
+  const [onlyMissed, setOnlyMissed] = useState(false)
+
+  // Practising your misses is the whole reason anything is recorded. If nothing
+  // has been missed yet the filter is offered but empty, so it falls back
+  // rather than showing a blank pane.
+  const questions = useMemo(() => {
+    if (!onlyMissed) return all
+    const missed = new Set(missedIn('predict'))
+    const subset = all.filter(q => missed.has(q.id))
+    return subset.length ? subset : all
+  }, [all, onlyMissed])
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState(null)
   const [revealed, setRevealed] = useState(false)
@@ -35,7 +47,16 @@ export default function Predict({ scene, onReplay }) {
     <div className="predict">
       <div className="pq-head">
         <span className="pq-kind">{q.kind}</span>
-        <span className="pq-count">{i + 1} / {questions.length}</span>
+        <div className="pq-headright">
+          <button
+            className={onlyMissed ? 'tick on' : 'tick'}
+            onClick={() => { setOnlyMissed(v => !v); setI(0); setPicked(null); setRevealed(false) }}
+            title="Only the questions you have got wrong and not yet corrected"
+          >
+            Practise misses
+          </button>
+          <span className="pq-count">{i + 1} / {questions.length}</span>
+        </div>
       </div>
 
       <h2 className="pq-prompt">{q.prompt}</h2>
@@ -70,7 +91,11 @@ export default function Predict({ scene, onReplay }) {
 
       {!revealed && (
         <div className="pq-actions">
-          <button className="play" onClick={() => setRevealed(true)} disabled={!picked}>
+          <button
+            className="play"
+            onClick={() => { setRevealed(true); record('predict', q.id, picked === q.correct) }}
+            disabled={!picked}
+          >
             Reveal
           </button>
           {!picked && <span className="hint">Commit to an answer first.</span>}

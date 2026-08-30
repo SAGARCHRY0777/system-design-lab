@@ -433,7 +433,7 @@ outage.
 
 ---
 
-<sub>**The reading path** · step 17 of 23 · *Queue*</sub>
+<sub>**The reading path** · step 17 of 27 · *Queue*</sub>
 
 ◀ **Previous** [Sharding](../../05-databases/sharding/README.md) &nbsp;·&nbsp; **Next** [Worker](../../06-messaging/workers/README.md) ▶
 

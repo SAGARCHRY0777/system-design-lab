@@ -132,7 +132,7 @@ Ranked by how much a reader would notice.
 
 | Gap | Why it matters |
 |---|---|
-| **`08-reliability/` has no pages** | Retries, circuit breaker, rate limiting and backpressure appear in the catalogue and three have working implementations, but none has a concept page. The largest structural hole. |
+| **Load shedding** | Referenced from three [reliability](08-reliability/) pages as the pattern that covers "everyone is inside their limit and the system still saturates", and it has no page. In the catalogue only. |
 | **7 of 8 real-world problems** | Only the [URL shortener](15-real-world-problems/url-shortener/) is written. Chat, payments and ticket booking each teach something the existing scenes cannot. |
 | **`10-storage/`** | CDN and object storage have no pages, though CDN is referenced across a dozen files. |
 | **4 of 8 implementations** | Message queue, worker pool, load balancer algorithms, distributed lock. |

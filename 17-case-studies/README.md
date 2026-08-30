@@ -85,7 +85,7 @@ disclaimer, a decision whose cost has gone missing, a diagram colour outside the
 
 ---
 
-<sub>**The reading path** · step 22 of 23 · *Case studies*</sub>
+<sub>**The reading path** · step 26 of 27 · *Case studies*</sub>
 
 ◀ **Previous** [URL shortener, V1 to V8](../15-real-world-problems/url-shortener/README.md) &nbsp;·&nbsp; **Next** [Interview](../20-system-design-interview/README.md) ▶
 

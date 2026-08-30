@@ -45,7 +45,7 @@ committed file drifts. Edit the generator, not the markdown.
 
 ---
 
-<sub>**The reading path** · step 20 of 23 · *Combinations*</sub>
+<sub>**The reading path** · step 24 of 27 · *Combinations*</sub>
 
 ◀ **Previous** [Observability](../11-observability/README.md) &nbsp;·&nbsp; **Next** [URL shortener, V1 to V8](../15-real-world-problems/url-shortener/README.md) ▶
 

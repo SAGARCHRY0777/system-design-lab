@@ -357,7 +357,7 @@ to the extent that the latency was a capacity problem wearing a disguise.
 
 ---
 
-<sub>**The reading path** · step 5 of 23 · *Latency*</sub>
+<sub>**The reading path** · step 5 of 27 · *Latency*</sub>
 
 ◀ **Previous** [Foundations](../../00-foundations/README.md) &nbsp;·&nbsp; **Next** [Throughput](../../00-foundations/throughput/README.md) ▶
 

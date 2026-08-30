@@ -416,7 +416,7 @@ with 150 it owns 1.08x.
 
 ---
 
-<sub>**The reading path** · step 16 of 23 · *Sharding*</sub>
+<sub>**The reading path** · step 16 of 27 · *Sharding*</sub>
 
 ◀ **Previous** [Replication](../../05-databases/replication/README.md) &nbsp;·&nbsp; **Next** [Queue](../../06-messaging/queues/README.md) ▶
 

@@ -447,7 +447,7 @@ another thing to fail — and it will not help at all if the cause was vacuum on
 
 ---
 
-<sub>**The reading path** · step 14 of 23 · *Database*</sub>
+<sub>**The reading path** · step 14 of 27 · *Database*</sub>
 
 ◀ **Previous** [Cache](../../04-caching/fundamentals/README.md) &nbsp;·&nbsp; **Next** [Replication](../../05-databases/replication/README.md) ▶
 

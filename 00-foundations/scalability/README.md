@@ -328,7 +328,7 @@ started: capacity arrives after the damage.
 
 ---
 
-<sub>**The reading path** · step 7 of 23 · *Scalability*</sub>
+<sub>**The reading path** · step 7 of 27 · *Scalability*</sub>
 
 ◀ **Previous** [Throughput](../../00-foundations/throughput/README.md) &nbsp;·&nbsp; **Next** [Availability](../../00-foundations/availability/README.md) ▶
 

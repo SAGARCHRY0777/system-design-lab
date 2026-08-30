@@ -184,7 +184,7 @@ little. It is **"is this worth what it costs to run for the next three years?"**
 
 ---
 
-<sub>**The reading path** · step 3 of 23 · *Trade-off framework*</sub>
+<sub>**The reading path** · step 3 of 27 · *Trade-off framework*</sub>
 
 ◀ **Previous** [Estimation](ESTIMATION-GUIDE.md) &nbsp;·&nbsp; **Next** [Foundations](00-foundations/README.md) ▶
 

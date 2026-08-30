@@ -101,7 +101,7 @@ five requests.
 
 ## Related
 
-- Rate limiting concept — *not yet written*
-- Backpressure — what to do when limiting is not enough
+- [Rate limiting](../../08-reliability/rate-limiting/) — the concept page
+- [Backpressure](../../08-reliability/backpressure/) — what to do when limiting is not enough
 - [Trade-off framework](../../TRADEOFF-FRAMEWORK.md) — the axes this choice sits on
 - [Glossary: rate limiting](../../GLOSSARY.md#rate-limiting)

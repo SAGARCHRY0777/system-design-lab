@@ -352,7 +352,7 @@ the underused version of this proposal and defends against the failure a normal 
 
 ---
 
-<sub>**The reading path** · step 15 of 23 · *Replication*</sub>
+<sub>**The reading path** · step 15 of 27 · *Replication*</sub>
 
 ◀ **Previous** [Database](../../05-databases/fundamentals/README.md) &nbsp;·&nbsp; **Next** [Sharding](../../05-databases/sharding/README.md) ▶
 

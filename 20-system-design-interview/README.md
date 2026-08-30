@@ -96,7 +96,7 @@ from the data. Edit the data, not the markdown.
 
 ---
 
-<sub>**The reading path** · step 23 of 23 · *Interview*</sub>
+<sub>**The reading path** · step 27 of 27 · *Interview*</sub>
 
 ◀ **Previous** [Case studies](../17-case-studies/README.md) &nbsp;·&nbsp; **End of the path.** From here: [the gaps](../GAPS.md) — what this repository deliberately does not cover.
 

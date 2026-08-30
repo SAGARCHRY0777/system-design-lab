@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SCENES } from '../scenes/index.js'
 import { buildBriefs, grade, whyWrong } from '../lib/studio.js'
+import { record } from '../lib/progress.js'
 
 /**
  * The design studio.
@@ -99,7 +100,14 @@ export default function Studio() {
 
       {!result && (
         <div className="pq-actions">
-          <button className="play" onClick={() => setResult(grade(b, picked))}>
+          <button
+            className="play"
+            onClick={() => {
+              const g = grade(b, picked)
+              setResult(g)
+              record('studio', b.id, g.perfect)
+            }}
+          >
             Submit design
           </button>
           <span className="hint">

@@ -341,7 +341,7 @@ change the data model.
 
 ---
 
-<sub>**The reading path** · step 21 of 23 · *URL shortener, V1 to V8*</sub>
+<sub>**The reading path** · step 25 of 27 · *URL shortener, V1 to V8*</sub>
 
 ◀ **Previous** [Combinations](../../14-component-combinations/README.md) &nbsp;·&nbsp; **Next** [Case studies](../../17-case-studies/README.md) ▶
 

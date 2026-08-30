@@ -402,8 +402,8 @@ decision. Set it below what users currently experience and above what they would
 
 ---
 
-<sub>**The reading path** · step 19 of 23 · *Observability*</sub>
+<sub>**The reading path** · step 23 of 27 · *Observability*</sub>
 
-◀ **Previous** [Worker](../06-messaging/workers/README.md) &nbsp;·&nbsp; **Next** [Combinations](../14-component-combinations/README.md) ▶
+◀ **Previous** [Circuit breaker](../08-reliability/circuit-breaker/README.md) &nbsp;·&nbsp; **Next** [Combinations](../14-component-combinations/README.md) ▶
 
 <!-- PATH:END -->

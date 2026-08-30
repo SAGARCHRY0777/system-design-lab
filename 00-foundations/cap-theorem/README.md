@@ -379,7 +379,7 @@ touching the consistency model at all.
 
 ---
 
-<sub>**The reading path** · step 11 of 23 · *CAP theorem*</sub>
+<sub>**The reading path** · step 11 of 27 · *CAP theorem*</sub>
 
 ◀ **Previous** [Consistency](../../00-foundations/consistency/README.md) &nbsp;·&nbsp; **Next** [Load balancer](../../03-load-balancing/fundamentals/README.md) ▶
 

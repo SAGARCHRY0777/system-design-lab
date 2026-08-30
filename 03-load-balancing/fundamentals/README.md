@@ -422,7 +422,7 @@ nothing, then one bigger server remains the right answer — **more often than p
 
 ---
 
-<sub>**The reading path** · step 12 of 23 · *Load balancer*</sub>
+<sub>**The reading path** · step 12 of 27 · *Load balancer*</sub>
 
 ◀ **Previous** [CAP theorem](../../00-foundations/cap-theorem/README.md) &nbsp;·&nbsp; **Next** [Cache](../../04-caching/fundamentals/README.md) ▶
 

@@ -185,7 +185,7 @@ That last table is the actual output of estimation. Not the numbers — the deci
 
 ---
 
-<sub>**The reading path** · step 2 of 23 · *Estimation*</sub>
+<sub>**The reading path** · step 2 of 27 · *Estimation*</sub>
 
 ◀ **Previous** [System design thinking](SYSTEM-DESIGN-THINKING.md) &nbsp;·&nbsp; **Next** [Trade-off framework](TRADEOFF-FRAMEWORK.md) ▶
 

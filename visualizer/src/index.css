@@ -879,3 +879,6 @@ footer p { margin: 0; max-width: 82ch; }
 .st-fb li { font-size: 14.5px; color: var(--ink2); margin-bottom: 6px; max-width: 72ch; }
 .st-fb p { margin: 0; font-size: 14.5px; color: var(--ink2); max-width: 72ch; }
 .st-fb.over .iv-h { color: var(--amber); }
+
+.pq-headright { display: flex; align-items: center; gap: 10px; }
+.pq-headright .tick { font-family: inherit; font-size: 11px; padding: 3px 8px; }

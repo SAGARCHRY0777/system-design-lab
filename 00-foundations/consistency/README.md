@@ -314,7 +314,7 @@ problems is not to have replicas.** That is legitimate until scale or availabili
 
 ---
 
-<sub>**The reading path** · step 10 of 23 · *Consistency*</sub>
+<sub>**The reading path** · step 10 of 27 · *Consistency*</sub>
 
 ◀ **Previous** [Reliability](../../00-foundations/reliability/README.md) &nbsp;·&nbsp; **Next** [CAP theorem](../../00-foundations/cap-theorem/README.md) ▶
 
