@@ -425,7 +425,7 @@ How objects collaborate.
 
 ## Enterprise integration patterns
 
-Hohpe & Woolf. The vocabulary of anything message-based — and the reason "just put a queue in front of it" is not a design.
+Hohpe and Woolf. The vocabulary of anything message-based — and the reason "just put a queue in front of it" is not a design.
 
 | Pattern | Intent | Seen as |
 |---|---|---|
@@ -449,27 +449,31 @@ Hohpe & Woolf. The vocabulary of anything message-based — and the reason "just
 
 ## Distributed systems patterns
 
-| Pattern | Intent | Difficulty |
+How nodes and data behave when there is no shared memory and no shared clock.
+
+| Pattern | Intent | Seen as |
 |---|---|---|
-| **Saga** | Long-lived transaction as compensable local steps | `Advanced` |
-| **CQRS** | Separate read and write models | `Advanced` |
-| **Event Sourcing** | State as an append-only event log | `Advanced` |
-| **Transactional Outbox** | Atomically commit and publish | `Advanced` |
-| **Change Data Capture** | The replication log becomes the event stream | `Advanced` |
-| **Leader Election** | One node coordinates | `Expert` |
-| **Consensus (Raft/Paxos)** | Agreement despite failures | `Expert` |
-| **Quorum** | Majority read/write overlap | `Advanced` |
-| **Consistent Hashing** | Minimal reshuffling when nodes change | `Advanced` |
-| **Vector Clocks** | Track causality without a global clock | `Expert` |
-| **CRDT** | Data types that merge without coordination | `Expert` |
-| **Two-Phase Commit** | Atomic commit across nodes — and why it blocks | `Advanced` |
-| **Gossip** | Epidemic state dissemination | `Advanced` |
-| **Lease / Fencing Token** | Ownership that survives a stalled holder | `Expert` |
-| **Read Repair** | Fix stale replicas on read | `Advanced` |
-| **Hinted Handoff** | Hold writes for a node that is down | `Advanced` |
-| **Merkle Tree** | Cheaply find which replicas diverged | `Expert` |
+| **Saga** | Long-lived transaction as compensable local steps | Advanced |
+| **CQRS** | Separate read and write models | Advanced |
+| **Event Sourcing** | State as an append-only event log | Advanced |
+| **Transactional Outbox** | Atomically commit and publish | Advanced |
+| **Change Data Capture** | The replication log becomes the event stream | Advanced |
+| **Leader Election** | One node coordinates | Expert |
+| **Consensus (Raft/Paxos)** | Agreement despite failures | Expert |
+| **Quorum** | Majority read/write overlap | Advanced |
+| **Consistent Hashing** | Minimal reshuffling when nodes change | Advanced |
+| **Vector Clocks** | Track causality without a global clock | Expert |
+| **CRDT** | Data types that merge without coordination | Expert |
+| **Two-Phase Commit** | Atomic commit across nodes — and why it blocks | Advanced |
+| **Gossip** | Epidemic state dissemination | Advanced |
+| **Lease / Fencing Token** | Ownership that survives a stalled holder | Expert |
+| **Read Repair** | Fix stale replicas on read | Advanced |
+| **Hinted Handoff** | Hold writes for a node that is down | Advanced |
+| **Merkle Tree** | Cheaply find which replicas diverged | Expert |
 
 ## Resilience patterns
+
+How a system behaves when something it depends on is broken.
 
 | Pattern | Intent |
 |---|---|
@@ -486,9 +490,9 @@ Hohpe & Woolf. The vocabulary of anything message-based — and the reason "just
 | **Cell-Based Architecture** | Partition the stack so failure has a bounded blast radius |
 | **Chaos Engineering** | Inject failure deliberately — untested failover is not failover |
 
-Three of these are routinely conflated and are **not** the same thing: **rate limiting** caps a caller, **load shedding** drops low-value work to protect high-value work, and **backpressure** tells the producer to slow down. A system can need all three, and each fails differently in the absence of the others.
-
 ## Deployment patterns
+
+Changing a running system without stopping it. These belong in a system design repository because the chain in [System Design Thinking](../SYSTEM-DESIGN-THINKING.md#part-1--the-chain) has *"deploys meant downtime"* as a reason the load balancer gets added — deployment is an architectural force, not an afterthought.
 
 | Pattern | Intent |
 |---|---|
@@ -502,7 +506,7 @@ Three of these are routinely conflated and are **not** the same thing: **rate li
 | **Ambassador** | Proxy outbound calls on behalf of the application |
 | **Backend-for-Frontend** | A tailored API per client type |
 
-These belong here because the chain in [System Design Thinking](../SYSTEM-DESIGN-THINKING.md#part-1--the-chain) has *"deploys meant downtime"* as a reason the load balancer gets added. Deployment is an architectural force, not an afterthought.
+Three resilience patterns are routinely conflated and are **not** the same thing: **rate limiting** caps a caller, **load shedding** drops low-value work to protect high-value work, and **backpressure** tells the producer to slow down. A system can need all three, and each fails differently in the absence of the others.
 
 ## Related
 

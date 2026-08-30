@@ -24,6 +24,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from patterns_data import GOF_BEHAVIORAL, GOF_CREATIONAL, GOF_STRUCTURAL  # noqa: E402
 
+# Full entries for the four non-GoF families. Optional on purpose: the module is
+# written separately, and until it exists those families fall back to the
+# name+description tuples below. A missing enrichment should degrade the page,
+# never break the build.
+try:
+    import patterns_data_extra as EXTRA  # noqa: E402
+except ImportError:
+    EXTRA = None
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "13-design-patterns" / "CATALOGUE.md"
 # The visualizer imports this, so the app and the markdown cannot drift.
@@ -128,6 +137,53 @@ def entry(name: str, p: dict) -> list[str]:
     return L
 
 
+def rich_entry(name: str, p: dict) -> list[str]:
+    """A non-GoF pattern with full detail, a real case study and a diagram."""
+    L = [f"### {name}", "", f"**{p['what']}**", ""]
+    L.append(f"- **Where** — {p['where']}")
+    L.append(f"- **How** — {p['how']}")
+    L.append(f"- **Why** — {p['why']}")
+    L.append(f"- **Advantages** — {p['adv']}")
+    L.append(f"- **Disadvantages** — {p['dis']}")
+    L.append(f"- **Trade-off** — *{p['tradeoff']}*")
+    L.append("")
+    if p.get("diagram"):
+        L.append("```mermaid")
+        L.append(p["diagram"].strip())
+        L.append("```")
+        L.append("")
+    if p.get("case"):
+        L.append(f"> **In the wild.** {p['case']}")
+        L.append("")
+    L.append(f"**What the top 1% do differently.** {p['top1']}")
+    L.append("")
+    return L
+
+
+def family_section(title: str, blurb: str, rows: list, enriched: dict | None) -> list[str]:
+    """Full entries where the data exists, an index table where it does not."""
+    L = [f"## {title}", "", blurb, ""]
+    if enriched:
+        for row in rows:
+            name = row[0]
+            p = enriched.get(name)
+            if p:
+                L.extend(rich_entry(name, p))
+            else:
+                L.append(f"### {name}")
+                L.append("")
+                L.append(f"**{row[1]}**")
+                L.append("")
+        return L
+    L.append("| Pattern | Intent |" + (" Seen as |" if len(rows[0]) > 2 else ""))
+    L.append("|---|---|" + ("---|" if len(rows[0]) > 2 else ""))
+    for row in rows:
+        extra = f" {row[2]} |" if len(row) > 2 else ""
+        L.append(f"| **{row[0]}** | {row[1]} |{extra}")
+    L.append("")
+    return L
+
+
 def build() -> str:
     gof_count = sum(len(g) for _, _, g in GOF_GROUPS)
     total = gof_count + len(EIP) + len(DISTRIBUTED) + len(RESILIENCE) + len(DEPLOYMENT)
@@ -197,49 +253,31 @@ def build() -> str:
         for name, p in group.items():
             L.extend(entry(name, p))
 
-    A("## Enterprise integration patterns")
-    A("")
-    A("Hohpe & Woolf. The vocabulary of anything message-based — and the reason \"just put a "
-      "queue in front of it\" is not a design.")
-    A("")
-    A("| Pattern | Intent | Seen as |")
-    A("|---|---|---|")
-    for name, intent, seen in EIP:
-        A(f"| **{name}** | {intent} | {seen} |")
-    A("")
+    for title, blurb, rows, enriched in [
+        ("Enterprise integration patterns",
+         "Hohpe and Woolf. The vocabulary of anything message-based — and the reason "
+         "\"just put a queue in front of it\" is not a design.",
+         EIP, getattr(EXTRA, "EIP", None)),
+        ("Distributed systems patterns",
+         "How nodes and data behave when there is no shared memory and no shared clock.",
+         DISTRIBUTED, getattr(EXTRA, "DISTRIBUTED", None)),
+        ("Resilience patterns",
+         "How a system behaves when something it depends on is broken.",
+         RESILIENCE, getattr(EXTRA, "RESILIENCE", None)),
+        ("Deployment patterns",
+         "Changing a running system without stopping it. These belong in a system design "
+         "repository because the chain in "
+         "[System Design Thinking](../SYSTEM-DESIGN-THINKING.md#part-1--the-chain) has "
+         "*\"deploys meant downtime\"* as a reason the load balancer gets added — deployment "
+         "is an architectural force, not an afterthought.",
+         DEPLOYMENT, getattr(EXTRA, "DEPLOYMENT", None)),
+    ]:
+        L.extend(family_section(title, blurb, rows, enriched))
 
-    A("## Distributed systems patterns")
-    A("")
-    A("| Pattern | Intent | Difficulty |")
-    A("|---|---|---|")
-    for name, intent, diff in DISTRIBUTED:
-        A(f"| **{name}** | {intent} | `{diff}` |")
-    A("")
-
-    A("## Resilience patterns")
-    A("")
-    A("| Pattern | Intent |")
-    A("|---|---|")
-    for name, intent in RESILIENCE:
-        A(f"| **{name}** | {intent} |")
-    A("")
-    A("Three of these are routinely conflated and are **not** the same thing: **rate limiting** "
-      "caps a caller, **load shedding** drops low-value work to protect high-value work, and "
-      "**backpressure** tells the producer to slow down. A system can need all three, and each "
-      "fails differently in the absence of the others.")
-    A("")
-
-    A("## Deployment patterns")
-    A("")
-    A("| Pattern | Intent |")
-    A("|---|---|")
-    for name, intent in DEPLOYMENT:
-        A(f"| **{name}** | {intent} |")
-    A("")
-    A("These belong here because the chain in "
-      "[System Design Thinking](../SYSTEM-DESIGN-THINKING.md#part-1--the-chain) has *\"deploys "
-      "meant downtime\"* as a reason the load balancer gets added. Deployment is an architectural "
-      "force, not an afterthought.")
+    A("Three resilience patterns are routinely conflated and are **not** the same thing: "
+      "**rate limiting** caps a caller, **load shedding** drops low-value work to protect "
+      "high-value work, and **backpressure** tells the producer to slow down. A system can need "
+      "all three, and each fails differently in the absence of the others.")
     A("")
 
     A("## Related")
@@ -278,11 +316,17 @@ def build_json() -> str:
         ("resilience", "Resilience", "Behaviour under failure.", RESILIENCE, ("what",)),
         ("deployment", "Deployment", "Change without downtime.", DEPLOYMENT, ("what",)),
     ]:
+        enriched = getattr(EXTRA, fid.upper().replace("-", "_"), None) if EXTRA else None
         pats = []
         for row in rows:
             d = {"name": row[0], "what": row[1]}
             if len(row) > 2:
                 d[keys[1]] = row[2]
+            rich = (enriched or {}).get(row[0])
+            if rich:
+                d.update({k: rich[k] for k in
+                          ("where", "how", "why", "adv", "dis", "tradeoff", "top1", "case")
+                          if rich.get(k)})
             pats.append(d)
         out["families"].append({"id": fid, "name": name, "blurb": blurb, "patterns": pats})
     return json.dumps(out, indent=2, ensure_ascii=False) + chr(10)

@@ -764,3 +764,16 @@ footer p { margin: 0; max-width: 82ch; }
   .themebtn span { display: none; }
   .themer-menu { right: auto; left: 0; }
 }
+
+/* A real system that ships the pattern. A pattern nobody ships is a thought
+   experiment, which is the same rule the combination matrix applies. */
+.pat-case {
+  border: 1px solid var(--line2); border-radius: 8px;
+  padding: 12px 15px; margin: 0 0 20px;
+  background: var(--sunken);
+}
+.pat-case-h {
+  display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink3); font-weight: 600; margin-bottom: 5px;
+}
+.pat-case p { margin: 0; font-size: 14.5px; color: var(--ink2); max-width: 68ch; }

@@ -206,6 +206,13 @@ export default function Patterns() {
               <p className="pat-tradeoff"><span>Trade-off</span> {active.tradeoff}</p>
             )}
 
+            {active.case && (
+              <div className="pat-case">
+                <span className="pat-case-h">In the wild</span>
+                <p>{active.case}</p>
+              </div>
+            )}
+
             {active.top1 && (
               <div className="pat-top1">
                 <span className="pat-top1-h">What the top 1% do differently</span>
