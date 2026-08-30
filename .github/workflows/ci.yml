@@ -42,6 +42,9 @@ jobs:
       - name: Pattern catalogue matches its generator
         run: python scripts/gen_pattern_catalogue.py --check
 
+      - name: Interview bank matches its generator
+        run: python scripts/gen_interview.py --check
+
   visualizer:
     name: Visualizer · lint + build
     runs-on: ubuntu-latest
