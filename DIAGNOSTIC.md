@@ -6,7 +6,7 @@ difficulty: n/a
 
 # Diagnostic
 
-`[BEGINNER → EXPERT]` · Twelve questions, about twenty minutes. Not a quiz — a router. It tells you which page in this repository to open first.
+`[BEGINNER → EXPERT]` · Seventeen questions, about half an hour. Not a quiz — a router. It tells you which page in this repository to open first.
 
 ---
 
@@ -225,6 +225,81 @@ you pay for the shortfall.** Two correct components, one bad interaction — whi
 
 ---
 
+**13.** `[I]` A colleague says your API is safe because every endpoint checks that the caller is
+logged in. You change `GET /invoices/8814` to `GET /invoices/8815` and get someone else's invoice.
+What was checked, and what was not?
+
+<details><summary>Answer</summary>
+
+Authentication was checked; **authorization was not**. The endpoint confirmed *who you are* and never
+asked whether you are allowed *this object*. Those are two different questions and conflating them is
+the most common real API vulnerability there is — IDOR, or BOLA in the API-specific naming.
+
+The fix is not another gate at the edge. The ownership check has to happen where the object is
+loaded, because that is the only place that knows which object was asked for. See
+[api-security](12-security/api-security/).
+</details>
+
+**14.** `[I]` You issue JWTs with a 24-hour expiry. An account is compromised at 09:00 and you
+disable it at 09:05. When does the attacker's token stop working?
+
+<details><summary>Answer</summary>
+
+**At 09:00 tomorrow.** A JWT is validated by checking a signature, and nothing in that check consults
+your database — which is exactly the property people choose JWTs for. Disabling the account changes
+state the token never reads.
+
+Every fix reintroduces the server state you were trying to avoid: a short expiry plus refresh tokens
+narrows the window, a denylist closes it and costs a lookup per request. There is no version of this
+where you keep statelessness and get revocation. See [jwt](12-security/jwt/).
+</details>
+
+**15.** `[I]` `GET /orders?limit=20&offset=40` powers an infinite scroll. Orders arrive constantly.
+A user scrolls steadily and complains about seeing the same order twice. Is that a bug in your code?
+
+<details><summary>Answer</summary>
+
+It is a bug in **offset pagination**, and your code is probably faithful to it. Each page is a fresh
+query against a table that has changed since the last one. Three new orders inserted at the head push
+everything down three rows, so rows that were at offsets 38–40 slide to 41–43 and get returned again.
+
+Delete rows instead of inserting and the same mechanism **silently skips** records, which is worse —
+a duplicate is visible to a client that de-duplicates by id, a skip is simply gone. Cursor pagination
+exists for this. It is invisible in testing because test fixtures do not move. See
+[pagination](07-api-design/pagination/).
+</details>
+
+**16.** `[A]` Six engineers. The team proposes splitting the monolith into eight services to "scale
+better". Throughput is fine; deploys are slow because everything ships together. Good idea?
+
+<details><summary>Answer</summary>
+
+No — or at least, not for that reason. Microservices are an **organisational** solution to a
+team-scaling problem, not a technical solution to a performance one, and the stated problem is
+deploy coupling rather than throughput.
+
+Six people cannot operate eight services: eight pipelines, eight on-call surfaces, and availability
+that now **multiplies** down every synchronous call. The intermediate step is a modular monolith with
+enforced internal boundaries, which fixes coupling without buying a distributed system. Split later,
+along the seams that hurt, if they ever do. See
+[monolith vs microservices](02-architecture/monolith-vs-microservices/).
+</details>
+
+**17.** `[A]` You lower a DNS record's TTL from 3600 to 60 as part of a failover plan, then fail over.
+Some users still reach the dead region twenty minutes later. Why?
+
+<details><summary>Answer</summary>
+
+Because the **old** TTL governs everything already cached. A resolver that fetched the record at
+3600 seconds holds it for up to an hour regardless of what you publish afterwards — the reduction
+only applies to lookups made after it propagates. Lowering the TTL is something you do *days* before
+a planned failover, not during one.
+
+And that is only the resolvers you can reason about. Some clients and libraries cache DNS for the
+process lifetime and ignore TTL entirely. **DNS TTL is a floor on your real recovery time, not the
+value of it.** See [dns](01-networking/dns/).
+</details>
+
 ## Scoring
 
 One point per question where you had the **reasoning**. No points for the label: "it's a CAP
@@ -232,9 +307,9 @@ trade-off", "you'd use a cache", "p99" with no account of why the average could 
 
 | Score | What it means | Start here |
 |---|---|---|
-| **0–4** | The vocabulary is probably there; the arithmetic is not. This is the normal starting point and it is a good one, because foundations are the cheapest thing in this repository to fix. | [00-foundations/](00-foundations/), in order. Do not skip [availability](00-foundations/availability/) — the multiplying is where most intuition fails. Then [SYSTEM-DESIGN-THINKING.md](SYSTEM-DESIGN-THINKING.md) for the method, and [ESTIMATION-GUIDE.md](ESTIMATION-GUIDE.md) for putting numbers on a problem. |
-| **5–8** | Foundations are solid. You know what the components are and are still learning what each one **costs**. | The component pages: [load balancer](03-load-balancing/fundamentals/), [cache](04-caching/fundamentals/), [database](05-databases/fundamentals/), [queue](06-messaging/queues/). Read each page's **§14 When NOT to** and **§19 Failure scenarios** first — that half is what most material omits, and it is where questions 5 and 8 came from. |
-| **9–12** | Individual components are not your problem any more. Your remaining gaps are in how they behave **together**, which no single-component page can teach. | The [combination matrix](14-component-combinations/MATRIX.md) — all 153 pairs, including the ones that amplify each other — then the worked problem, [URL shortener V1→V8](15-real-world-problems/url-shortener/), which is the whole chain applied end to end. Then [GAPS.md](GAPS.md), so you know what this repository deliberately does not cover. |
+| **0–6** | The vocabulary is probably there; the arithmetic is not. This is the normal starting point and it is a good one, because foundations are the cheapest thing in this repository to fix. | [00-foundations/](00-foundations/), in order. Do not skip [availability](00-foundations/availability/) — the multiplying is where most intuition fails. Then [SYSTEM-DESIGN-THINKING.md](SYSTEM-DESIGN-THINKING.md) for the method, and [ESTIMATION-GUIDE.md](ESTIMATION-GUIDE.md) for putting numbers on a problem. |
+| **7–11** | Foundations are solid. You know what the components are and are still learning what each one **costs**. | The component pages: [load balancer](03-load-balancing/fundamentals/), [cache](04-caching/fundamentals/), [database](05-databases/fundamentals/), [queue](06-messaging/queues/). Read each page's **§14 When NOT to** and **§19 Failure scenarios** first — that half is what most material omits, and it is where questions 5 and 8 came from. |
+| **12–17** | Individual components are not your problem any more. Your remaining gaps are in how they behave **together**, which no single-component page can teach. | The [combination matrix](14-component-combinations/MATRIX.md) — all 153 pairs, including the ones that amplify each other — then the worked problem, [URL shortener V1→V8](15-real-world-problems/url-shortener/), which is the whole chain applied end to end. Then the sections that assume all of the above: [security](12-security/), [API design](07-api-design/), [architecture](02-architecture/) and [networking](01-networking/). Finish with [GAPS.md](GAPS.md), so you know what this repository deliberately does not cover. |
 
 **A missed question is worth more than the score.** Each one maps to exactly one page:
 
@@ -252,10 +327,17 @@ trade-off", "you'd use a cache", "p99" with no account of why the average could 
 | 10 | Hot shards | [sharding](05-databases/sharding/) |
 | 11 | Metric cardinality | [observability](11-observability/) |
 | 12 | Composition, and lost backpressure | [queue](06-messaging/queues/) · [workers](06-messaging/workers/) · [matrix](14-component-combinations/MATRIX.md) |
+| 13 | Authentication is not authorization | [api-security](12-security/api-security/) |
+| 14 | A JWT cannot be revoked before expiry | [jwt](12-security/jwt/) |
+| 15 | Offset pagination skips and duplicates | [pagination](07-api-design/pagination/) |
+| 16 | Microservices are an org solution | [monolith vs microservices](02-architecture/monolith-vs-microservices/) |
+| 17 | The old DNS TTL governs what is cached | [dns](01-networking/dns/) |
 
 A caveat on a perfect score: every question here has one right answer and production does not.
 Twelve out of twelve means you are ready for the [combinations](14-component-combinations/MATRIX.md)
 and the [judgement](TRADEOFF-FRAMEWORK.md) material, not that the reading is finished.
+
+**Preparing for an interview rather than learning?** The [question bank](20-system-design-interview/) is the same material asked the way an interviewer asks it — 46 questions with their follow-up chains, and what each one is actually probing.
 
 ## Related
 
