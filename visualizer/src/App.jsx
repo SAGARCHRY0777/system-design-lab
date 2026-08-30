@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
-import Patterns from './components/Patterns.jsx'
-import Interview from './components/Interview.jsx'
-import Predict from './components/Predict.jsx'
+const Patterns = lazy(() => import('./components/Patterns.jsx'))
+const Interview = lazy(() => import('./components/Interview.jsx'))
+const Predict = lazy(() => import('./components/Predict.jsx'))
 import StarButton from './components/StarButton.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
@@ -158,11 +158,23 @@ export default function App() {
         </div>
       </header>
 
-      {view === 'patterns' && <Patterns />}
+      {view === 'patterns' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <Patterns />
+        </Suspense>
+      )}
 
-      {view === 'interview' && <Interview />}
+      {view === 'interview' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <Interview />
+        </Suspense>
+      )}
 
-      {view === 'predict' && <Predict scene={scene} onReplay={replay} />}
+      {view === 'predict' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <Predict scene={scene} onReplay={replay} />
+        </Suspense>
+      )}
 
       {view === 'architecture' && <>
       <p className="summary"><strong>{scene.title}.</strong> {scene.summary}</p>

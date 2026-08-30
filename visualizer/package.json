@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Interactive architecture lab \u2014 watch a request flow, scrub an architecture V1\u2192V8, and switch components off to see what breaks.",
+  "description": "Interactive architecture lab — watch a request flow, scrub an architecture V1→V8, and switch components off to see what breaks.",
   "license": "MIT",
   "author": "SAGARCHRY0777",
   "scripts": {
@@ -15,6 +15,7 @@
     "check:quiz": "node scripts/check-quiz.mjs"
   },
   "dependencies": {
+    "mermaid": "^11.17.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

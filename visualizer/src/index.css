@@ -777,3 +777,19 @@ footer p { margin: 0; max-width: 82ch; }
   color: var(--ink3); font-weight: 600; margin-bottom: 5px;
 }
 .pat-case p { margin: 0; font-size: 14.5px; color: var(--ink2); max-width: 68ch; }
+
+/* ---------- mermaid ---------- */
+
+.pat-diagram {
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel);
+  padding: 14px; margin: 0 0 20px;
+  overflow-x: auto;              /* wide diagrams pan; the page never does */
+}
+.mmd svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.mmd-fallback {
+  background: var(--sunken); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 14px; margin: 0 0 20px; overflow-x: auto;
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+  font-size: 12px; color: var(--ink3); line-height: 1.5;
+}

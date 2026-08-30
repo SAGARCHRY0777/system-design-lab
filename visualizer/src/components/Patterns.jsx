@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import Mermaid from './Mermaid.jsx'
 import CATALOGUE from '../../../13-design-patterns/patterns.json'
 
 /**
@@ -204,6 +205,12 @@ export default function Patterns() {
 
             {active.tradeoff && (
               <p className="pat-tradeoff"><span>Trade-off</span> {active.tradeoff}</p>
+            )}
+
+            {active.diagram && (
+              <div className="pat-diagram">
+                <Mermaid chart={active.diagram} id={active.name.replace(/[^a-z0-9]/gi, '')} />
+              </div>
             )}
 
             {active.case && (

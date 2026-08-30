@@ -325,7 +325,8 @@ def build_json() -> str:
             rich = (enriched or {}).get(row[0])
             if rich:
                 d.update({k: rich[k] for k in
-                          ("where", "how", "why", "adv", "dis", "tradeoff", "top1", "case")
+                          ("where", "how", "why", "adv", "dis", "tradeoff", "top1",
+                           "case", "diagram")
                           if rich.get(k)})
             pats.append(d)
         out["families"].append({"id": fid, "name": name, "blurb": blurb, "patterns": pats})
