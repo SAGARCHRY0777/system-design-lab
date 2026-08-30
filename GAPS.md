@@ -103,7 +103,7 @@ pages. **Problems:** 7 of 8. **Implementations:** 7 of 8. **Judgment:** done —
 
 ## What is genuinely covered
 
-**101 markdown pages · 252 diagrams · 398 hidden-answer blocks.**
+**122 markdown pages · 293 diagrams · 482 hidden-answer blocks.**
 
 - [Foundations](00-foundations/) — 7 concepts · [Networking](01-networking/) — 5 ·
   [Security](12-security/) — 5 · [API design](07-api-design/) — 4
@@ -113,7 +113,8 @@ pages. **Problems:** 7 of 8. **Implementations:** 7 of 8. **Judgment:** done —
   [sharding](05-databases/sharding/) · [replication](05-databases/replication/) ·
   [schema migration](05-databases/schema-migration/) · [data modelling](05-databases/data-modelling/)
 - [Scalability](09-scalability/) — batch vs stream, multi-tenancy, cost ·
-  [Observability](11-observability/) · [Architecture](02-architecture/)
+  [Observability](11-observability/) · [Architecture](02-architecture/) ·
+  [Storage](10-storage/) — CDN, object storage, and choosing between the four kinds
 - [Pattern catalogue](13-design-patterns/CATALOGUE.md) — 78 patterns, **all with full entries,
   a diagram and a case study**
 - [Combination matrix](14-component-combinations/MATRIX.md) — all 153 pairs, 11 with their own page
@@ -123,8 +124,12 @@ pages. **Problems:** 7 of 8. **Implementations:** 7 of 8. **Judgment:** done —
 - [Templates](_templates/) — concept, HLD, LLD
 - The method: [thinking](SYSTEM-DESIGN-THINKING.md) · [trade-offs](TRADEOFF-FRAMEWORK.md) ·
   [estimation](ESTIMATION-GUIDE.md) · [checklist](DESIGN-CHECKLIST.md) · [diagnostic](DIAGNOSTIC.md)
+- [Design exercises](16-design-exercises/) — 24 parameter decisions, each labelled by how
+  expensive it is to reverse
 - 4 implementations with measured benchmarks, 103 tests
-- 3 scenes driving 69 verified prediction questions
+- 6 scenes driving **148 verified prediction questions, 33 design briefs and 24 parameter
+  decisions** — every answer key derived from the scene file, so none of them can drift from
+  the diagrams
 
 ## What is genuinely still missing
 
@@ -132,11 +137,10 @@ Ranked by how much a reader would notice.
 
 | Gap | Why it matters |
 |---|---|
-| **Load shedding** | Referenced from three [reliability](08-reliability/) pages as the pattern that covers "everyone is inside their limit and the system still saturates", and it has no page. In the catalogue only. |
-| **7 of 8 real-world problems** | Only the [URL shortener](15-real-world-problems/url-shortener/) is written. Chat, payments and ticket booking each teach something the existing scenes cannot. |
-| **`10-storage/`** | CDN and object storage have no pages, though CDN is referenced across a dozen files. |
+| **Load shedding** | Referenced from three [reliability](08-reliability/) pages as the pattern that covers "everyone is inside their limit and the system still saturates", and it has no page. In the catalogue only. **This is now the largest single hole.** |
+| **2 scenes have no written problem** | [URL shortener](15-real-world-problems/url-shortener/), [chat](15-real-world-problems/chat-system/), [notifications](15-real-world-problems/notification-system/) and [payments](15-real-world-problems/payment-system/) are written. Social feed and ticket booking are animated, quizzed and gradeable in the app, but have no V1→V8 prose page. |
 | **4 of 8 implementations** | Message queue, worker pool, load balancer algorithms, distributed lock. |
-| **`16-design-exercises/`** | Never started. The exercises live on the concept pages instead, which may be the better home. |
+| **Parameters beyond the six scenes** | [16-design-exercises/](16-design-exercises/) covers 24 decisions across six systems. Isolation levels, consistency modes and capacity headroom are each decided somewhere in this repository and asked nowhere. |
 | **Search · geospatial · probabilistic structures** | Named in Tier 2 below; each is a real omission for anyone designing Uber or a search feature. |
 
 ## How this page stays honest

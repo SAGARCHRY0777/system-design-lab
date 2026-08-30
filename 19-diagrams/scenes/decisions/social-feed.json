@@ -1,0 +1,105 @@
+{
+  "scene": "social-feed",
+  "decisions": [
+    {
+      "id": "feed-contents",
+      "v": 3,
+      "parameter": "What a feed row stores",
+      "question": "You are materialising feeds. What goes in each row?",
+      "reversibility": "one-way",
+      "reversal": "Changing this means rewriting every materialised feed for every user — billions of rows — while continuing to serve reads from them.",
+      "options": [
+        {
+          "value": "The full post: text, author name, avatar URL, counts",
+          "verdict": "wrong",
+          "because": "Denormalising looks faster because the read needs no join. Then someone edits a post or changes their display name, and you must find and rewrite every copy across millions of feeds. You have made a write-amplification problem out of a read optimisation."
+        },
+        {
+          "value": "Post ID and timestamp only",
+          "verdict": "correct",
+          "because": "A feed row becomes ~16 bytes, so storing 800 of them per user is trivial, and edits and deletes are a single write to the post itself. The extra hydration lookup is a batch get from cache — the cheapest part of the request."
+        },
+        {
+          "value": "Post ID plus a denormalised copy of the author's display name",
+          "verdict": "defensible",
+          "because": "A real and common compromise: it kills the most frequent hydration lookup. You are betting that display names change rarely enough that a lazy backfill is acceptable — usually true, and worth stating out loud as a bet rather than discovering later."
+        }
+      ]
+    },
+    {
+      "id": "feed-length",
+      "v": 3,
+      "parameter": "Materialised feed length",
+      "question": "How many entries do you keep in a user's precomputed feed?",
+      "reversibility": "cheap",
+      "reversal": "A trim job and a config value. Raising or lowering it is a background task, not a migration.",
+      "options": [
+        {
+          "value": "Unbounded — keep everything ever fanned out",
+          "verdict": "wrong",
+          "because": "Storage grows without limit for content nobody will ever scroll to. A user following 2,000 accounts accumulates millions of rows to serve a screen that shows twenty."
+        },
+        {
+          "value": "About 800 entries",
+          "verdict": "correct",
+          "because": "Deep enough that essentially no real session scrolls past it, shallow enough to stay cheap. Past the end you fall back to read-time assembly, which is fine because almost nobody gets there."
+        },
+        {
+          "value": "20 entries — exactly one screen",
+          "verdict": "wrong",
+          "because": "Every user who scrolls twice falls through to the expensive read-time path, which is the thing the materialised feed exists to avoid. You kept the write cost and gave away the read benefit."
+        }
+      ]
+    },
+    {
+      "id": "fanout-threshold",
+      "v": 6,
+      "parameter": "Hybrid fan-out threshold",
+      "question": "Above what follower count do you stop fanning out on write?",
+      "reversibility": "cheap",
+      "reversal": "A number in a config file, applied to future posts. You can tune it weekly against real latency data, and you should.",
+      "options": [
+        {
+          "value": "100 followers",
+          "verdict": "wrong",
+          "because": "Almost every account is now read-time, so nearly every timeline request does a large fan-in merge. You have effectively reverted to V2 while keeping all the machinery of V4."
+        },
+        {
+          "value": "Around 10,000 followers",
+          "verdict": "correct",
+          "because": "Puts well over 99% of accounts on the write path, where fan-out is cheap and reads are free, and confines read-time merging to the few thousand accounts where write fan-out would be catastrophic. The threshold sits where the two costs actually cross."
+        },
+        {
+          "value": "1,000,000 followers",
+          "verdict": "wrong",
+          "because": "An account with 900K followers still triggers 900K feed writes from one request. The queue backs up for everyone, including the ordinary users whose posts are stuck behind it."
+        }
+      ]
+    },
+    {
+      "id": "fanout-delivery",
+      "v": 4,
+      "parameter": "Fan-out queue delivery guarantee",
+      "question": "A fan-out worker crashes halfway through a job. What did you configure?",
+      "reversibility": "costly",
+      "reversal": "Moving from at-most-once to at-least-once forces every consumer to become idempotent. That is a change to the write path of every worker, not a queue setting.",
+      "options": [
+        {
+          "value": "At-least-once, with an idempotent feed insert",
+          "verdict": "correct",
+          "because": "The crash replays the job and the duplicate insert is a no-op because the row key is (user_id, post_id). Redelivery is something you design for once, in the consumer, and then never think about."
+        },
+        {
+          "value": "At-most-once — acknowledge on receipt",
+          "verdict": "wrong",
+          "because": "The crashed job is gone. Some followers never receive that post in their feed, there is no error anywhere, and no user reports it because nobody knows what they did not see. Silent data loss is the worst failure mode because it never gets fixed."
+        },
+        {
+          "value": "Exactly-once delivery",
+          "verdict": "wrong",
+          "because": "Not something a queue can give you across a process boundary. Systems advertising it are doing at-least-once plus deduplication, which is what you should build explicitly — believing the label means skipping the idempotency you still need."
+        }
+      ]
+    }
+  ]
+}

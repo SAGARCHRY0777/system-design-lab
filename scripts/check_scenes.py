@@ -21,6 +21,85 @@ SCENES = ROOT / "19-diagrams" / "scenes"
 NODE_KINDS = {"client", "edge", "lb", "service", "cache", "store", "queue", "external"}
 EDGE_KINDS = {"sync", "async", "replication"}
 
+# A decision is a parameter choice rather than a component choice: you already
+# decided to shard, this is what you shard ON. `reversibility` is the field that
+# earns the block its place -- a TTL is a config change and a shard key is a
+# migration, and knowing which is which is the whole skill being taught.
+REVERSIBILITY = {"cheap", "costly", "one-way"}
+VERDICTS = {"correct", "defensible", "wrong"}
+
+
+def load_decisions(scene_id: str) -> tuple[list[dict], list[str]]:
+    """Decisions live in scenes/decisions/<id>.json, beside the scene.
+
+    They are a separate file for a measured reason rather than a stylistic one:
+    the app imports every scene into its main bundle because the default view
+    needs them, and 33 KB of decision prose that only the lazily-loaded studio
+    reads was riding along on the critical path. Splitting the file moved it into
+    the chunk that actually uses it.
+    """
+    path = SCENES / "decisions" / f"{scene_id}.json"
+    if not path.exists():
+        return [], [f"no decisions file at {path.relative_to(ROOT)}"]
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [], [f"decisions file is invalid JSON: {exc}"]
+    if data.get("scene") != scene_id:
+        return [], [f"decisions file declares scene {data.get('scene')!r}, expected {scene_id!r}"]
+    return data.get("decisions", []), []
+
+
+def check_decisions(decisions: list[dict], versions: set[int]) -> list[str]:
+    errs: list[str] = []
+    seen: set[str] = set()
+
+    for dec in decisions:
+        did = dec.get("id", "?")
+        tag = f"decision {did!r}"
+
+        if did in seen:
+            errs.append(f"{tag}: duplicate id")
+        seen.add(did)
+
+        for field in ("parameter", "question", "reversibility", "reversal", "options"):
+            if not dec.get(field):
+                errs.append(f"{tag}: missing {field!r}")
+        if errs and not dec.get("options"):
+            continue
+
+        if dec.get("v") not in versions:
+            errs.append(f"{tag}: v={dec.get('v')} is not a version of this scene")
+
+        rev = dec.get("reversibility")
+        if rev not in REVERSIBILITY:
+            errs.append(f"{tag}: reversibility {rev!r} not in {sorted(REVERSIBILITY)}")
+
+        options = dec.get("options", [])
+        if len(options) < 3:
+            errs.append(f"{tag}: {len(options)} option(s) -- fewer than three is a coin flip")
+
+        for opt in options:
+            if not opt.get("value"):
+                errs.append(f"{tag}: an option has no value")
+            if opt.get("verdict") not in VERDICTS:
+                errs.append(f"{tag}: option {opt.get('value')!r} has verdict "
+                            f"{opt.get('verdict')!r}, not in {sorted(VERDICTS)}")
+            # The explanation IS the teaching. A stub here is worse than no
+            # question, because it tells a reader they were wrong and not why.
+            if len(opt.get("because", "")) < 60:
+                errs.append(f"{tag}: option {opt.get('value')!r} has no real explanation")
+
+        # The load-bearing invariant. Two correct answers make the decision
+        # ungradeable; none makes it unwinnable. Either way a reader is told they
+        # are wrong when they are not, which destroys trust in every other
+        # answer in the app.
+        n_correct = sum(1 for o in options if o.get("verdict") == "correct")
+        if n_correct != 1:
+            errs.append(f"{tag}: {n_correct} options marked 'correct' -- must be exactly 1")
+
+    return errs
+
 
 def check_scene(path: Path) -> list[str]:
     errs: list[str] = []
@@ -87,6 +166,10 @@ def check_scene(path: Path) -> list[str]:
                 errs.append(f"{tag}: metrics missing {key}")
         if metrics.get("p99_ms", 1) < metrics.get("p50_ms", 0):
             errs.append(f"{tag}: p99 is below p50, which cannot happen")
+
+    decisions, load_errs = load_decisions(scene["id"])
+    errs += load_errs
+    errs += check_decisions(decisions, seen_versions)
 
     versions_by_v = {ver["v"]: ver for ver in scene["versions"]}
 

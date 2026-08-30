@@ -1,0 +1,110 @@
+{
+  "scene": "notification-system",
+  "decisions": [
+    {
+      "id": "partition-key",
+      "v": 3,
+      "parameter": "Queue partition key",
+      "question": "Three channels, 20M users. What do you partition the work queue on?",
+      "reversibility": "costly",
+      "reversal": "Repartitioning a live queue means draining it or running old and new topologies side by side until the old one empties, while ordering guarantees are in flux.",
+      "options": [
+        {
+          "value": "Channel — one partition each for email, push and SMS",
+          "verdict": "wrong",
+          "because": "Three partitions means a parallelism ceiling of three, forever, no matter how many workers you run. Worse, the channels have wildly different volumes: the email partition is hours behind while the SMS partition sits idle, and no amount of scaling helps because the key decides the distribution."
+        },
+        {
+          "value": "user_id",
+          "verdict": "correct",
+          "because": "Thousands of partitions, evenly loaded, and everything for one user lands in order on one partition — which is what makes the V6 rate limit and the V7 digest possible at all. Both need to reason about a single user's recent history."
+        },
+        {
+          "value": "Random — spread work as evenly as possible",
+          "verdict": "wrong",
+          "because": "Perfect balance and no per-user ordering, so two notifications for the same user race. It also makes per-user rate limiting a distributed coordination problem instead of a local one."
+        }
+      ]
+    },
+    {
+      "id": "retry-backoff",
+      "v": 4,
+      "parameter": "Retry policy",
+      "question": "The SMS provider returns 500s for twenty minutes. How do workers retry?",
+      "reversibility": "cheap",
+      "reversal": "Worker configuration. Deploy and it takes effect on the next message.",
+      "options": [
+        {
+          "value": "Retry immediately, in a loop, until it succeeds",
+          "verdict": "wrong",
+          "because": "This is the V4 incident. A provider returning errors is usually a provider under stress, and a tight retry loop is a denial of service aimed at the thing you need to recover. You also burn your own workers spinning on a call that cannot succeed."
+        },
+        {
+          "value": "Exponential backoff with jitter, ~6 attempts, then a dead-letter queue",
+          "verdict": "correct",
+          "because": "Backoff gives the provider room to recover; jitter stops every worker retrying in the same instant and re-creating the spike; the attempt cap stops one poison message consuming a worker forever; and the DLQ keeps the failure inspectable instead of silent. Each clause is there because of a different failure."
+        },
+        {
+          "value": "Fixed 1-second delay between attempts",
+          "verdict": "wrong",
+          "because": "Better than no delay and still wrong, because every worker that failed at the same moment retries at the same moment. Without jitter you have built a synchronised wave that hits the recovering provider once a second."
+        },
+        {
+          "value": "Retry forever with backoff, never give up",
+          "verdict": "wrong",
+          "because": "A permanently invalid phone number is not going to start working. Backoff without a cap means the message stays in the system indefinitely, and eventually there are enough of them to occupy every worker."
+        }
+      ]
+    },
+    {
+      "id": "dedupe-window",
+      "v": 5,
+      "parameter": "Deduplication window",
+      "question": "A deploy replayed six hours of the event log. How long do you remember an event ID?",
+      "reversibility": "cheap",
+      "reversal": "A TTL on the dedupe store. Widening it costs memory and nothing else.",
+      "options": [
+        {
+          "value": "5 minutes",
+          "verdict": "wrong",
+          "because": "Size the window against the incident you are defending against, not against normal operation. The replay covered six hours; a five-minute memory catches none of it and every user is woken at 03:00 anyway."
+        },
+        {
+          "value": "24 hours, keyed on (user, event ID)",
+          "verdict": "correct",
+          "because": "Comfortably longer than any realistic replay or backfill window, and bounded so the store does not grow forever. Keying on the pair rather than the event alone means a genuine broadcast still reaches every user exactly once."
+        },
+        {
+          "value": "Remember every event ID forever",
+          "verdict": "wrong",
+          "because": "Unbounded growth in the hot path of every notification, to defend against a replay older than any you will ever perform. It also permanently suppresses legitimately recurring notifications that reuse an ID."
+        }
+      ]
+    },
+    {
+      "id": "ratelimit-scope",
+      "v": 6,
+      "parameter": "Rate limit scope",
+      "question": "One busy thread sent a single user 140 pushes in an hour. What do you limit?",
+      "reversibility": "cheap",
+      "reversal": "Configuration. The reason to think about it is that the wrong scope looks like it is working — the graph goes down — while the user experience does not change at all.",
+      "options": [
+        {
+          "value": "Globally, across the whole system",
+          "verdict": "wrong",
+          "because": "The system was nowhere near its global capacity during the incident, so a global limit would not have triggered. Meanwhile it punishes everyone during a legitimate spike. The limit must be scoped to the thing that was actually harmed: one person."
+        },
+        {
+          "value": "Per user, per channel",
+          "verdict": "correct",
+          "because": "Matches where the damage occurs. Per-channel matters because the tolerances differ by an order of magnitude — twenty pushes an hour is obnoxious, twenty emails is a mail-client filter rule, and twenty SMS is a real bill and a regulatory problem."
+        },
+        {
+          "value": "Per event type",
+          "verdict": "wrong",
+          "because": "Comment notifications as a category were not misbehaving. One user was in one unusually active thread, and a per-type limit throttles that event type for every user on the platform to fix it."
+        }
+      ]
+    }
+  ]
+}

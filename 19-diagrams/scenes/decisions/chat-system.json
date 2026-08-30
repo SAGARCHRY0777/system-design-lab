@@ -1,0 +1,110 @@
+{
+  "scene": "chat-system",
+  "decisions": [
+    {
+      "id": "registry-ttl",
+      "v": 3,
+      "parameter": "Connection registry entry lifetime",
+      "question": "The registry maps user to gateway. How does an entry go away?",
+      "reversibility": "cheap",
+      "reversal": "A TTL value and a heartbeat interval, both configuration. The reason to think about it carefully anyway is that the failure is invisible from the inside: a stale registry entry produces no error, no retry and no alert. Messages are routed to a machine that is not there, and the only signal is a user saying nobody replied.",
+      "options": [
+        {
+          "value": "Deleted when the gateway sees a clean disconnect",
+          "verdict": "wrong",
+          "because": "Gateways do not always get to say goodbye. A process killed by the OOM killer, a severed network link or a hard crash leaves its entries behind forever, and every message for those users is routed to a machine that no longer exists. Cleanup that only runs on the happy path is not cleanup."
+        },
+        {
+          "value": "A ~30 second TTL, refreshed by heartbeat",
+          "verdict": "correct",
+          "because": "Liveness becomes something continuously proven rather than assumed. A dead gateway's entries drain within one TTL with nobody having to notice it died — which matters at V8, where a gateway holding 25,000 sockets disappears."
+        },
+        {
+          "value": "A 5 minute TTL, refreshed by heartbeat",
+          "verdict": "wrong",
+          "because": "Right mechanism, wrong constant. After a crash you black-hole messages for up to five minutes — an eternity in a chat product, and long enough that users conclude the app is broken."
+        }
+      ]
+    },
+    {
+      "id": "delivery-semantics",
+      "v": 5,
+      "parameter": "Delivery guarantee",
+      "question": "The recipient is offline and the push provider might time out. What guarantee?",
+      "reversibility": "costly",
+      "reversal": "Tightening the guarantee later means adding a dedupe path to every client and every consumer, and shipping it to mobile apps you do not control the update cycle of.",
+      "options": [
+        {
+          "value": "At-most-once — try to deliver, do not retry",
+          "verdict": "wrong",
+          "because": "A dropped message in a chat product is the single failure users will not forgive, because they cannot tell it from being ignored by the person they were talking to."
+        },
+        {
+          "value": "At-least-once, deduplicated on the client by message ID",
+          "verdict": "correct",
+          "because": "Retries are safe because the client discards an ID it has already rendered. You accept a duplicate on the wire in exchange for never losing a message, and you pay for it in one place."
+        },
+        {
+          "value": "Exactly-once delivery to the device",
+          "verdict": "wrong",
+          "because": "Unachievable to a mobile client that can lose power between receiving bytes and rendering them. Every real system claiming it is doing at-least-once plus dedupe — choosing this option means not building the dedupe you nevertheless need."
+        }
+      ]
+    },
+    {
+      "id": "ordering-key",
+      "v": 6,
+      "parameter": "Message ordering key",
+      "question": "Two messages 30 ms apart arrived in different orders on different devices. What orders them?",
+      "reversibility": "one-way",
+      "reversal": "Every message already stored carries the old key. Changing it means every client's sort logic must handle both schemes, forever, because old messages never get rewritten.",
+      "options": [
+        {
+          "value": "Server wall-clock timestamp",
+          "verdict": "wrong",
+          "because": "This is the V6 bug. The two messages were stamped by two different gateways whose clocks disagree by more than 30 ms, which is entirely normal. NTP bounds skew, it does not eliminate it, and no amount of clock discipline makes wall time a total order across machines."
+        },
+        {
+          "value": "A per-conversation monotonic sequence number",
+          "verdict": "correct",
+          "because": "Order is assigned by one authority per conversation, so it is total and unambiguous by construction rather than by luck. The scope matters: per-conversation keeps the assigning authority small, where a global sequence would be a system-wide bottleneck."
+        },
+        {
+          "value": "Client timestamp — the sender knows when they sent it",
+          "verdict": "wrong",
+          "because": "Client clocks are worse than server clocks and are also under the user's control. Anyone can set their phone forward and pin their messages to the top of everyone's conversation."
+        },
+        {
+          "value": "UUIDv4 message IDs, sorted by ID",
+          "verdict": "wrong",
+          "because": "Random IDs carry no order at all. This sorts messages into a stable, consistent and completely meaningless sequence."
+        }
+      ]
+    },
+    {
+      "id": "presence-model",
+      "v": 7,
+      "parameter": "Presence propagation",
+      "question": "1M users, 200 contacts each. How does an online/offline change reach contacts?",
+      "reversibility": "cheap",
+      "reversal": "Presence is soft state that rebuilds itself continuously. You can change the propagation model on a Tuesday afternoon.",
+      "options": [
+        {
+          "value": "Push every change to all 200 contacts immediately",
+          "verdict": "wrong",
+          "because": "Do the arithmetic before building it. A user toggling state every 30 seconds across 1M users at 200 contacts each is roughly 1.6M events per second — over a hundred times the entire message path of the product. The cheapest-looking feature on the roadmap was the most expensive thing in the system."
+        },
+        {
+          "value": "Subscribe only to the contacts in the conversation currently open",
+          "verdict": "correct",
+          "because": "Collapses the fan-out to what a user can actually see, which is a handful of people rather than 200. The realisation is that presence for someone you are not looking at has no value, so it should not be computed."
+        },
+        {
+          "value": "Batch changes and broadcast a digest every 60 seconds",
+          "verdict": "defensible",
+          "because": "Cuts the event rate by orders of magnitude and is simple to reason about. The cost is that presence is now up to a minute stale, which makes 'is this person there right now' — the entire point of the feature — unreliable."
+        }
+      ]
+    }
+  ]
+}

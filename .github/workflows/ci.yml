@@ -48,6 +48,11 @@ jobs:
       - name: Reading-path footers are current
         run: python scripts/gen_path.py --check
 
+      # The design exercises render the same JSON the studio imports, so the
+      # page and the app cannot give different answers to the same question.
+      - name: Design exercises match their generator
+        run: python scripts/gen_decisions.py --check
+
       # Every figure in a case study is traceable to a named primary source.
       # The generator also refuses a decision with no cost and a doesNotApply
       # that has decayed into a disclaimer -- the two fields the section is for.
@@ -84,6 +89,14 @@ jobs:
       - name: Design-studio briefs grade correctly
         working-directory: visualizer
         run: npm run check:studio
+
+      # Parameter decisions are attached to versions, but briefs cover the
+      # transitions between them -- so a decision can be authored, pass shape
+      # validation, and still be reachable by nobody. Three of the first
+      # twenty-four were. This walks the real UI path to prove they are shown.
+      - name: Parameter decisions are reachable and grade correctly
+        working-directory: visualizer
+        run: npm run check:decisions
 
       - name: Build
         working-directory: visualizer

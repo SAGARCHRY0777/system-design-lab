@@ -106,6 +106,48 @@ and is exactly the dashed-vs-solid distinction from the notation contract.
 
 ---
 
+## `decisions/<id>.json` — the parameters
+
+A sibling file, not a field on the scene. Where the scene records *which components exist*, this
+records **what they were set to**: the shard key, the TTL, the replication mode, the timeout. Those
+are the choices that end up in a postmortem — nobody writes *"we should not have used a cache"*.
+
+```jsonc
+{
+  "scene": "url-shortener",        // must match the scene's id
+  "decisions": [
+    {
+      "id": "shard-key",
+      "v": 6,                       // the version where this is decided
+      "parameter": "Shard key",
+      "question": "You are sharding. What do you shard on?",
+      "reversibility": "one-way",   // cheap | costly | one-way
+      "reversal": "Re-sharding on a different key means every row moves…",
+      "options": [
+        { "value": "hash(short_code)", "verdict": "correct",    "because": "…" },
+        { "value": "user_id",          "verdict": "wrong",      "because": "…" },
+        { "value": "region",           "verdict": "defensible", "because": "…" }
+      ]
+    }
+  ]
+}
+```
+
+**`reversibility` is the field that earns this file its place.** A TTL is a config change and a
+shard key is a migration; an engineer who knows which is which can decide the cheap ones fast and
+spend the argument on the expensive ones. Exactly one option is `correct`, and `defensible` exists
+because real parameter choices are not binary — marking a reasonable-but-suboptimal answer simply
+"wrong" would teach that design has one right answer.
+
+### Why it is a separate file
+
+Every scene is imported into the app's **main** bundle, because the default view renders one
+immediately. The decision prose is 33 KB that only the lazily-loaded studio reads — while it lived
+inside the scene it cost every visitor 10.7 KB gzipped on the critical path for bytes the first
+screen never touches. Splitting the file moves it into the chunk that uses it.
+
+---
+
 ## Validation
 
 `python scripts/check_scenes.py` enforces:
@@ -115,6 +157,14 @@ and is exactly the dashed-vs-solid distinction from the notation contract.
 - every `bottleneck` refers to an active node
 - versions are ordered and `v` is unique
 - every node in `nodes` is used by at least one version — no dead declarations
+- each scene has a `decisions/` file naming it, with **exactly one** `correct` option per
+  decision, a known `reversibility`, three or more options, and a real explanation on each —
+  a stub tells a reader they were wrong without saying why, which is worse than not asking
+
+`npm run check:decisions` additionally walks the studio's own path to prove every authored decision
+is **reachable**. Decisions belong to versions and briefs cover the transitions between them, so a
+decision can be authored, pass every shape check, and be shown to nobody — three of the first
+twenty-four were.
 
 `python scripts/render_diagrams.py --check` additionally fails when a committed SVG is stale
 relative to its scene, so the markdown can never quietly disagree with the data.

@@ -2,7 +2,7 @@
 
 # System Design Lab
 
-**A system design learning laboratory** — 101 pages, 252 diagrams, 398 hidden-answer exercises,
+**A system design learning laboratory** — 122 pages, 293 diagrams, 482 hidden-answer exercises,
 4 measured implementations, and an interactive lab where you commit to an answer before you see one.
 
 [Take the diagnostic](DIAGNOSTIC.md) · [Open the lab](https://SAGARCHRY0777.github.io/system-design-lab/) · [Patterns](13-design-patterns/CATALOGUE.md) · [Combinations](14-component-combinations/MATRIX.md) · [Case studies](17-case-studies/) · [Interview](20-system-design-interview/) · [Gaps](GAPS.md)
@@ -29,7 +29,7 @@ Next         →  which component does that force?
 
 Learn the chain and you can *derive* most architectures instead of memorising them.
 
-**And it asks you things.** 398 questions here have their answers folded away, and the lab makes you
+**And it asks you things.** 482 questions here have their answers folded away, and the lab makes you
 commit before it reveals. Reading an answer you did not attempt teaches nothing.
 
 ## The lab
@@ -38,12 +38,13 @@ commit before it reveals. Reading an answer you did not attempt teaches nothing.
   <img src="19-diagrams/generated/url-shortener-v4.svg" alt="URL shortener at version 4, a request animating from client through load balancer and app servers to the cache" width="760">
 </div>
 
-**[SAGARCHRY0777.github.io/system-design-lab](https://SAGARCHRY0777.github.io/system-design-lab/)** — five tabs:
+**[SAGARCHRY0777.github.io/system-design-lab](https://SAGARCHRY0777.github.io/system-design-lab/)** — six tabs:
 
 | Tab | What it does |
 |---|---|
 | **Architectures** | Scrub a system V1→V8 and see *why* each change happened. Animate a request in simulated time — it dwells inside each component for what that component costs, so a database visit visibly takes 30× a cache lookup. Switch a component off and the request **stops there**. |
-| **Predict** | 69 questions derived from the scenes. The reveal is locked until you commit, then it corrects you using the scene's own text — and offers **Watch it happen**. |
+| **Predict** | 148 questions derived from the scenes. The reveal is locked until you commit, then it corrects you using the scene's own text — and offers **Watch it happen**. |
+| **Design studio** | 33 briefs and [24 parameter decisions](16-design-exercises/). You are handed the system, the traffic and the symptom, and you **produce** the architecture — then set its shard key, TTL and timeouts. Over-building is marked as harshly as under-building, and every decision is labelled by how expensive it is to undo. |
 | **Patterns** | 78 patterns, searchable, each with a diagram. Every Gang of Four entry shows what it becomes **across a network**, and why that is harder. |
 | **Case studies** | 10 real systems with primary sources. The field given most weight is *when this does **not** apply to you*. |
 | **Interview** | 46 questions, 98 follow-ups revealed **one at a time** — because anyone can recite a first answer. |
@@ -65,8 +66,10 @@ you by *what you get wrong*. A missed question is worth more than the score.
 4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
 5. [The URL shortener](15-real-world-problems/url-shortener/), V1→V8 — the whole method on one problem
 
-**Already comfortable** — the [combination matrix](14-component-combinations/MATRIX.md) and the
-[case studies](17-case-studies/). **Interviewing** — [the checklist](DESIGN-CHECKLIST.md) and
+**Already comfortable** — the [combination matrix](14-component-combinations/MATRIX.md), the
+[case studies](17-case-studies/), and the [parameter decisions](16-design-exercises/), which ask
+what you would *set* things to rather than which component to reach for.
+**Interviewing** — [the checklist](DESIGN-CHECKLIST.md) and
 [the question bank](20-system-design-interview/).
 
 ## Learning path
@@ -108,6 +111,7 @@ systems are made of.
 | [13-design-patterns/](13-design-patterns/) | **78 patterns** in the [catalogue](13-design-patterns/CATALOGUE.md), every one with a diagram and a case study |
 | [14-component-combinations/](14-component-combinations/) | **All 153 pairs** classified; 11 with full pages |
 | [15-real-world-problems/](15-real-world-problems/url-shortener/) | Full designs, V1→V8 |
+| [16-design-exercises/](16-design-exercises/) | **24 parameter decisions** — shard keys, TTLs, timeouts — each labelled by how hard it is to undo |
 | [17-case-studies/](17-case-studies/) | **10 real systems**, each with a primary source, its costs, and when *not* to copy it |
 | [18-implementations/](18-implementations/) | Working Python, **measured** benchmarks, 103 tests |
 | [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated SVGs |

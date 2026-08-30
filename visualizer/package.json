@@ -11,9 +11,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "check": "npm run lint && npm run check:quiz && npm run check:studio && npm run build",
+    "check": "npm run lint && npm run check:quiz && npm run check:studio && npm run check:decisions && npm run build",
     "check:quiz": "node scripts/check-quiz.mjs",
-    "check:studio": "node scripts/check-studio.mjs"
+    "check:studio": "node scripts/check-studio.mjs",
+    "check:decisions": "node scripts/check-decisions.mjs"
   },
   "dependencies": {
     "mermaid": "^11.17.2",

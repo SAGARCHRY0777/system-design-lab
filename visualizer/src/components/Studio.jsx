@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SCENES } from '../scenes/index.js'
+import { decisionsForScene } from '../scenes/decisions.js'
 import { buildBriefs, grade, whyWrong } from '../lib/studio.js'
-import { record } from '../lib/progress.js'
+import {
+  REVERSIBILITY, assignDecisions, gradeDecision, verdictText,
+} from '../lib/decisions.js'
+import { missedIn, record } from '../lib/progress.js'
 
 /**
  * The design studio.
@@ -14,6 +18,12 @@ import { record } from '../lib/progress.js'
  * Over-building is graded as harshly as under-building, and the feedback for a
  * wrong component says WHEN it would have been right. A catalogue of patterns
  * implicitly teaches that every pattern is desirable; this is the correction.
+ *
+ * A brief has two phases, and the second one is the one that matters more.
+ * BUILD asks what to add. CONFIGURE asks what to set it to -- the shard key, the
+ * TTL, the timeout. Choosing a component is the part that gets rehearsed because
+ * it is what a diagram shows; choosing its parameters is the part that ends up
+ * in the postmortem. Nobody writes "we should not have used a cache".
  */
 export default function Studio() {
   const [sceneId, setSceneId] = useState(SCENES[0].id)
@@ -24,14 +34,38 @@ export default function Studio() {
   const [picked, setPicked] = useState([])
   const [result, setResult] = useState(null)
 
-  useEffect(() => { setI(0); setPicked([]); setResult(null) }, [sceneId])
-  useEffect(() => { setPicked([]); setResult(null) }, [i])
+  // Phase two: parameters.
+  const [phase, setPhase] = useState('build')
+  const [di, setDi] = useState(0)
+  const [dPicked, setDPicked] = useState(null)
+  const [dResult, setDResult] = useState(null)
+
+  const reset = () => {
+    setPicked([]); setResult(null)
+    setPhase('build'); setDi(0); setDPicked(null); setDResult(null)
+  }
+  useEffect(() => { setI(0); reset() }, [sceneId])
+  useEffect(reset, [i])
+
+  const assigned = useMemo(
+    () => assignDecisions(decisionsForScene(scene.id), briefs),
+    [scene, briefs],
+  )
 
   const b = briefs[Math.min(i, briefs.length - 1)]
+  const decisions = assigned[Math.min(i, briefs.length - 1)] ?? []
   if (!b) return <div className="studio"><p className="hint">No briefs for this system.</p></div>
 
   const label = id => scene.nodes[id]?.label ?? id
   const toggle = id => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+  const nextBrief = () => setI(n => (n + 1) % briefs.length)
+
+  const d = decisions[di]
+  const rev = d ? REVERSIBILITY[d.reversibility] : null
+  // Read at render rather than in state: `record` writes on commit, and the tag
+  // should disappear the moment a previously-missed decision is corrected.
+  const missedBefore = d != null
+    && missedIn('decision').includes(`${scene.id}:${d.id}`)
 
   const VERDICT = {
     exact: ['Exactly right.', 'You added what was needed and nothing else.'],
@@ -65,40 +99,44 @@ export default function Studio() {
           <strong>The symptom:</strong> {b.trigger}
         </p>
         <p className="hint">
-          Current p99 is {b.prevMetrics.p99_ms} ms. What do you add? Adding nothing unnecessary
-          counts for as much as adding the right thing.
+          {phase === 'build'
+            ? `Current p99 is ${b.prevMetrics.p99_ms} ms. What do you add? Adding nothing `
+              + 'unnecessary counts for as much as adding the right thing.'
+            : `You are at V${b.toV}. The components are decided — now set them.`}
         </p>
       </div>
 
-      <div className="st-palette">
-        <span className="iv-h">Available components</span>
-        <div className="st-opts">
-          {b.options.map(id => {
-            const on = picked.includes(id)
-            const state = result
-              ? b.answer.includes(id)
-                ? (on ? 'right' : 'missedopt')
-                : (on ? 'wrong' : '')
-              : (on ? 'picked' : '')
-            return (
-              <button
-                key={id}
-                className={`st-opt ${state}`}
-                onClick={() => !result && toggle(id)}
-                disabled={!!result}
-              >
-                <span className="st-mark" aria-hidden="true">
-                  {result && b.answer.includes(id) ? '✓' : result && on ? '✗' : on ? '●' : '○'}
-                </span>
-                <span>{label(id)}</span>
-                {scene.nodes[id]?.note && <em>{scene.nodes[id].note}</em>}
-              </button>
-            )
-          })}
+      {phase === 'build' && (
+        <div className="st-palette">
+          <span className="iv-h">Available components</span>
+          <div className="st-opts">
+            {b.options.map(id => {
+              const on = picked.includes(id)
+              const state = result
+                ? b.answer.includes(id)
+                  ? (on ? 'right' : 'missedopt')
+                  : (on ? 'wrong' : '')
+                : (on ? 'picked' : '')
+              return (
+                <button
+                  key={id}
+                  className={`st-opt ${state}`}
+                  onClick={() => !result && toggle(id)}
+                  disabled={!!result}
+                >
+                  <span className="st-mark" aria-hidden="true">
+                    {result && b.answer.includes(id) ? '✓' : result && on ? '✗' : on ? '●' : '○'}
+                  </span>
+                  <span>{label(id)}</span>
+                  {scene.nodes[id]?.note && <em>{scene.nodes[id].note}</em>}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {!result && (
+      {phase === 'build' && !result && (
         <div className="pq-actions">
           <button
             className="play"
@@ -118,7 +156,7 @@ export default function Studio() {
         </div>
       )}
 
-      {result && (
+      {phase === 'build' && result && (
         <div className={`st-result ${result.perfect ? 'good' : 'bad'}`}>
           <strong>{VERDICT[result.verdict][0]}</strong>
           <p>{VERDICT[result.verdict][1]}</p>
@@ -157,18 +195,155 @@ export default function Studio() {
             <button className="tick" onClick={() => { setPicked([]); setResult(null) }}>
               Try again
             </button>
-            <button className="play" onClick={() => setI(n => (n + 1) % briefs.length)}>
-              Next brief ›
-            </button>
+            {decisions.length > 0 ? (
+              <button className="play" onClick={() => setPhase('configure')}>
+                Now configure it ›
+              </button>
+            ) : (
+              <button className="play" onClick={nextBrief}>Next brief ›</button>
+            )}
           </div>
+          {decisions.length > 0 && (
+            <p className="hint">
+              Choosing the component was the easy half. {decisions.length === 1
+                ? 'There is one parameter'
+                : `There are ${decisions.length} parameters`} to set, and at least one of
+              them you will not get to change later.
+            </p>
+          )}
+        </div>
+      )}
+
+      {phase === 'configure' && d && (
+        <div className="st-decide">
+          <div className="st-dhead">
+            <span className="iv-h">Configure · {d.parameter}</span>
+            <span className="pq-count">
+              {missedBefore && <em className="st-again">missed before</em>}
+              {di + 1} / {decisions.length}
+            </span>
+          </div>
+
+          {/* The badge is the lesson. Everything else on this screen is the
+              worked example that justifies it. */}
+          <div className={`st-rev ${d.reversibility}`}>
+            <strong>{rev.label}</strong>
+            <span>{rev.blurb}</span>
+          </div>
+
+          <h2 className="pq-prompt">{d.question}</h2>
+
+          <ul className="pq-options">
+            {d.options.map(o => {
+              const isPicked = dPicked === o.value
+              const isAnswer = o.verdict === 'correct'
+              const cls = [
+                'pq-opt',
+                isPicked && !dResult && 'picked',
+                dResult && isAnswer && 'right',
+                dResult && isPicked && !isAnswer && (o.verdict === 'defensible' ? 'maybe' : 'wrong'),
+              ].filter(Boolean).join(' ')
+              return (
+                <li key={o.value}>
+                  <button
+                    className={cls}
+                    onClick={() => !dResult && setDPicked(o.value)}
+                    disabled={!!dResult}
+                    aria-pressed={isPicked}
+                  >
+                    <span className="pq-mark" aria-hidden="true">
+                      {dResult && isAnswer ? '✓'
+                        : dResult && isPicked ? (o.verdict === 'defensible' ? '~' : '✗')
+                          : isPicked ? '●' : '○'}
+                    </span>
+                    <span>{o.value}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+
+          {!dResult && (
+            <div className="pq-actions">
+              <button
+                className="play"
+                disabled={!dPicked}
+                onClick={() => {
+                  const g = gradeDecision(d, dPicked)
+                  setDResult(g)
+                  record('decision', `${scene.id}:${d.id}`, g.correct)
+                }}
+              >
+                Commit
+              </button>
+              {!dPicked && <span className="hint">Commit to a value first.</span>}
+            </div>
+          )}
+
+          {dResult && (
+            <div className={`st-result ${dResult.correct ? 'good' : 'bad'}`}>
+              <strong>{verdictText(dResult.verdict)[0]}</strong>
+              <p>{verdictText(dResult.verdict)[1]}</p>
+
+              <div className="st-fb">
+                <span className="iv-h">
+                  {dResult.correct ? 'Why' : `Why "${dResult.picked.value}" behaves that way`}
+                </span>
+                <p>{dResult.picked.because}</p>
+              </div>
+
+              {!dResult.correct && (
+                <div className="st-fb">
+                  <span className="iv-h">What this system needed</span>
+                  <p><strong>{dResult.answer.value}</strong> — {dResult.answer.because}</p>
+                </div>
+              )}
+
+              <div className="st-fb over">
+                <span className="iv-h">If you need to change your mind</span>
+                <p>{d.reversal}</p>
+              </div>
+
+              <div className="pq-actions">
+                <button
+                  className="tick"
+                  onClick={() => { setDPicked(null); setDResult(null) }}
+                >
+                  Try again
+                </button>
+                {di + 1 < decisions.length ? (
+                  <button
+                    className="play"
+                    onClick={() => { setDi(n => n + 1); setDPicked(null); setDResult(null) }}
+                  >
+                    Next parameter ›
+                  </button>
+                ) : (
+                  <button className="play" onClick={nextBrief}>Next brief ›</button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       <p className="simnote">
-        Graded against the next version of the scene file — the same data that draws the diagrams, so
-        the reference design and the picture cannot disagree. <strong>Over-building costs you the
-        same as under-building</strong>, because a component added before its problem exists is
-        complexity you pay for forever.
+        {phase === 'build' ? (
+          <>
+            Graded against the next version of the scene file — the same data that draws the
+            diagrams, so the reference design and the picture cannot disagree.{' '}
+            <strong>Over-building costs you the same as under-building</strong>, because a component
+            added before its problem exists is complexity you pay for forever.
+          </>
+        ) : (
+          <>
+            Some of these are a config change and some are a migration, and the badge tells you
+            which before you choose. <strong>That distinction is the point.</strong> Reversible
+            decisions should be made quickly and corrected with data; one-way decisions deserve the
+            argument, and they are usually made earliest, when the system is smallest and it feels
+            like they matter least.
+          </>
+        )}
       </p>
     </div>
   )

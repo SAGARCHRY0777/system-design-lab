@@ -50,7 +50,7 @@ function write(state) {
 /**
  * Record an attempt.
  *
- * @param {string} area  'predict' | 'studio' | 'interview'
+ * @param {string} area  'predict' | 'studio' | 'decision' | 'interview'
  * @param {string} id    stable question or brief id
  * @param {boolean} ok   whether they got it right
  */

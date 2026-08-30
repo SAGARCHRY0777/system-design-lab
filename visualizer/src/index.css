@@ -882,3 +882,51 @@ footer p { margin: 0; max-width: 82ch; }
 
 .pq-headright { display: flex; align-items: center; gap: 10px; }
 .pq-headright .tick { font-family: inherit; font-size: 11px; padding: 3px 8px; }
+
+/* Phase two of a brief: parameters.
+   The reversibility strip is the most important element on the screen -- it is
+   the difference between "we can tune this next week" and "this is load-bearing
+   forever" -- so it is given a severity colour and sits above the question. */
+.st-decide { border-top: 1px solid var(--line); padding-top: 18px; }
+.st-dhead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin-bottom: 12px;
+}
+
+.st-rev {
+  display: flex; flex-direction: column; gap: 3px;
+  border-left: 3px solid var(--line2);
+  background: var(--sunken);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 10px 14px; margin: 0 0 18px; max-width: 72ch;
+}
+.st-rev strong {
+  font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink3);
+}
+.st-rev span { font-size: 14px; color: var(--ink2); }
+
+.st-rev.cheap { border-left-color: var(--accent); }
+.st-rev.cheap strong { color: var(--accent); }
+.st-rev.costly { border-left-color: var(--amber); }
+.st-rev.costly strong { color: var(--amber); }
+.st-rev.one-way {
+  border-left-color: var(--red);
+  background: color-mix(in srgb, var(--red) 7%, var(--sunken));
+}
+.st-rev.one-way strong { color: var(--red); }
+
+/* A defensible answer is not a wrong answer. Marking it red would teach that
+   design has one right answer, which is the belief this app exists to correct. */
+.pq-opt.maybe { border-color: var(--amber); }
+.pq-opt.maybe .pq-mark { color: var(--amber); }
+
+.st-decide .st-result > strong { color: var(--red); }
+.st-decide .st-result.good > strong { color: var(--accent); }
+
+/* A pointer, not a score. It says "you got this wrong last time" and vanishes
+   the moment it is corrected -- which is the only fact worth remembering. */
+.st-again {
+  font-style: normal; font-size: 11px; letter-spacing: .04em;
+  color: var(--amber); margin-right: 10px;
+}

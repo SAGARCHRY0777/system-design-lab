@@ -1,0 +1,105 @@
+{
+  "scene": "payment-system",
+  "decisions": [
+    {
+      "id": "idempotency-ttl",
+      "v": 2,
+      "parameter": "Idempotency key lifetime",
+      "question": "A phone lost signal mid-checkout and the app retried. How long is the key remembered?",
+      "reversibility": "costly",
+      "reversal": "Extending the window is easy. Discovering it was too short is not: the evidence is a double charge that already happened, and the repair is a refund plus an apology to someone who no longer trusts you.",
+      "options": [
+        {
+          "value": "60 seconds",
+          "verdict": "wrong",
+          "because": "The retry you are defending against comes from a phone that lost signal. It may reconnect in a minute, or when the user gets off the train. The window must cover how long a client might plausibly wait before retrying, and that is a human timescale, not a network one."
+        },
+        {
+          "value": "24 hours",
+          "verdict": "correct",
+          "because": "Longer than any realistic client retry, including a user who reopens the app the next morning, and short enough that the store stays bounded. Anything arriving later is a new intent to pay rather than a retry of an old one."
+        },
+        {
+          "value": "Forever",
+          "verdict": "defensible",
+          "because": "Safe, and payments are exactly where you would consider paying for safety. But keys are usually client-generated, and a buggy client that reuses one will have a legitimate payment silently swallowed months later — a bug that is nearly impossible to diagnose because the system correctly did nothing."
+        }
+      ]
+    },
+    {
+      "id": "ledger-write",
+      "v": 4,
+      "parameter": "When ledger entries are written",
+      "question": "A payment is captured. When do the double-entry rows get written?",
+      "reversibility": "one-way",
+      "reversal": "A ledger that has drifted cannot be recomputed if the events that would have produced it were lost. You are reconstructing money movements from provider statements and logs, by hand, under audit.",
+      "options": [
+        {
+          "value": "In the same transaction as the payment state change",
+          "verdict": "correct",
+          "because": "The state change and its accounting record commit together or not at all, so there is no instant in which the system believes it captured money it has not recorded. For anything that must reconcile to the penny, the atomicity is the design."
+        },
+        {
+          "value": "Asynchronously, from a queue, just after the capture",
+          "verdict": "wrong",
+          "because": "The window between the two writes is small and non-zero, and a crash inside it produces a captured payment with no ledger entry. Unlike a missed notification this never self-corrects, because nothing else in the system knows the entry was supposed to exist. Async is right for work that can be retried; it is wrong for the record of what happened."
+        },
+        {
+          "value": "Nightly, by batch, from the payments table",
+          "verdict": "wrong",
+          "because": "The ledger is now up to 24 hours behind, so nobody can answer 'what is our outstanding balance' — which is the V4 trigger. It also makes the payments table the source of truth and the ledger a report, which inverts the entire point of double-entry."
+        }
+      ]
+    },
+    {
+      "id": "webhook-ordering",
+      "v": 6,
+      "parameter": "Webhook application",
+      "question": "The captured event arrived before authorised, and one webhook was redelivered. How do you apply them?",
+      "reversibility": "costly",
+      "reversal": "Fixing this after the fact means replaying the provider's event history against a corrected state machine and repairing whatever the out-of-order applications already did.",
+      "options": [
+        {
+          "value": "Apply each webhook in the order it arrives",
+          "verdict": "wrong",
+          "because": "This is the V6 bug. The network does not preserve order and the provider retries, so arrival order is not event order. Applying 'captured' before 'authorised' advances the payment through a transition that should be impossible."
+        },
+        {
+          "value": "Order by the provider's event sequence, and make each application idempotent",
+          "verdict": "correct",
+          "because": "Two independent problems need two independent fixes. Ordering handles out-of-order arrival; idempotency handles redelivery. Solving only one leaves the other bug live, which is why this pair shows up together in every integration with an external provider."
+        },
+        {
+          "value": "Ignore webhooks and poll the provider for payment status",
+          "verdict": "defensible",
+          "because": "Polling gives you current state rather than a stream of transitions, which sidesteps ordering entirely — and it is a genuine fallback when a provider's webhooks are unreliable. The cost is latency and load proportional to payment volume, and you lose events that are transient by nature."
+        }
+      ]
+    },
+    {
+      "id": "capture-timeout",
+      "v": 8,
+      "parameter": "Capture timeout and what a timeout means",
+      "question": "The provider times out on 8% of captures, and most of those actually succeeded. What do you do?",
+      "reversibility": "cheap",
+      "reversal": "The timeout is a client setting. How you interpret it is a line of code. Both are cheap to change and expensive to get wrong.",
+      "options": [
+        {
+          "value": "No timeout — wait for a definitive answer",
+          "verdict": "wrong",
+          "because": "There may never be one. Threads accumulate on a degraded provider until the API stops serving anyone, and you have converted a partner's partial outage into your own total one."
+        },
+        {
+          "value": "Time out, mark the payment failed, let the customer retry",
+          "verdict": "wrong",
+          "because": "The premise says most of those captures succeeded. Marking them failed and inviting a retry charges the customer twice, which is the exact bug V2 was built to fix — reintroduced through the error path instead of the happy path."
+        },
+        {
+          "value": "Time out, mark the outcome UNKNOWN, and resolve it by reconciliation",
+          "verdict": "correct",
+          "because": "A timeout tells you nothing about what the other system did — it is the absence of information, not evidence of failure. Modelling UNKNOWN as a real state is what lets the reconciler resolve it against the provider's record later. At 5M payments a day, 8% timing out is around 5,000 unknowns daily, which is why an operations queue is part of the architecture rather than a temporary measure."
+        }
+      ]
+    }
+  ]
+}

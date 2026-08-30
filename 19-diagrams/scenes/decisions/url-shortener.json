@@ -1,0 +1,115 @@
+{
+  "scene": "url-shortener",
+  "decisions": [
+    {
+      "id": "code-length",
+      "v": 1,
+      "parameter": "Short code length",
+      "question": "Codes are base62. How many characters?",
+      "reversibility": "one-way",
+      "reversal": "Every code you have ever issued is a public URL that someone has pasted into a document, a tweet or a QR code on a printed poster. You can start issuing longer codes tomorrow, but you can never shorten or reissue the ones already out there. This is the most irreversible decision on the page and it is made on day one, at 10K requests a day, when it feels like it does not matter.",
+      "options": [
+        {
+          "value": "4 characters (~14.8M codes)",
+          "verdict": "wrong",
+          "because": "62^4 is 14,776,336. At the 1B requests/day this system reaches, even a 0.1% write ratio exhausts the whole keyspace in under two weeks. You then face the one migration you cannot perform."
+        },
+        {
+          "value": "7 characters (~3.5 trillion codes)",
+          "verdict": "correct",
+          "because": "62^7 is 3,521,614,606,208. At a million new links a day that is 9,600 years of keyspace, and it stays short enough to read aloud. Buying four orders of magnitude of headroom costs three characters."
+        },
+        {
+          "value": "A base62-encoded auto-increment integer",
+          "verdict": "defensible",
+          "because": "It works and it guarantees uniqueness without a collision check, which is genuinely attractive. The cost is that codes are enumerable: anyone can walk your entire link database, and the difference between two codes tells a competitor your exact signup rate. Correct for internal tools, wrong for a public service."
+        },
+        {
+          "value": "A full UUID (36 characters)",
+          "verdict": "wrong",
+          "because": "Collision-proof and completely self-defeating: the output is longer than most of the URLs being shortened. The product is brevity."
+        }
+      ]
+    },
+    {
+      "id": "cache-ttl",
+      "v": 4,
+      "parameter": "Cache TTL",
+      "question": "The cache is read-through. What TTL do you set on an entry?",
+      "reversibility": "cheap",
+      "reversal": "A config change that takes effect within one TTL period. If you get this wrong you will know within an hour and fix it within two. Spend your design argument somewhere else.",
+      "options": [
+        {
+          "value": "No expiry — the mapping never changes",
+          "verdict": "wrong",
+          "because": "The tempting answer, because a code-to-URL mapping really is immutable. But entries are not only invalidated by edits: a link that turns out to host malware has to stop redirecting NOW, and an entry with no TTL keeps serving it from every cache node until someone evicts it by hand. Also nothing ever reclaims memory for the long tail nobody clicks."
+        },
+        {
+          "value": "1 hour",
+          "verdict": "correct",
+          "because": "Long enough that the hot 0.1% of codes essentially never expire under continuous traffic, short enough that a takedown propagates on its own within an hour without an explicit purge. The TTL is doing double duty as a safety net."
+        },
+        {
+          "value": "30 seconds",
+          "verdict": "wrong",
+          "because": "Buys freshness that an immutable mapping does not need, and pays for it in hit rate: every hot key re-fetches 120 times an hour across every node. You added a cache to take load off the database and then configured it to keep asking."
+        }
+      ]
+    },
+    {
+      "id": "shard-key",
+      "v": 6,
+      "parameter": "Shard key",
+      "question": "You are sharding. What do you shard on?",
+      "reversibility": "one-way",
+      "reversal": "Re-sharding on a different key means every row moves. In practice that is dual writes to both clusters, a backfill of the entire dataset, a consistency check and a cutover with a rollback plan — months of engineering during which you ship nothing else.",
+      "options": [
+        {
+          "value": "user_id of whoever created the link",
+          "verdict": "wrong",
+          "because": "Look at the read path: a redirect request contains a short code and nothing else. It does not know who created the link, so it cannot compute the shard — every read becomes a scatter-gather across all N shards. The shard key must be derivable from what the hot request actually carries."
+        },
+        {
+          "value": "hash(short_code)",
+          "verdict": "correct",
+          "because": "The redirect path knows the code, so one hash sends it to exactly one shard. Hashing also spreads writes evenly by construction, which is the other half of the V6 problem."
+        },
+        {
+          "value": "created_at, in date ranges",
+          "verdict": "wrong",
+          "because": "Every new link is written to the newest shard, so 100% of write traffic lands on one machine and the other N-1 sit idle. You have bought the operational cost of a sharded cluster and none of the write throughput. Range keys on a monotonic column always do this."
+        },
+        {
+          "value": "Geographic region of the creator",
+          "verdict": "defensible",
+          "because": "Genuinely right for a data-residency requirement — if EU links must live in the EU, this is how. But it does not solve the V6 problem: regions are wildly uneven in size, so load is uneven, and a redirect still does not know the region from the code alone."
+        }
+      ]
+    },
+    {
+      "id": "replication-mode",
+      "v": 7,
+      "parameter": "Cross-region replication",
+      "question": "US and EU each hold a copy. How do writes propagate?",
+      "reversibility": "costly",
+      "reversal": "Switching modes is a config and topology change rather than a data migration, but it changes the guarantees the application above it is already relying on. Anything written assuming synchronous replication breaks quietly when you loosen it.",
+      "options": [
+        {
+          "value": "Synchronous — a write is not acknowledged until both regions have it",
+          "verdict": "wrong",
+          "because": "A round trip between US and EU is roughly 80-150 ms of pure speed-of-light latency that no hardware removes. Every link creation now pays it, and worse, an EU outage stops US writes entirely: you have coupled the availability of two regions in exchange for consistency that redirects do not need."
+        },
+        {
+          "value": "Asynchronous — acknowledge locally, replicate in the background",
+          "verdict": "correct",
+          "because": "Writes stay fast and the regions stay independently available. The cost is real and bounded: for ~200 ms after creation, a code can 404 in the other region. For a redirect that is acceptable. The tolerance is a property of the use case, not the technology — the same trade in the payment system would be indefensible."
+        },
+        {
+          "value": "No replication — each region owns its own links",
+          "verdict": "wrong",
+          "because": "Then a link created in the US simply does not exist in the EU, and short links are shared across exactly those borders. This breaks the product rather than the latency budget."
+        }
+      ]
+    }
+  ]
+}
