@@ -1,0 +1,350 @@
+{
+  "id": "notification-system",
+  "title": "Notification System",
+  "summary": "Take an event and turn it into an email, a push and a text — through providers you do not own, without ever sending the same thing twice. Fan-out is the easy half; suppression is the design.",
+  "nodes": {
+    "client": { "kind": "client",   "label": "Producer Services", "note": "order shipped, comment reply" },
+    "api":    { "kind": "service",  "label": "Notification API", "note": "accepts and returns" },
+    "queue":  { "kind": "queue",    "label": "Notification Queue" },
+    "router": { "kind": "service",  "label": "Router", "note": "decides whether to send at all" },
+    "dedupe": { "kind": "cache",    "label": "Dedupe Store", "note": "event key, 24h TTL" },
+    "prefs":  { "kind": "store",    "label": "Preferences", "note": "consent and quiet hours" },
+    "limits": { "kind": "cache",    "label": "Per-user Limits", "note": "token bucket, per channel" },
+    "digest": { "kind": "store",    "label": "Digest Buffer", "note": "deferred, collapsed hourly" },
+    "email":  { "kind": "service",  "label": "Email Workers" },
+    "pushw":  { "kind": "service",  "label": "Push Workers" },
+    "sms":    { "kind": "service",  "label": "SMS Workers" },
+    "esp":    { "kind": "external", "label": "Email Provider", "note": "2,000/s on our plan" },
+    "apns":   { "kind": "external", "label": "Push Providers", "note": "APNs / FCM" },
+    "smsp":   { "kind": "external", "label": "SMS Provider", "note": "3p a message" },
+    "dlq":    { "kind": "queue",    "label": "Dead Letter Queue", "note": "poison messages" }
+  },
+  "versions": [
+    {
+      "v": 1,
+      "label": "500K users · send it inline",
+      "trigger": "Launch. The service that knows an order shipped calls the email provider itself, inside the request that shipped the order.",
+      "traffic": { "rps": 20, "label": "500K users · ~20 notifications/s" },
+      "active": ["client", "api", "esp"],
+      "edges": [
+        { "from": "client", "to": "api", "kind": "sync", "label": "notify()" },
+        { "from": "api",    "to": "esp", "kind": "sync", "label": "SMTP, ~400ms, blocking" }
+      ],
+      "metrics": { "p50_ms": 420, "p99_ms": 2100 },
+      "bottleneck": "esp",
+      "note": "The provider's latency is now your latency and the provider's outage is now your outage. You have coupled a business transaction to a third party whose status page you read like everyone else — and this is the defining constraint of the whole problem, present from line one."
+    },
+    {
+      "v": 2,
+      "label": "3M users · accept and return",
+      "trigger": "The email provider had a nine-minute wobble and it took checkout down with it. Nobody should wait for an email.",
+      "traffic": { "rps": 120, "label": "3M users · ~120/s" },
+      "active": ["client", "api", "queue", "email", "esp"],
+      "edges": [
+        { "from": "client", "to": "api",   "kind": "sync",  "label": "notify()" },
+        { "from": "api",    "to": "queue", "kind": "async", "label": "accept, return 202" },
+        { "from": "queue",  "to": "email", "kind": "async" },
+        { "from": "email",  "to": "esp",   "kind": "sync",  "label": "SMTP" }
+      ],
+      "metrics": { "p50_ms": 9, "p99_ms": 35 },
+      "bottleneck": null,
+      "note": "The queue is not a performance optimisation here, it is the buffer that absorbs a permanent mismatch: we generate 120 a second today and will peak at 6,000, against a provider that accepts 2,000 a second on a good day and zero on a bad one. What you give up is the answer — the producer now learns nothing about whether the email arrived."
+    },
+    {
+      "v": 3,
+      "label": "20M users · three channels",
+      "trigger": "Push and SMS arrived. They are not variations of email: SMS costs real money per message and is regulated, push tokens expire silently, and email is the only one where \"accepted\" means nothing at all.",
+      "traffic": { "rps": 900, "label": "20M users · ~900/s" },
+      "active": ["client", "api", "queue", "router", "email", "pushw", "sms", "esp", "apns", "smsp"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync",  "label": "notify()" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "202" },
+        { "from": "queue",  "to": "router", "kind": "async" },
+        { "from": "router", "to": "email",  "kind": "async" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "email",  "to": "esp",    "kind": "sync",  "label": "~400ms" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync",  "label": "~40ms, batched" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync",  "label": "~900ms" }
+      ],
+      "metrics": { "p50_ms": 10, "p99_ms": 40 },
+      "bottleneck": null,
+      "note": "One worker pool per channel, because they share nothing that matters. Latency differs by 20x, cost differs by four orders of magnitude, the retry that is safe for push is expensive for SMS, and each provider rate-limits you separately. A single worker pool means the slowest channel sets the throughput of all three."
+    },
+    {
+      "v": 4,
+      "label": "50M users · the provider fails",
+      "trigger": "The SMS provider returned 500s for twenty minutes. The workers retried immediately in a tight loop and turned a provider outage into a self-inflicted one.",
+      "traffic": { "rps": 2400, "label": "50M users · ~2.4K/s" },
+      "active": ["client", "api", "queue", "router", "email", "pushw", "sms", "esp", "apns", "smsp", "dlq"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "202" },
+        { "from": "queue",  "to": "router", "kind": "async" },
+        { "from": "router", "to": "email",  "kind": "async" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "email",  "to": "esp",    "kind": "sync" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync",  "label": "backoff + jitter" },
+        { "from": "email",  "to": "dlq",    "kind": "async" },
+        { "from": "pushw",  "to": "dlq",    "kind": "async" },
+        { "from": "sms",    "to": "dlq",    "kind": "async", "label": "after 5 attempts" }
+      ],
+      "metrics": { "p50_ms": 11, "p99_ms": 48 },
+      "bottleneck": "smsp",
+      "note": "Three things, and all three are needed. Exponential backoff with full jitter, so retries spread instead of synchronising. A circuit breaker per provider, so a dead provider is stopped calling rather than hammered. A dead letter queue, so one malformed payload does not block the partition behind it forever. A retry against a provider without an idempotency key is not a retry, it is a second message."
+    },
+    {
+      "v": 5,
+      "label": "80M users · deduplication",
+      "trigger": "A deploy replayed six hours of the event log. Every user received every notification a second time, at 03:00, and 40,000 of them turned notifications off permanently.",
+      "traffic": { "rps": 4800, "label": "80M users · ~4.8K/s" },
+      "active": ["client", "api", "queue", "router", "dedupe", "email", "pushw", "sms", "esp", "apns", "smsp", "dlq"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "202" },
+        { "from": "queue",  "to": "router", "kind": "async", "label": "at-least-once" },
+        { "from": "router", "to": "dedupe", "kind": "sync",  "label": "seen (user, event, channel)?" },
+        { "from": "router", "to": "email",  "kind": "async" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "email",  "to": "esp",    "kind": "sync" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync" },
+        { "from": "email",  "to": "dlq",    "kind": "async" },
+        { "from": "pushw",  "to": "dlq",    "kind": "async" },
+        { "from": "sms",    "to": "dlq",    "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 12, "p99_ms": 50 },
+      "bottleneck": null,
+      "note": "Every queue in this design is at-least-once, so duplicates are the contract rather than an anomaly, and the only question is where you collapse them. The key must be derived from the EVENT — (user, event key, channel) — because a key generated when the send is attempted is unique every time and suppresses nothing. This is the version that keeps users, and it is the one most designs never reach."
+    },
+    {
+      "v": 6,
+      "label": "100M users · consent and budget",
+      "trigger": "One busy comment thread sent a single user 140 push notifications in an hour. The system was nowhere near its own limits — the limit that matters is per user, not per system.",
+      "traffic": { "rps": 8000, "label": "100M users · ~8K/s" },
+      "active": ["client", "api", "queue", "router", "dedupe", "prefs", "limits", "email", "pushw", "sms", "esp", "apns", "smsp", "dlq"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "202" },
+        { "from": "queue",  "to": "router", "kind": "async" },
+        { "from": "router", "to": "dedupe", "kind": "sync",  "label": "already sent?" },
+        { "from": "router", "to": "prefs",  "kind": "sync",  "label": "consented? quiet hours?" },
+        { "from": "router", "to": "limits", "kind": "sync",  "label": "budget left for THIS user?" },
+        { "from": "router", "to": "email",  "kind": "async" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "email",  "to": "esp",    "kind": "sync" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync" },
+        { "from": "email",  "to": "dlq",    "kind": "async" },
+        { "from": "pushw",  "to": "dlq",    "kind": "async" },
+        { "from": "sms",    "to": "dlq",    "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 14, "p99_ms": 58 },
+      "bottleneck": null,
+      "note": "Three suppression checks that look identical and are not. Dedupe fails OPEN — a duplicate is an annoyance. Preferences fail CLOSED — sending to somebody who opted out is a legal problem in most jurisdictions, not a user-experience one. Rate limits fail open but log loudly. Deciding the failure direction of each check is the actual design work."
+    },
+    {
+      "v": 7,
+      "label": "100M users · digest",
+      "trigger": "Rate limiting was silently dropping notifications people actually wanted. Refusing to send is the wrong answer to sending too much; the right one is to defer and collapse.",
+      "traffic": { "rps": 8000, "label": "100M users · ~8K/s, 40K at peak" },
+      "active": ["client", "api", "queue", "router", "dedupe", "prefs", "limits", "digest", "email", "pushw", "sms", "esp", "apns", "smsp", "dlq"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "202" },
+        { "from": "queue",  "to": "router", "kind": "async" },
+        { "from": "router", "to": "dedupe", "kind": "sync" },
+        { "from": "router", "to": "prefs",  "kind": "sync",  "label": "immediate or digest?" },
+        { "from": "router", "to": "limits", "kind": "sync" },
+        { "from": "router", "to": "digest", "kind": "async", "label": "over budget: defer" },
+        { "from": "router", "to": "email",  "kind": "async", "label": "immediate" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "digest", "to": "email",  "kind": "async", "label": "hourly, one message" },
+        { "from": "email",  "to": "esp",    "kind": "sync" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync" },
+        { "from": "email",  "to": "dlq",    "kind": "async" },
+        { "from": "pushw",  "to": "dlq",    "kind": "async" },
+        { "from": "sms",    "to": "dlq",    "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 14, "p99_ms": 60 },
+      "bottleneck": null,
+      "note": "\"You have 23 new comments\" is one notification instead of 23, and it is a better product as well as a cheaper one. The cost is a second delivery path with its own scheduler, its own idea of a time zone, and its own way of failing: a digest job that misses its window sends a summary of yesterday at breakfast."
+    },
+    {
+      "v": 8,
+      "label": "Provider down mid-campaign",
+      "trigger": "Design review: the push provider goes down at the exact moment marketing enqueues 20 million notifications.",
+      "traffic": { "rps": 40000, "label": "campaign peak · ~40K/s enqueued" },
+      "active": ["client", "api", "queue", "router", "dedupe", "prefs", "limits", "digest", "email", "pushw", "sms", "esp", "apns", "smsp", "dlq"],
+      "edges": [
+        { "from": "client", "to": "api",    "kind": "sync" },
+        { "from": "api",    "to": "queue",  "kind": "async", "label": "20M enqueued in a minute" },
+        { "from": "queue",  "to": "router", "kind": "async", "label": "backlog: 6 hours" },
+        { "from": "router", "to": "dedupe", "kind": "sync" },
+        { "from": "router", "to": "prefs",  "kind": "sync" },
+        { "from": "router", "to": "limits", "kind": "sync" },
+        { "from": "router", "to": "digest", "kind": "async" },
+        { "from": "router", "to": "email",  "kind": "async" },
+        { "from": "router", "to": "pushw",  "kind": "async" },
+        { "from": "router", "to": "sms",    "kind": "async" },
+        { "from": "digest", "to": "email",  "kind": "async" },
+        { "from": "email",  "to": "esp",    "kind": "sync",  "label": "unaffected" },
+        { "from": "pushw",  "to": "apns",   "kind": "sync",  "label": "timing out" },
+        { "from": "sms",    "to": "smsp",   "kind": "sync" },
+        { "from": "email",  "to": "dlq",    "kind": "async" },
+        { "from": "pushw",  "to": "dlq",    "kind": "async", "label": "filling fast" },
+        { "from": "sms",    "to": "dlq",    "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 15, "p99_ms": 70 },
+      "bottleneck": "apns",
+      "note": "The ingest numbers do not move, and that is the whole return on V2. Two real dangers remain. Head-of-line blocking: if push and email share one queue, a dead push provider stops email as well, so channels need separate queues or at minimum separate concurrency budgets. And staleness: when the provider returns, six hours of \"your driver is arriving\" is worse than silence, which is why every notification carries a TTL and expired ones are dropped rather than delivered."
+    }
+  ],
+  "flows": [
+    {
+      "id": "v1-inline",
+      "label": "Send inline",
+      "minVersion": 1,
+      "maxVersion": 1,
+      "path": ["client", "api", "esp", "api", "client"],
+      "outcome": "The caller waits 400 ms for somebody else's SMTP server, and waits forever when it is down."
+    },
+    {
+      "id": "v2-async",
+      "label": "Accept, then send",
+      "minVersion": 2,
+      "maxVersion": 2,
+      "path": ["client", "api", "queue", "email", "esp"],
+      "outcome": "The producer is answered in 9 ms and never learns what happened. That ignorance is the trade."
+    },
+    {
+      "id": "v3-email",
+      "label": "Email path",
+      "minVersion": 3,
+      "path": ["client", "api", "queue", "router", "email", "esp"],
+      "outcome": "Slow, cheap, and \"accepted\" tells you nothing about whether a human will ever see it."
+    },
+    {
+      "id": "v3-push",
+      "label": "Push path",
+      "minVersion": 3,
+      "path": ["client", "api", "queue", "router", "pushw", "apns"],
+      "outcome": "Fast, batched, effectively free — and the token may have been silently invalid for months."
+    },
+    {
+      "id": "v3-sms",
+      "label": "SMS path",
+      "minVersion": 3,
+      "path": ["client", "api", "queue", "router", "sms", "smsp"],
+      "outcome": "Slow, regulated, and 3p a message. Cost is what limits this channel, not throughput."
+    },
+    {
+      "id": "v4-retry",
+      "label": "Retry into the dead letter queue",
+      "minVersion": 4,
+      "path": ["queue", "router", "sms", "smsp", "sms", "dlq"],
+      "outcome": "Five attempts with backoff and jitter, then park it. Retrying forever is how a provider outage becomes your outage."
+    },
+    {
+      "id": "v5-dupe",
+      "label": "A redelivered event",
+      "minVersion": 5,
+      "path": ["client", "api", "queue", "router", "dedupe", "router"],
+      "outcome": "The queue delivered the same event twice, as it is entitled to. The router recognises the event key and stops here — no provider is called."
+    },
+    {
+      "id": "v6-suppressed",
+      "label": "Suppressed by preference or budget",
+      "minVersion": 6,
+      "path": ["client", "api", "queue", "router", "prefs", "router", "limits", "router"],
+      "outcome": "Three checks in order: already sent, consented, within budget. Most notifications in a mature system die at one of these, and that is the system working."
+    },
+    {
+      "id": "v7-digest",
+      "label": "Deferred into a digest",
+      "minVersion": 7,
+      "path": ["client", "api", "queue", "router", "digest", "email", "esp"],
+      "outcome": "Twenty-three events become one email an hour later. Deferring beats dropping, and it beats sending."
+    }
+  ],
+  "failures": [
+    {
+      "id": "esp-down",
+      "node": "esp",
+      "minVersion": 2,
+      "effect": "Emails accumulate in the queue and are sent when the provider returns. At V1 this same outage took checkout down; from V2 it is a graph nobody outside the team notices — provided the backlog drains before the notifications go stale.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "queue-down",
+      "node": "queue",
+      "minVersion": 2,
+      "effect": "Nothing is delivered and, worse, nothing is retained. The API is accepting events it cannot honour, so it must fail the enqueue loudly rather than return 202 — an acknowledgement you cannot keep is the most damaging thing this API can do.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "router-down",
+      "node": "router",
+      "minVersion": 3,
+      "effect": "Nothing is dispatched, and everything waits in the queue until it returns. The most survivable outage in the design, because the queue is doing exactly the job it was added for.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "apns-down",
+      "node": "apns",
+      "minVersion": 3,
+      "effect": "Push stops. Email and SMS are unaffected only because they have their own workers and their own queue depth — share one pool and head-of-line blocking takes all three channels down together.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "smsp-down",
+      "node": "smsp",
+      "minVersion": 3,
+      "effect": "SMS stops, and SMS is what carries one-time codes. An SMS provider outage is therefore a login outage for every user on SMS two-factor, which is why a second provider matters far more on this channel than on the other two.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "dedupe-down",
+      "node": "dedupe",
+      "minVersion": 5,
+      "effect": "Duplicate suppression has to fail open or fail closed and you must choose in advance. Fail open and a replay sends everything twice; fail closed and nothing is sent at all. For notifications, fail open — then rely on the unique constraint in the database as the slower backstop.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "prefs-down",
+      "node": "prefs",
+      "minVersion": 6,
+      "effect": "You no longer know what the user consented to. This check must fail CLOSED: stop sending. Sending to somebody who unsubscribed is a regulatory incident, and \"the preference service was down\" is not a defence anybody accepts.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "limits-down",
+      "node": "limits",
+      "minVersion": 6,
+      "effect": "No per-user budget is enforced. Nothing breaks for most users; the one caught in a runaway loop receives a thousand notifications and leaves. Fail open, but alert on it immediately.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "digest-down",
+      "node": "digest",
+      "minVersion": 7,
+      "effect": "Deferred notifications are not collapsed and not sent. Immediate notifications are unaffected. The failure is invisible until somebody notices their daily summary stopped arriving, which is typically a week.",
+      "bottleneck": null,
+      "survivable": true
+    }
+  ]
+}

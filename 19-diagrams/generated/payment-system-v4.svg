@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1587 382" width="1587" height="382" role="img" aria-label="Payment System version 4: 3M/day · double-entry ledger">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="1587" height="382"/>
+<text class="tag" x="40" y="26">V4</text>
+<text class="title" x="70" y="26">Payment System</text>
+<text class="sub" x="40" y="46">3M/day · double-entry ledger · p50 38ms · p99 170ms</text>
+<g transform="translate(0 62)">
+<path class="edge sync" d="M172.0,160.0 C239.0,160.0 239.0,160.0 306.0,160.0"/>
+<path class="edge sync" d="M447.0,160.0 C514.0,160.0 514.0,160.0 581.0,160.0"/>
+<path class="edge sync" d="M722.0,160.0 C789.0,160.0 789.0,115.0 856.0,115.0"/>
+<path class="edge sync" d="M722.0,160.0 C1064.0,160.0 1064.0,70.0 1406.0,70.0"/>
+<rect class="elbl-bg" x="1045.6" y="98.0" width="45.8" height="12" rx="2"/><text class="elbl" x="1068.5" y="106.0" text-anchor="middle">pending</text>
+<path class="edge async" d="M722.0,160.0 C789.0,160.0 789.0,205.0 856.0,205.0"/>
+<rect class="elbl-bg" x="781.4" y="165.5" width="24.2" height="12" rx="2"/><text class="elbl" x="793.5" y="173.5" text-anchor="middle">202</text>
+<path class="edge async" d="M997.0,205.0 C1064.0,205.0 1064.0,160.0 1131.0,160.0"/>
+<path class="edge sync" d="M1272.0,160.0 C1339.0,160.0 1339.0,250.0 1406.0,250.0"/>
+<rect class="elbl-bg" x="1288.2" y="188.0" width="110.6" height="12" rx="2"/><text class="elbl" x="1343.5" y="196.0" text-anchor="middle">authorise / capture</text>
+<path class="edge sync" d="M1272.0,160.0 C1339.0,160.0 1339.0,160.0 1406.0,160.0"/>
+<rect class="elbl-bg" x="1282.8" y="143.0" width="121.4" height="12" rx="2"/><text class="elbl" x="1343.5" y="151.0" text-anchor="middle">two entries, sum zero</text>
+<path class="edge sync" d="M1272.0,160.0 C1339.0,160.0 1339.0,70.0 1406.0,70.0"/>
+<rect class="elbl-bg" x="1312.5" y="98.0" width="62.0" height="12" rx="2"/><text class="elbl" x="1343.5" y="106.0" text-anchor="middle">projection</text>
+<rect class="shape client" x="40" y="130.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="165.0" text-anchor="middle">Checkout</text>
+<polygon class="shape lb" points="333,130.0 429,130.0 447,160.0 429,190.0 333,190.0 315,160.0"/>
+<text class="lbl" x="381.0" y="165.0" text-anchor="middle">Load Balancer</text>
+<rect class="shape service" x="590" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="656.0" y="165.0" text-anchor="middle">Payment API</text>
+<path class="shape store" d="M865,94.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M865,94.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="931.0" y="112.0" text-anchor="middle">Idempotency Store</text>
+<text class="note" x="931.0" y="129.0" text-anchor="middle">key to stored response</text>
+<rect class="shape queue" x="865" y="175.0" width="132" height="60" rx="4"/><line class="shape queue" x1="909.0" y1="183.0" x2="909.0" y2="227.0" opacity="0.35"/><line class="shape queue" x1="953.0" y1="183.0" x2="953.0" y2="227.0" opacity="0.35"/>
+<text class="lbl" x="931.0" y="210.0" text-anchor="middle">Saga Queue</text>
+<rect class="shape service" x="1140" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1206.0" y="157.0" text-anchor="middle">Orchestrator</text>
+<text class="note" x="1206.0" y="174.0" text-anchor="middle">authorise, capture, record</text>
+<path class="shape store" d="M1415,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1415,49.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1481.0" y="67.0" text-anchor="middle">Payment Records</text>
+<text class="note" x="1481.0" y="84.0" text-anchor="middle">state machine per payment</text>
+<path class="shape store" d="M1415,139.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1415,139.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1481.0" y="157.0" text-anchor="middle">Ledger</text>
+<text class="note" x="1481.0" y="174.0" text-anchor="middle">double-entry, append-only</text>
+<rect class="shape external" x="1415" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1481.0" y="247.0" text-anchor="middle">Payment Provider</text>
+<text class="note" x="1481.0" y="264.0" text-anchor="middle">cannot be made transactional</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="7.60s" repeatCount="indefinite" path="M106.0,160.0 L381.0,160.0 L656.0,160.0 L931.0,205.0 L1206.0,160.0 L1481.0,250.0 L1206.0,160.0 L1481.0,70.0"/></g>
+</g></svg>

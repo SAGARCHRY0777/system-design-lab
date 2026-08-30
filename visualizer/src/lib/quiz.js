@@ -36,9 +36,17 @@ function bottleneckQuestions(scene) {
     .filter(v => v.bottleneck)
     .map((v, i) => {
       const correct = label(scene, v.bottleneck)
-      const pool = v.active
+      // Distractors come from the active set first -- a component that is
+      // actually present is a far better wrong answer than one that is not.
+      // But a small version may not hold three of them, which produced a
+      // two-option question and a coin flip. Top up from the rest of the scene
+      // before giving up.
+      const active = v.active
         .filter(id => id !== v.bottleneck && scene.nodes[id]?.kind !== 'client')
-        .map(id => label(scene, id))
+      const spare = Object.keys(scene.nodes)
+        .filter(id => id !== v.bottleneck && !active.includes(id)
+          && scene.nodes[id]?.kind !== 'client')
+      const pool = [...active, ...spare].map(id => label(scene, id))
       return {
         id: `bottleneck-${v.v}`,
         kind: 'Bottleneck',
@@ -49,6 +57,9 @@ function bottleneckQuestions(scene) {
         because: v.note ?? v.trigger,
       }
     })
+    // A question with fewer than three options is a coin flip wearing a
+    // question mark. Drop it rather than ask it.
+    .filter(q => q.options.length >= 3)
 }
 
 /**

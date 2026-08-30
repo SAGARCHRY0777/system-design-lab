@@ -36,6 +36,15 @@ what an experienced engineer does differently.
 from [`scripts/patterns_data.py`](../scripts/patterns_data.py); CI fails if the committed file drifts
 from the data. Edit the data, not the markdown.
 
+## Patterns with their own page
+
+Some patterns are load-bearing enough that an index entry does not do them justice — they get the full
+treatment, with failure modes and exercises.
+
+| Pattern | The one thing to take away |
+|---|---|
+| [API gateway](api-gateway/) | One door for auth, routing, quotas and TLS. **It becomes a deployment bottleneck the moment domain logic leaks into it**, and that happens one reasonable request at a time. |
+
 ## Related
 
 - [Component combination matrix](../14-component-combinations/MATRIX.md)

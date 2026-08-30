@@ -9,5 +9,15 @@
 import urlShortener from '../../../19-diagrams/scenes/url-shortener.json'
 import socialFeed from '../../../19-diagrams/scenes/social-feed.json'
 import ticketBooking from '../../../19-diagrams/scenes/ticket-booking.json'
+import chatSystem from '../../../19-diagrams/scenes/chat-system.json'
+import notificationSystem from '../../../19-diagrams/scenes/notification-system.json'
+import paymentSystem from '../../../19-diagrams/scenes/payment-system.json'
 
-export const SCENES = [urlShortener, socialFeed, ticketBooking]
+export const SCENES = [
+  urlShortener,
+  socialFeed,
+  ticketBooking,
+  chatSystem,
+  notificationSystem,
+  paymentSystem,
+]

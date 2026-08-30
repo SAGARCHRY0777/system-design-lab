@@ -77,8 +77,8 @@ because in practice it is never traded alone — always against write latency.
 - [x] ★ [Database](05-databases/fundamentals/) `[I]`
 - [x] ★ [Queue](06-messaging/queues/) `[I]`
 - [ ] Worker `[B]`
-- [ ] CDN `[B]`
-- [ ] API gateway `[I]`
+- [x] [CDN](10-storage/cdn/) `[B]`
+- [x] [API gateway](13-design-patterns/api-gateway/) `[I]`
 
 ## Phase 4 — Core patterns
 

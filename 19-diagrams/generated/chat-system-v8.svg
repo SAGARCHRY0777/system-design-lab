@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1892 652" width="1892" height="652" role="img" aria-label="Chat System version 8: A gateway is lost">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="1892" height="652"/>
+<text class="tag" x="40" y="26">V8</text>
+<text class="title" x="70" y="26">Chat System</text>
+<text class="sub" x="40" y="46">A gateway is lost · p50 22ms · p99 900ms</text>
+<g transform="translate(0 62)">
+<path class="edge sync" d="M172.0,295.0 C241.5,295.0 241.5,295.0 311.0,295.0"/>
+<rect class="elbl-bg" x="182.6" y="278.0" width="126.8" height="12" rx="2"/><text class="elbl" x="246.0" y="286.0" text-anchor="middle">25K reconnects at once</text>
+<path class="edge sync" d="M452.0,295.0 C521.5,295.0 521.5,295.0 591.0,295.0"/>
+<rect class="elbl-bg" x="476.1" y="278.0" width="99.8" height="12" rx="2"/><text class="elbl" x="526.0" y="286.0" text-anchor="middle">onto 39 survivors</text>
+<path class="edge sync" d="M732.0,295.0 C1221.5,295.0 1221.5,70.0 1711.0,70.0"/>
+<rect class="elbl-bg" x="1168.0" y="165.5" width="116.0" height="12" rx="2"/><text class="elbl" x="1226.0" y="173.5" text-anchor="middle">25K re-registrations</text>
+<path class="edge async" d="M732.0,295.0 C941.5,295.0 941.5,340.0 1151.0,340.0"/>
+<rect class="elbl-bg" x="901.5" y="300.5" width="89.0" height="12" rx="2"/><text class="elbl" x="946.0" y="308.5" text-anchor="middle">heartbeat storm</text>
+<path class="edge sync" d="M732.0,295.0 C801.5,295.0 801.5,295.0 871.0,295.0"/>
+<rect class="elbl-bg" x="742.6" y="278.0" width="126.8" height="12" rx="2"/><text class="elbl" x="806.0" y="286.0" text-anchor="middle">catch me up from seq N</text>
+<path class="edge sync" d="M1012.0,295.0 C1361.5,295.0 1361.5,340.0 1711.0,340.0"/>
+<rect class="elbl-bg" x="1324.2" y="300.5" width="83.6" height="12" rx="2"/><text class="elbl" x="1366.0" y="308.5" text-anchor="middle">backfill reads</text>
+<path class="edge sync" d="M1012.0,295.0 C1081.5,295.0 1081.5,340.0 1151.0,340.0"/>
+<path class="edge sync" d="M1012.0,295.0 C1361.5,295.0 1361.5,430.0 1711.0,430.0"/>
+<path class="edge async" d="M1012.0,295.0 C1081.5,295.0 1081.5,250.0 1151.0,250.0"/>
+<path class="edge async" d="M1292.0,250.0 C1361.5,250.0 1361.5,295.0 1431.0,295.0"/>
+<path class="edge sync" d="M1572.0,295.0 C1641.5,295.0 1641.5,250.0 1711.0,250.0"/>
+<path class="edge sync" d="M1572.0,295.0 C1641.5,295.0 1641.5,70.0 1711.0,70.0"/>
+<rect class="elbl-bg" x="1582.6" y="165.5" width="126.8" height="12" rx="2"/><text class="elbl" x="1646.0" y="173.5" text-anchor="middle">stale entries, TTL 60s</text>
+<path class="edge async" d="M1572.0,295.0 C1641.5,295.0 1641.5,430.0 1711.0,430.0"/>
+<path class="edge async" d="M1572.0,295.0 C1641.5,295.0 1641.5,160.0 1711.0,160.0"/>
+<path class="edge async" d="M1572.0,295.0 C1641.5,295.0 1641.5,340.0 1711.0,340.0"/>
+<path class="edge async" d="M1572.0,295.0 C1641.5,295.0 1641.5,520.0 1711.0,520.0"/>
+<rect class="shape client" x="40" y="265.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="292.0" text-anchor="middle">Clients</text>
+<text class="note" x="106.0" y="309.0" text-anchor="middle">phone, web, desktop</text>
+<polygon class="shape lb" points="338,265.0 434,265.0 452,295.0 434,325.0 338,325.0 320,295.0"/>
+<text class="lbl" x="386.0" y="292.0" text-anchor="middle">Load Balancer</text>
+<text class="note" x="386.0" y="309.0" text-anchor="middle">sticky, long-lived</text>
+<rect class="shape service" x="600" y="265.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="666.0" y="292.0" text-anchor="middle">WS Gateways</text>
+<text class="note" x="666.0" y="309.0" text-anchor="middle">~25K sockets each</text>
+<rect class="shape service" x="880" y="265.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="946.0" y="292.0" text-anchor="middle">Chat Service</text>
+<text class="note" x="946.0" y="309.0" text-anchor="middle">stateless</text>
+<rect class="shape cache bottleneck" x="1720" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1786.0" y="67.0" text-anchor="middle">Connection Registry</text>
+<text class="note" x="1786.0" y="84.0" text-anchor="middle">user to gateway, TTL 60s</text>
+<rect class="shape queue" x="1720" y="130.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1764.0" y1="138.0" x2="1764.0" y2="182.0" opacity="0.35"/><line class="shape queue" x1="1808.0" y1="138.0" x2="1808.0" y2="182.0" opacity="0.35"/>
+<text class="lbl" x="1786.0" y="157.0" text-anchor="middle">Routing Bus</text>
+<text class="note" x="1786.0" y="174.0" text-anchor="middle">one channel per gateway</text>
+<rect class="shape queue" x="1160" y="220.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1204.0" y1="228.0" x2="1204.0" y2="272.0" opacity="0.35"/><line class="shape queue" x1="1248.0" y1="228.0" x2="1248.0" y2="272.0" opacity="0.35"/>
+<text class="lbl" x="1226.0" y="255.0" text-anchor="middle">Fan-out Queue</text>
+<rect class="shape service" x="1440" y="265.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1506.0" y="300.0" text-anchor="middle">Fan-out Workers</text>
+<path class="shape store" d="M1720,229.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1720,229.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1786.0" y="247.0" text-anchor="middle">Membership</text>
+<text class="note" x="1786.0" y="264.0" text-anchor="middle">who is in which conversation</text>
+<path class="shape store" d="M1720,319.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1720,319.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1786.0" y="337.0" text-anchor="middle">Message Store</text>
+<text class="note" x="1786.0" y="354.0" text-anchor="middle">partitioned by conversation</text>
+<path class="shape store" d="M1720,409.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1720,409.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1786.0" y="427.0" text-anchor="middle">Receipts</text>
+<text class="note" x="1786.0" y="444.0" text-anchor="middle">delivered and read, per member</text>
+<rect class="shape cache" x="1160" y="310.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1226.0" y="337.0" text-anchor="middle">Presence</text>
+<text class="note" x="1226.0" y="354.0" text-anchor="middle">heartbeat, 45s TTL</text>
+<rect class="shape external" x="1720" y="490.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1786.0" y="517.0" text-anchor="middle">Push Providers</text>
+<text class="note" x="1786.0" y="534.0" text-anchor="middle">APNs / FCM</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="15.89s" repeatCount="indefinite" path="M106.0,295.0 L386.0,295.0 L666.0,295.0 L946.0,295.0 L1226.0,250.0 L1506.0,295.0 L1786.0,250.0 L1506.0,295.0 L1786.0,70.0 L1506.0,295.0 L1786.0,160.0 L666.0,295.0"/></g>
+</g></svg>

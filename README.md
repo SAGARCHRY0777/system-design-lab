@@ -102,6 +102,7 @@ systems are made of.
 | [07-api-design/](07-api-design/) | REST/gRPC/GraphQL, versioning, pagination, idempotency |
 | [08-reliability/](08-reliability/) | Timeouts, retries, circuit breaker, rate limiting, backpressure |
 | [09-scalability/](09-scalability/) | Batch vs stream, multi-tenancy, cost as an architectural constraint |
+| [10-storage/](10-storage/) | CDN, object storage, and choosing between block/file/object/database |
 | [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
 | [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |
 | [13-design-patterns/](13-design-patterns/) | **78 patterns** in the [catalogue](13-design-patterns/CATALOGUE.md), every one with a diagram and a case study |

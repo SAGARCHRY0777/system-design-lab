@@ -17,7 +17,8 @@
 import { readFile } from 'node:fs/promises'
 import { buildBriefs, grade, whyWrong } from '../src/lib/studio.js'
 
-const SCENES = ['url-shortener', 'social-feed', 'ticket-booking']
+const SCENES = ['url-shortener', 'social-feed', 'ticket-booking',
+                'chat-system', 'notification-system', 'payment-system']
 
 let fail = 0
 const bad = m => { console.log('  FAIL ' + m); fail++ }

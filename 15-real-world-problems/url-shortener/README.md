@@ -330,6 +330,7 @@ change the data model.
 
 ## Related
 
+- [All real-world problems](../) — the other worked designs in this section
 - [Estimation guide](../../ESTIMATION-GUIDE.md) — where the numbers came from
 - [Cache](../../04-caching/fundamentals/) · [Sharding](../../05-databases/sharding/) ·
   [Replication](../../05-databases/replication/)

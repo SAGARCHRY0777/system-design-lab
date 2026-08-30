@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1397 382" width="1397" height="382" role="img" aria-label="Notification System version 3: 20M users · three channels">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="1397" height="382"/>
+<text class="tag" x="40" y="26">V3</text>
+<text class="title" x="70" y="26">Notification System</text>
+<text class="sub" x="40" y="46">20M users · three channels · p50 10ms · p99 40ms</text>
+<g transform="translate(0 62)">
+<path class="edge sync" d="M172.0,160.0 C220.0,160.0 220.0,160.0 268.0,160.0"/>
+<rect class="elbl-bg" x="198.9" y="143.0" width="51.2" height="12" rx="2"/><text class="elbl" x="224.5" y="151.0" text-anchor="middle">notify()</text>
+<path class="edge async" d="M409.0,160.0 C457.0,160.0 457.0,160.0 505.0,160.0"/>
+<rect class="elbl-bg" x="449.4" y="143.0" width="24.2" height="12" rx="2"/><text class="elbl" x="461.5" y="151.0" text-anchor="middle">202</text>
+<path class="edge async" d="M646.0,160.0 C694.0,160.0 694.0,160.0 742.0,160.0"/>
+<path class="edge async" d="M883.0,160.0 C931.0,160.0 931.0,70.0 979.0,70.0"/>
+<path class="edge async" d="M883.0,160.0 C931.0,160.0 931.0,160.0 979.0,160.0"/>
+<path class="edge async" d="M883.0,160.0 C931.0,160.0 931.0,250.0 979.0,250.0"/>
+<path class="edge sync" d="M1120.0,70.0 C1168.0,70.0 1168.0,70.0 1216.0,70.0"/>
+<rect class="elbl-bg" x="1152.3" y="53.0" width="40.4" height="12" rx="2"/><text class="elbl" x="1172.5" y="61.0" text-anchor="middle">~400ms</text>
+<path class="edge sync" d="M1120.0,160.0 C1168.0,160.0 1168.0,160.0 1216.0,160.0"/>
+<rect class="elbl-bg" x="1130.7" y="143.0" width="83.6" height="12" rx="2"/><text class="elbl" x="1172.5" y="151.0" text-anchor="middle">~40ms, batched</text>
+<path class="edge sync" d="M1120.0,250.0 C1168.0,250.0 1168.0,250.0 1216.0,250.0"/>
+<rect class="elbl-bg" x="1152.3" y="233.0" width="40.4" height="12" rx="2"/><text class="elbl" x="1172.5" y="241.0" text-anchor="middle">~900ms</text>
+<rect class="shape client" x="40" y="130.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="157.0" text-anchor="middle">Producer Services</text>
+<text class="note" x="106.0" y="174.0" text-anchor="middle">order shipped, comment reply</text>
+<rect class="shape service" x="277" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="343.0" y="157.0" text-anchor="middle">Notification API</text>
+<text class="note" x="343.0" y="174.0" text-anchor="middle">accepts and returns</text>
+<rect class="shape queue" x="514" y="130.0" width="132" height="60" rx="4"/><line class="shape queue" x1="558.0" y1="138.0" x2="558.0" y2="182.0" opacity="0.35"/><line class="shape queue" x1="602.0" y1="138.0" x2="602.0" y2="182.0" opacity="0.35"/>
+<text class="lbl" x="580.0" y="165.0" text-anchor="middle">Notification Queue</text>
+<rect class="shape service" x="751" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="817.0" y="157.0" text-anchor="middle">Router</text>
+<text class="note" x="817.0" y="174.0" text-anchor="middle">decides whether to send at all</text>
+<rect class="shape service" x="988" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1054.0" y="75.0" text-anchor="middle">Email Workers</text>
+<rect class="shape service" x="988" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1054.0" y="165.0" text-anchor="middle">Push Workers</text>
+<rect class="shape service" x="988" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1054.0" y="255.0" text-anchor="middle">SMS Workers</text>
+<rect class="shape external" x="1225" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1291.0" y="67.0" text-anchor="middle">Email Provider</text>
+<text class="note" x="1291.0" y="84.0" text-anchor="middle">2,000/s on our plan</text>
+<rect class="shape external" x="1225" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1291.0" y="157.0" text-anchor="middle">Push Providers</text>
+<text class="note" x="1291.0" y="174.0" text-anchor="middle">APNs / FCM</text>
+<rect class="shape external" x="1225" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1291.0" y="247.0" text-anchor="middle">SMS Provider</text>
+<text class="note" x="1291.0" y="264.0" text-anchor="middle">3p a message</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="4.62s" repeatCount="indefinite" path="M106.0,160.0 L343.0,160.0 L580.0,160.0 L817.0,160.0 L1054.0,70.0 L1291.0,70.0"/></g>
+</g></svg>

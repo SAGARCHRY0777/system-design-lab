@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1777 472" width="1777" height="472" role="img" aria-label="Notification System version 5: 80M users · deduplication">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="1777" height="472"/>
+<text class="tag" x="40" y="26">V5</text>
+<text class="title" x="70" y="26">Notification System</text>
+<text class="sub" x="40" y="46">80M users · deduplication · p50 12ms · p99 50ms</text>
+<g transform="translate(0 62)">
+<path class="edge sync" d="M172.0,205.0 C258.0,205.0 258.0,205.0 344.0,205.0"/>
+<path class="edge async" d="M485.0,205.0 C571.0,205.0 571.0,205.0 657.0,205.0"/>
+<rect class="elbl-bg" x="563.4" y="188.0" width="24.2" height="12" rx="2"/><text class="elbl" x="575.5" y="196.0" text-anchor="middle">202</text>
+<path class="edge async" d="M798.0,205.0 C884.0,205.0 884.0,205.0 970.0,205.0"/>
+<rect class="elbl-bg" x="849.4" y="188.0" width="78.2" height="12" rx="2"/><text class="elbl" x="888.5" y="196.0" text-anchor="middle">at-least-once</text>
+<path class="edge sync" d="M1111.0,205.0 C1197.0,205.0 1197.0,70.0 1283.0,70.0"/>
+<rect class="elbl-bg" x="1121.9" y="120.5" width="159.2" height="12" rx="2"/><text class="elbl" x="1201.5" y="128.5" text-anchor="middle">seen (user, event, channel)?</text>
+<path class="edge async" d="M1111.0,205.0 C1197.0,205.0 1197.0,160.0 1283.0,160.0"/>
+<path class="edge async" d="M1111.0,205.0 C1197.0,205.0 1197.0,250.0 1283.0,250.0"/>
+<path class="edge async" d="M1111.0,205.0 C1197.0,205.0 1197.0,340.0 1283.0,340.0"/>
+<path class="edge sync" d="M1424.0,160.0 C1510.0,160.0 1510.0,70.0 1596.0,70.0"/>
+<path class="edge sync" d="M1424.0,250.0 C1510.0,250.0 1510.0,160.0 1596.0,160.0"/>
+<path class="edge sync" d="M1424.0,340.0 C1510.0,340.0 1510.0,250.0 1596.0,250.0"/>
+<path class="edge async" d="M1424.0,160.0 C1510.0,160.0 1510.0,340.0 1596.0,340.0"/>
+<path class="edge async" d="M1424.0,250.0 C1510.0,250.0 1510.0,340.0 1596.0,340.0"/>
+<path class="edge async" d="M1424.0,340.0 C1510.0,340.0 1510.0,340.0 1596.0,340.0"/>
+<rect class="shape client" x="40" y="175.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="202.0" text-anchor="middle">Producer Services</text>
+<text class="note" x="106.0" y="219.0" text-anchor="middle">order shipped, comment reply</text>
+<rect class="shape service" x="353" y="175.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="419.0" y="202.0" text-anchor="middle">Notification API</text>
+<text class="note" x="419.0" y="219.0" text-anchor="middle">accepts and returns</text>
+<rect class="shape queue" x="666" y="175.0" width="132" height="60" rx="4"/><line class="shape queue" x1="710.0" y1="183.0" x2="710.0" y2="227.0" opacity="0.35"/><line class="shape queue" x1="754.0" y1="183.0" x2="754.0" y2="227.0" opacity="0.35"/>
+<text class="lbl" x="732.0" y="210.0" text-anchor="middle">Notification Queue</text>
+<rect class="shape service" x="979" y="175.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1045.0" y="202.0" text-anchor="middle">Router</text>
+<text class="note" x="1045.0" y="219.0" text-anchor="middle">decides whether to send at all</text>
+<rect class="shape cache" x="1292" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1358.0" y="67.0" text-anchor="middle">Dedupe Store</text>
+<text class="note" x="1358.0" y="84.0" text-anchor="middle">event key, 24h TTL</text>
+<rect class="shape service" x="1292" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1358.0" y="165.0" text-anchor="middle">Email Workers</text>
+<rect class="shape service" x="1292" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1358.0" y="255.0" text-anchor="middle">Push Workers</text>
+<rect class="shape service" x="1292" y="310.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1358.0" y="345.0" text-anchor="middle">SMS Workers</text>
+<rect class="shape external" x="1605" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1671.0" y="67.0" text-anchor="middle">Email Provider</text>
+<text class="note" x="1671.0" y="84.0" text-anchor="middle">2,000/s on our plan</text>
+<rect class="shape external" x="1605" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1671.0" y="157.0" text-anchor="middle">Push Providers</text>
+<text class="note" x="1671.0" y="174.0" text-anchor="middle">APNs / FCM</text>
+<rect class="shape external" x="1605" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1671.0" y="247.0" text-anchor="middle">SMS Provider</text>
+<text class="note" x="1671.0" y="264.0" text-anchor="middle">3p a message</text>
+<rect class="shape queue" x="1605" y="310.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1649.0" y1="318.0" x2="1649.0" y2="362.0" opacity="0.35"/><line class="shape queue" x1="1693.0" y1="318.0" x2="1693.0" y2="362.0" opacity="0.35"/>
+<text class="lbl" x="1671.0" y="337.0" text-anchor="middle">Dead Letter Queue</text>
+<text class="note" x="1671.0" y="354.0" text-anchor="middle">poison messages</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="6.08s" repeatCount="indefinite" path="M106.0,205.0 L419.0,205.0 L732.0,205.0 L1045.0,205.0 L1358.0,160.0 L1671.0,70.0"/></g>
+</g></svg>

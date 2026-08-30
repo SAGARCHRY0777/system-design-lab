@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2090 562" width="2090" height="562" role="img" aria-label="Chat System version 5: 600K online · offline delivery">
+<style><![CDATA[
+/* Light is the base, dark is the override -- same three-state structure as the
+   app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
+   and a hardcoded dark diagram on a light page reads as broken. Media queries
+   inside an SVG do apply when it is referenced as an image. */
+.bg{fill:#f4f6f4}
+.shape{fill:#eaeeec;stroke:#b8c4bf;stroke-width:1.6}
+.shape.cache{stroke-dasharray:7 5}
+.shape.bottleneck{stroke:#8a5a0c;stroke-width:2.2}
+.lbl{fill:#16201e;font:500 12.5px system-ui,sans-serif}
+.note{fill:#6d7c77;font:10px system-ui,sans-serif}
+.edge{fill:none;stroke:#b8c4bf;stroke-width:1.6}
+.edge.async{stroke-dasharray:6 5}
+.edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
+.elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
+.head{fill:#b8c4bf}
+.title{fill:#16201e;font:600 14px system-ui,sans-serif}
+.sub{fill:#4a5854;font:12px system-ui,sans-serif}
+.tag{fill:#1c6853;font:600 11px ui-monospace,monospace}
+.halo{fill:#1c6853;opacity:.2}
+.core{fill:#1c6853}
+
+@media (prefers-color-scheme: dark){
+  .bg{fill:#0e1414}
+  .shape{fill:#111818;stroke:#344544}
+  .shape.bottleneck{stroke:#d9a441}
+  .lbl{fill:#e4ecea}
+  .note{fill:#6f817d}
+  .edge{stroke:#344544}
+  .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
+  .head{fill:#344544}
+  .title{fill:#e4ecea}
+  .sub{fill:#9fb0ac}
+  .tag{fill:#4fc3a1}
+  .halo{fill:#4fc3a1}
+  .core{fill:#4fc3a1}
+}
+]]></style>
+<rect class="bg" width="2090" height="562"/>
+<text class="tag" x="40" y="26">V5</text>
+<text class="title" x="70" y="26">Chat System</text>
+<text class="sub" x="40" y="46">600K online · offline delivery · p50 15ms · p99 85ms</text>
+<g transform="translate(0 62)">
+<path class="edge sync" d="M172.0,250.0 C258.0,250.0 258.0,250.0 344.0,250.0"/>
+<rect class="elbl-bg" x="250.4" y="233.0" width="24.2" height="12" rx="2"/><text class="elbl" x="262.5" y="241.0" text-anchor="middle">WSS</text>
+<path class="edge sync" d="M485.0,250.0 C571.0,250.0 571.0,250.0 657.0,250.0"/>
+<path class="edge sync" d="M798.0,250.0 C1353.5,250.0 1353.5,70.0 1909.0,70.0"/>
+<rect class="elbl-bg" x="1332.4" y="143.0" width="51.2" height="12" rx="2"/><text class="elbl" x="1358.0" y="151.0" text-anchor="middle">register</text>
+<path class="edge sync" d="M798.0,250.0 C884.0,250.0 884.0,250.0 970.0,250.0"/>
+<rect class="elbl-bg" x="873.7" y="233.0" width="29.6" height="12" rx="2"/><text class="elbl" x="888.5" y="241.0" text-anchor="middle">send</text>
+<path class="edge sync" d="M1111.0,250.0 C1510.0,250.0 1510.0,340.0 1909.0,340.0"/>
+<rect class="elbl-bg" x="1494.3" y="278.0" width="40.4" height="12" rx="2"/><text class="elbl" x="1514.5" y="286.0" text-anchor="middle">append</text>
+<path class="edge async" d="M1111.0,250.0 C1197.0,250.0 1197.0,250.0 1283.0,250.0"/>
+<path class="edge async" d="M1424.0,250.0 C1510.0,250.0 1510.0,250.0 1596.0,250.0"/>
+<path class="edge sync" d="M1737.0,250.0 C1823.0,250.0 1823.0,250.0 1909.0,250.0"/>
+<rect class="elbl-bg" x="1804.6" y="233.0" width="45.8" height="12" rx="2"/><text class="elbl" x="1827.5" y="241.0" text-anchor="middle">members</text>
+<path class="edge sync" d="M1737.0,250.0 C1823.0,250.0 1823.0,70.0 1909.0,70.0"/>
+<rect class="elbl-bg" x="1796.5" y="143.0" width="62.0" height="12" rx="2"/><text class="elbl" x="1827.5" y="151.0" text-anchor="middle">connected?</text>
+<path class="edge async" d="M1737.0,250.0 C1823.0,250.0 1823.0,160.0 1909.0,160.0"/>
+<rect class="elbl-bg" x="1747.9" y="188.0" width="159.2" height="12" rx="2"/><text class="elbl" x="1827.5" y="196.0" text-anchor="middle">online: push down the socket</text>
+<path class="edge async" d="M1737.0,250.0 C1823.0,250.0 1823.0,340.0 1909.0,340.0"/>
+<rect class="elbl-bg" x="1747.9" y="278.0" width="159.2" height="12" rx="2"/><text class="elbl" x="1827.5" y="286.0" text-anchor="middle">offline: leave it in the log</text>
+<path class="edge async" d="M1737.0,250.0 C1823.0,250.0 1823.0,430.0 1909.0,430.0"/>
+<rect class="elbl-bg" x="1791.1" y="323.0" width="72.8" height="12" rx="2"/><text class="elbl" x="1827.5" y="331.0" text-anchor="middle">wake the app</text>
+<rect class="shape client" x="40" y="220.0" width="132" height="60" rx="26"/>
+<text class="lbl" x="106.0" y="247.0" text-anchor="middle">Clients</text>
+<text class="note" x="106.0" y="264.0" text-anchor="middle">phone, web, desktop</text>
+<polygon class="shape lb" points="371,220.0 467,220.0 485,250.0 467,280.0 371,280.0 353,250.0"/>
+<text class="lbl" x="419.0" y="247.0" text-anchor="middle">Load Balancer</text>
+<text class="note" x="419.0" y="264.0" text-anchor="middle">sticky, long-lived</text>
+<rect class="shape service" x="666" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="732.0" y="247.0" text-anchor="middle">WS Gateways</text>
+<text class="note" x="732.0" y="264.0" text-anchor="middle">~25K sockets each</text>
+<rect class="shape service" x="979" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1045.0" y="247.0" text-anchor="middle">Chat Service</text>
+<text class="note" x="1045.0" y="264.0" text-anchor="middle">stateless</text>
+<rect class="shape cache" x="1918" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1984.0" y="67.0" text-anchor="middle">Connection Registry</text>
+<text class="note" x="1984.0" y="84.0" text-anchor="middle">user to gateway, TTL 60s</text>
+<rect class="shape queue" x="1918" y="130.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1962.0" y1="138.0" x2="1962.0" y2="182.0" opacity="0.35"/><line class="shape queue" x1="2006.0" y1="138.0" x2="2006.0" y2="182.0" opacity="0.35"/>
+<text class="lbl" x="1984.0" y="157.0" text-anchor="middle">Routing Bus</text>
+<text class="note" x="1984.0" y="174.0" text-anchor="middle">one channel per gateway</text>
+<rect class="shape queue" x="1292" y="220.0" width="132" height="60" rx="4"/><line class="shape queue" x1="1336.0" y1="228.0" x2="1336.0" y2="272.0" opacity="0.35"/><line class="shape queue" x1="1380.0" y1="228.0" x2="1380.0" y2="272.0" opacity="0.35"/>
+<text class="lbl" x="1358.0" y="255.0" text-anchor="middle">Fan-out Queue</text>
+<rect class="shape service" x="1605" y="220.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1671.0" y="255.0" text-anchor="middle">Fan-out Workers</text>
+<path class="shape store" d="M1918,229.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1918,229.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1984.0" y="247.0" text-anchor="middle">Membership</text>
+<text class="note" x="1984.0" y="264.0" text-anchor="middle">who is in which conversation</text>
+<path class="shape store" d="M1918,319.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1918,319.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1984.0" y="337.0" text-anchor="middle">Message Store</text>
+<text class="note" x="1984.0" y="354.0" text-anchor="middle">partitioned by conversation</text>
+<rect class="shape external" x="1918" y="400.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="1984.0" y="427.0" text-anchor="middle">Push Providers</text>
+<text class="note" x="1984.0" y="444.0" text-anchor="middle">APNs / FCM</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="17.28s" repeatCount="indefinite" path="M106.0,250.0 L419.0,250.0 L732.0,250.0 L1045.0,250.0 L1358.0,250.0 L1671.0,250.0 L1984.0,250.0 L1671.0,250.0 L1984.0,70.0 L1671.0,250.0 L1984.0,160.0 L732.0,250.0"/></g>
+</g></svg>

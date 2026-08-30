@@ -1,0 +1,326 @@
+{
+  "id": "chat-system",
+  "title": "Chat System",
+  "summary": "Deliver a message to whoever is connected, and to whoever is not, in order, once. The only design here whose servers hold per-user state — which breaks the stateless assumption every other scene in this repository leans on.",
+  "nodes": {
+    "client":   { "kind": "client",   "label": "Clients", "note": "phone, web, desktop" },
+    "lb":       { "kind": "lb",       "label": "Load Balancer", "note": "sticky, long-lived" },
+    "ws":       { "kind": "service",  "label": "WS Gateways", "note": "~25K sockets each" },
+    "app":      { "kind": "service",  "label": "Chat Service", "note": "stateless" },
+    "registry": { "kind": "cache",    "label": "Connection Registry", "note": "user to gateway, TTL 60s" },
+    "bus":      { "kind": "queue",    "label": "Routing Bus", "note": "one channel per gateway" },
+    "queue":    { "kind": "queue",    "label": "Fan-out Queue" },
+    "fanout":   { "kind": "service",  "label": "Fan-out Workers" },
+    "groups":   { "kind": "store",    "label": "Membership", "note": "who is in which conversation" },
+    "messages": { "kind": "store",    "label": "Message Store", "note": "partitioned by conversation" },
+    "receipts": { "kind": "store",    "label": "Receipts", "note": "delivered and read, per member" },
+    "presence": { "kind": "cache",    "label": "Presence", "note": "heartbeat, 45s TTL" },
+    "push":     { "kind": "external", "label": "Push Providers", "note": "APNs / FCM" }
+  },
+  "versions": [
+    {
+      "v": 1,
+      "label": "10K online · polling",
+      "trigger": "Launch. Every client asks \"anything new?\" every two seconds, because that is the only thing a stateless HTTP server can offer.",
+      "traffic": { "rps": 5000, "label": "10K online · ~5K rps of polling" },
+      "active": ["client", "lb", "app", "messages"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync", "label": "poll every 2s" },
+        { "from": "lb",     "to": "app",      "kind": "sync" },
+        { "from": "app",    "to": "messages", "kind": "sync", "label": "anything after seq N?" }
+      ],
+      "metrics": { "p50_ms": 40, "p99_ms": 180 },
+      "bottleneck": "messages",
+      "note": "Five thousand requests a second to deliver about sixty messages a second. Polling cost is set by how many people are looking, not by how much is happening — which is the wrong thing for it to depend on. Halve the interval and latency halves while load doubles; there is no interval that is both cheap and fast."
+    },
+    {
+      "v": 2,
+      "label": "10K online · WebSocket",
+      "trigger": "99.6% of polls returned an empty array, and a message still took up to two seconds to appear. The fix is to stop asking: hold the connection open and push.",
+      "traffic": { "rps": 60, "label": "10K online · ~60 rps of real messages" },
+      "active": ["client", "lb", "ws", "app", "messages"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync", "label": "WSS upgrade" },
+        { "from": "lb",     "to": "ws",       "kind": "sync", "label": "one socket, held open" },
+        { "from": "ws",     "to": "app",      "kind": "sync", "label": "send" },
+        { "from": "app",    "to": "messages", "kind": "sync", "label": "append" }
+      ],
+      "metrics": { "p50_ms": 12, "p99_ms": 60 },
+      "bottleneck": null,
+      "note": "The same product now costs 60 rps instead of 5,000, and delivers in 12 ms instead of up to 2,000. It also just broke the assumption everything else in this repository relies on: the gateway is no longer stateless. It knows which sockets it holds, and no other machine does."
+    },
+    {
+      "v": 3,
+      "label": "200K online · two gateways",
+      "trigger": "A second gateway was added and half the messages vanished. The sender's gateway had no idea which machine held the recipient's socket, so it delivered to nobody.",
+      "traffic": { "rps": 1200, "label": "200K online · ~1.2K sends/s" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "messages"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync",  "label": "WSS" },
+        { "from": "lb",     "to": "ws",       "kind": "sync" },
+        { "from": "ws",     "to": "registry", "kind": "sync",  "label": "register this socket" },
+        { "from": "ws",     "to": "app",      "kind": "sync",  "label": "send" },
+        { "from": "app",    "to": "messages", "kind": "sync",  "label": "append" },
+        { "from": "app",    "to": "registry", "kind": "sync",  "label": "which gateway holds Bob?" },
+        { "from": "app",    "to": "bus",      "kind": "async", "label": "publish to that gateway" }
+      ],
+      "metrics": { "p50_ms": 14, "p99_ms": 70 },
+      "bottleneck": null,
+      "note": "The connection registry is the component that makes stateful servers survivable: it turns \"which machine holds this user?\" from local knowledge into a lookup. It is drawn dashed because it is rebuildable — every client re-registers when it reconnects — and that property is what stops it becoming the thing that can never be restarted."
+    },
+    {
+      "v": 4,
+      "label": "400K online · groups",
+      "trigger": "Group chats arrived. One message to a 500-member group is 500 deliveries, and doing them inline made the sender wait for the slowest recipient's gateway.",
+      "traffic": { "rps": 2400, "label": "400K online · ~2.4K sends/s" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "queue", "fanout", "groups", "messages"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync",  "label": "WSS" },
+        { "from": "lb",     "to": "ws",       "kind": "sync" },
+        { "from": "ws",     "to": "registry", "kind": "sync",  "label": "register" },
+        { "from": "ws",     "to": "app",      "kind": "sync",  "label": "send" },
+        { "from": "app",    "to": "messages", "kind": "sync",  "label": "append ONCE" },
+        { "from": "app",    "to": "queue",    "kind": "async", "label": "deliver to N members" },
+        { "from": "queue",  "to": "fanout",   "kind": "async" },
+        { "from": "fanout", "to": "groups",   "kind": "sync",  "label": "member list" },
+        { "from": "fanout", "to": "registry", "kind": "sync",  "label": "who is connected, and where" },
+        { "from": "fanout", "to": "bus",      "kind": "async", "label": "publish per gateway" }
+      ],
+      "metrics": { "p50_ms": 15, "p99_ms": 80 },
+      "bottleneck": null,
+      "note": "Store once, deliver many. A chat message is written a single time per conversation and fanned out only as delivery — unlike a social feed, which copies the post into every follower's timeline. The difference is that a conversation has a natural home and a follower graph does not."
+    },
+    {
+      "v": 5,
+      "label": "600K online · offline delivery",
+      "trigger": "Most recipients are not connected. A message published to a bus with nobody listening is a message deleted, and that is what was happening to every message sent to a sleeping phone.",
+      "traffic": { "rps": 3600, "label": "600K online · ~3.6K sends/s" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "queue", "fanout", "groups", "messages", "push"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync",  "label": "WSS" },
+        { "from": "lb",     "to": "ws",       "kind": "sync" },
+        { "from": "ws",     "to": "registry", "kind": "sync",  "label": "register" },
+        { "from": "ws",     "to": "app",      "kind": "sync",  "label": "send" },
+        { "from": "app",    "to": "messages", "kind": "sync",  "label": "append" },
+        { "from": "app",    "to": "queue",    "kind": "async" },
+        { "from": "queue",  "to": "fanout",   "kind": "async" },
+        { "from": "fanout", "to": "groups",   "kind": "sync",  "label": "members" },
+        { "from": "fanout", "to": "registry", "kind": "sync",  "label": "connected?" },
+        { "from": "fanout", "to": "bus",      "kind": "async", "label": "online: push down the socket" },
+        { "from": "fanout", "to": "messages", "kind": "async", "label": "offline: leave it in the log" },
+        { "from": "fanout", "to": "push",     "kind": "async", "label": "wake the app" }
+      ],
+      "metrics": { "p50_ms": 15, "p99_ms": 85 },
+      "bottleneck": null,
+      "note": "The socket is a fast path, not the delivery mechanism. The message store is the delivery mechanism: a client that reconnects asks for everything after the last sequence number it saw, and the socket is only an optimisation that saves it from waiting. Design it the other way round and every reconnect loses messages."
+    },
+    {
+      "v": 6,
+      "label": "800K online · order and receipts",
+      "trigger": "Two messages sent 30 ms apart arrived in the opposite order on one device and the right order on another. Nobody could tell whether a message had been read, or by whom.",
+      "traffic": { "rps": 4800, "label": "800K online · ~4.8K sends/s" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "queue", "fanout", "groups", "messages", "receipts", "push"],
+      "edges": [
+        { "from": "client", "to": "lb",       "kind": "sync",  "label": "WSS" },
+        { "from": "lb",     "to": "ws",       "kind": "sync" },
+        { "from": "ws",     "to": "registry", "kind": "sync",  "label": "register" },
+        { "from": "ws",     "to": "app",      "kind": "sync",  "label": "send" },
+        { "from": "app",    "to": "messages", "kind": "sync",  "label": "append, assign seq" },
+        { "from": "app",    "to": "receipts", "kind": "sync",  "label": "read up to seq" },
+        { "from": "app",    "to": "queue",    "kind": "async" },
+        { "from": "queue",  "to": "fanout",   "kind": "async" },
+        { "from": "fanout", "to": "groups",   "kind": "sync" },
+        { "from": "fanout", "to": "registry", "kind": "sync" },
+        { "from": "fanout", "to": "receipts", "kind": "async", "label": "delivered" },
+        { "from": "fanout", "to": "bus",      "kind": "async" },
+        { "from": "fanout", "to": "messages", "kind": "async" },
+        { "from": "fanout", "to": "push",     "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 16, "p99_ms": 90 },
+      "bottleneck": null,
+      "note": "Order is per conversation, not global. A single writer per conversation assigns a monotonic sequence number, and every client sorts by it and refuses to render a gap. Global ordering across all conversations would need a total-order broadcast, cost far more, and be perceived by nobody — the only order a human can observe is the order inside a thread they are reading."
+    },
+    {
+      "v": 7,
+      "label": "1M online · presence",
+      "trigger": "Presence was the cheapest-looking item on the roadmap. With 1M connections and 200 contacts each, one person going online is 200 notifications — and people go online about 40 times a day.",
+      "traffic": { "rps": 6000, "label": "1M connections · 6K sends/s · 1.6M naive presence events/s" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "queue", "fanout", "groups", "messages", "receipts", "presence", "push"],
+      "edges": [
+        { "from": "client",   "to": "lb",       "kind": "sync",  "label": "WSS" },
+        { "from": "lb",       "to": "ws",       "kind": "sync" },
+        { "from": "ws",       "to": "registry", "kind": "sync",  "label": "register" },
+        { "from": "ws",       "to": "presence", "kind": "async", "label": "heartbeat, 30s" },
+        { "from": "ws",       "to": "app",      "kind": "sync",  "label": "send" },
+        { "from": "app",      "to": "presence", "kind": "sync",  "label": "read ON VIEW only" },
+        { "from": "app",      "to": "messages", "kind": "sync",  "label": "append, seq" },
+        { "from": "app",      "to": "receipts", "kind": "sync" },
+        { "from": "app",      "to": "queue",    "kind": "async" },
+        { "from": "queue",    "to": "fanout",   "kind": "async" },
+        { "from": "fanout",   "to": "groups",   "kind": "sync" },
+        { "from": "fanout",   "to": "registry", "kind": "sync" },
+        { "from": "fanout",   "to": "receipts", "kind": "async" },
+        { "from": "fanout",   "to": "bus",      "kind": "async" },
+        { "from": "fanout",   "to": "messages", "kind": "async" },
+        { "from": "fanout",   "to": "push",     "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 18, "p99_ms": 120 },
+      "bottleneck": "presence",
+      "note": "Pushing every transition to every contact is 1.6M events per second against a message path doing 6,000 — presence would be 99.6% of the system. So it is not pushed. Clients heartbeat, the store expires them, and a client reads presence only for the contacts currently on screen. A green dot that is 30 seconds stale is a dot nobody disputes; the alternative is spending the entire infrastructure budget on it."
+    },
+    {
+      "v": 8,
+      "label": "A gateway is lost",
+      "trigger": "Design review: one gateway process dies holding 25,000 sockets. Every one of those clients reconnects inside the same second, re-registers, and asks for everything it missed.",
+      "traffic": { "rps": 6000, "label": "1M connections · 25K reconnects in one second" },
+      "active": ["client", "lb", "ws", "app", "registry", "bus", "queue", "fanout", "groups", "messages", "receipts", "presence", "push"],
+      "edges": [
+        { "from": "client",   "to": "lb",       "kind": "sync",  "label": "25K reconnects at once" },
+        { "from": "lb",       "to": "ws",       "kind": "sync",  "label": "onto 39 survivors" },
+        { "from": "ws",       "to": "registry", "kind": "sync",  "label": "25K re-registrations" },
+        { "from": "ws",       "to": "presence", "kind": "async", "label": "heartbeat storm" },
+        { "from": "ws",       "to": "app",      "kind": "sync",  "label": "catch me up from seq N" },
+        { "from": "app",      "to": "messages", "kind": "sync",  "label": "backfill reads" },
+        { "from": "app",      "to": "presence", "kind": "sync" },
+        { "from": "app",      "to": "receipts", "kind": "sync" },
+        { "from": "app",      "to": "queue",    "kind": "async" },
+        { "from": "queue",    "to": "fanout",   "kind": "async" },
+        { "from": "fanout",   "to": "groups",   "kind": "sync" },
+        { "from": "fanout",   "to": "registry", "kind": "sync",  "label": "stale entries, TTL 60s" },
+        { "from": "fanout",   "to": "receipts", "kind": "async" },
+        { "from": "fanout",   "to": "bus",      "kind": "async" },
+        { "from": "fanout",   "to": "messages", "kind": "async" },
+        { "from": "fanout",   "to": "push",     "kind": "async" }
+      ],
+      "metrics": { "p50_ms": 22, "p99_ms": 900 },
+      "bottleneck": "registry",
+      "note": "Losing a stateless app server costs you its in-flight requests. Losing a stateful gateway costs you 25,000 reconnections, each one a TLS handshake, a registry write and a backfill query, all arriving together. Note the fleet shape: 1M connections could be four gateways of 250K, and is deliberately forty of 25K instead, because blast radius is the thing being bought. The remaining fix is client-side — reconnect with exponential backoff and full jitter, so the herd spreads over a minute rather than a second. For up to sixty seconds the registry still points at a dead gateway, and messages routed there arrive anyway only because the message store, not the socket, is the delivery mechanism."
+    }
+  ],
+  "flows": [
+    {
+      "id": "v1-poll",
+      "label": "Poll for new messages",
+      "minVersion": 1,
+      "maxVersion": 1,
+      "path": ["client", "lb", "app", "messages", "app", "client"],
+      "outcome": "Almost always returns an empty array. Two seconds of latency and 5,000 requests a second to move sixty messages."
+    },
+    {
+      "id": "v2-push",
+      "label": "Send over a held socket",
+      "minVersion": 2,
+      "maxVersion": 2,
+      "path": ["client", "lb", "ws", "app", "messages", "app", "ws", "client"],
+      "outcome": "Durable first, delivered second. The gateway now holds state, and one machine knows something no other machine does."
+    },
+    {
+      "id": "v3-route",
+      "label": "Direct message across gateways",
+      "minVersion": 3,
+      "path": ["client", "lb", "ws", "app", "registry", "app", "bus", "ws", "client"],
+      "outcome": "Look the recipient up, publish to the channel their gateway is listening on. Without the registry this message is delivered to nobody, silently."
+    },
+    {
+      "id": "v4-group",
+      "label": "Message a 500-member group",
+      "minVersion": 4,
+      "path": ["client", "lb", "ws", "app", "queue", "fanout", "groups", "fanout", "registry", "fanout", "bus", "ws"],
+      "outcome": "Stored once, delivered 500 times, and the sender waited for none of it."
+    },
+    {
+      "id": "v5-offline",
+      "label": "Deliver to somebody asleep",
+      "minVersion": 5,
+      "path": ["app", "queue", "fanout", "registry", "fanout", "messages", "fanout", "push"],
+      "outcome": "Not connected, so no socket to write to. The message waits in the log and a push notification wakes the app, which then reconnects and asks for everything after its last sequence number."
+    },
+    {
+      "id": "v6-read",
+      "label": "Mark a conversation read",
+      "minVersion": 6,
+      "path": ["client", "lb", "ws", "app", "receipts", "app", "bus", "ws", "client"],
+      "outcome": "One write per conversation, not one per message — a receipt is a high-water mark, and treating it as a per-message event multiplies your write volume by the size of the backlog."
+    },
+    {
+      "id": "v7-presence",
+      "label": "Open a contact list",
+      "minVersion": 7,
+      "path": ["client", "lb", "ws", "app", "presence", "app", "ws", "client"],
+      "outcome": "One read for the twenty contacts actually on screen, rather than 200 pushed notifications per transition. Pull beats push whenever the audience for a change is larger than the number of people looking."
+    },
+    {
+      "id": "v8-reconnect",
+      "label": "Reconnect after a gateway dies",
+      "minVersion": 8,
+      "path": ["client", "lb", "ws", "registry", "ws", "app", "messages", "app", "ws", "client"],
+      "outcome": "Handshake, re-register, backfill. Multiply by 25,000 arriving in the same second and this is the most expensive request in the system."
+    }
+  ],
+  "failures": [
+    {
+      "id": "ws-down",
+      "node": "ws",
+      "minVersion": 2,
+      "effect": "Every socket on that gateway drops at once and the clients reconnect elsewhere. Nothing durable is lost — a send that was in flight is retried by the client under the same client message id, which is why that id exists. The damage is the simultaneity, not the loss.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "registry-down",
+      "node": "registry",
+      "minVersion": 3,
+      "effect": "Nobody can be located. Messages are still accepted and still durably stored, but live delivery stops entirely: the system degrades to exactly what V1 offered, except no client is polling any more, so it looks like a total outage to the user.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "bus-down",
+      "node": "bus",
+      "minVersion": 3,
+      "effect": "Cross-gateway delivery stops. Two people who happen to be connected to the same gateway can still talk, which makes this the hardest failure in the design to diagnose — it works perfectly for whoever is testing it.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "messages-down",
+      "node": "messages",
+      "minVersion": 1,
+      "effect": "Sends must be refused. A chat system that accepts a message it cannot durably store has chosen to lose messages silently, which is worse than an error the sender can see and retry.",
+      "bottleneck": null,
+      "survivable": false
+    },
+    {
+      "id": "fanout-down",
+      "node": "fanout",
+      "minVersion": 4,
+      "effect": "Messages are stored but not delivered live. The queue holds the work and it drains when workers return; clients that reconnect in the meantime pull their backlog from the message store and never notice.",
+      "bottleneck": "queue",
+      "survivable": true
+    },
+    {
+      "id": "push-down",
+      "node": "push",
+      "minVersion": 5,
+      "effect": "Connected users are completely unaffected. Offline users get nothing until they open the app themselves, at which point the backfill delivers everything at once — late, but complete.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "presence-down",
+      "node": "presence",
+      "minVersion": 7,
+      "effect": "Everyone shows as offline or as last known. Messaging is untouched, and the disappearance of the heartbeat traffic usually makes the rest of the system measurably faster — which is the clearest possible statement of what presence costs.",
+      "bottleneck": null,
+      "survivable": true
+    },
+    {
+      "id": "receipts-down",
+      "node": "receipts",
+      "minVersion": 6,
+      "effect": "Ticks stop updating and unread counts freeze. Messages flow normally. Worth noticing that the feature users complain about loudest is the one that matters least.",
+      "bottleneck": null,
+      "survivable": true
+    }
+  ]
+}
