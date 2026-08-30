@@ -14,6 +14,7 @@
 .edge.async{stroke-dasharray:6 5}
 .edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
 .elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
 .head{fill:#b8c4bf}
 .title{fill:#16201e;font:600 14px system-ui,sans-serif}
 .sub{fill:#4a5854;font:12px system-ui,sans-serif}
@@ -29,6 +30,7 @@
   .note{fill:#6f817d}
   .edge{stroke:#344544}
   .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
   .head{fill:#344544}
   .title{fill:#e4ecea}
   .sub{fill:#9fb0ac}
@@ -42,20 +44,20 @@
 <text class="title" x="70" y="26">Social Feed</text>
 <text class="sub" x="40" y="46">Media at scale · p50 13ms · p99 65ms</text>
 <g transform="translate(0 62)">
-<path id="e0" class="edge sync" d="M172.0,205.0 C211.5,205.0 211.5,160.0 251.0,160.0"/>
-<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">media</textPath></text>
-<path id="e1" class="edge sync" d="M172.0,205.0 C211.5,205.0 211.5,250.0 251.0,250.0"/>
-<text class="elbl" dy="-6"><textPath href="#e1" startOffset="50%" text-anchor="middle">timeline JSON</textPath></text>
-<path id="e2" class="edge sync" d="M392.0,160.0 C431.5,160.0 431.5,250.0 471.0,250.0"/>
-<text class="elbl" dy="-6"><textPath href="#e2" startOffset="50%" text-anchor="middle">on miss</textPath></text>
-<path id="e3" class="edge sync" d="M392.0,250.0 C431.5,250.0 431.5,160.0 471.0,160.0"/>
-<path id="e4" class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,70.0 691.0,70.0"/>
-<path id="e5" class="edge sync" d="M612.0,160.0 C871.5,160.0 871.5,205.0 1131.0,205.0"/>
-<path id="e6" class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,250.0 691.0,250.0"/>
-<path id="e7" class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,160.0 691.0,160.0"/>
-<path id="e8" class="edge async" d="M612.0,160.0 C651.5,160.0 651.5,340.0 691.0,340.0"/>
-<path id="e9" class="edge async" d="M832.0,340.0 C871.5,340.0 871.5,205.0 911.0,205.0"/>
-<path id="e10" class="edge async" d="M1052.0,205.0 C1091.5,205.0 1091.5,205.0 1131.0,205.0"/>
+<path class="edge sync" d="M172.0,205.0 C211.5,205.0 211.5,160.0 251.0,160.0"/>
+<rect class="elbl-bg" x="198.5" y="165.5" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="173.5" text-anchor="middle">media</text>
+<path class="edge sync" d="M172.0,205.0 C211.5,205.0 211.5,250.0 251.0,250.0"/>
+<rect class="elbl-bg" x="176.9" y="210.5" width="78.2" height="12" rx="2"/><text class="elbl" x="216.0" y="218.5" text-anchor="middle">timeline JSON</text>
+<path class="edge sync" d="M392.0,160.0 C431.5,160.0 431.5,250.0 471.0,250.0"/>
+<rect class="elbl-bg" x="413.1" y="188.0" width="45.8" height="12" rx="2"/><text class="elbl" x="436.0" y="196.0" text-anchor="middle">on miss</text>
+<path class="edge sync" d="M392.0,250.0 C431.5,250.0 431.5,160.0 471.0,160.0"/>
+<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,70.0 691.0,70.0"/>
+<path class="edge sync" d="M612.0,160.0 C871.5,160.0 871.5,205.0 1131.0,205.0"/>
+<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,250.0 691.0,250.0"/>
+<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,160.0 691.0,160.0"/>
+<path class="edge async" d="M612.0,160.0 C651.5,160.0 651.5,340.0 691.0,340.0"/>
+<path class="edge async" d="M832.0,340.0 C871.5,340.0 871.5,205.0 911.0,205.0"/>
+<path class="edge async" d="M1052.0,205.0 C1091.5,205.0 1091.5,205.0 1131.0,205.0"/>
 <rect class="shape client" x="40" y="175.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="210.0" text-anchor="middle">Client</text>
 <polygon class="shape edge" points="276,130.0 376,130.0 392,190.0 260,190.0"/>

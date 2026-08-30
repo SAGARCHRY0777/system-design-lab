@@ -128,12 +128,21 @@ export default function Canvas({
               className={cls}
               markerEnd={e.kind === 'async' ? 'url(#arrow-async)' : 'url(#arrow)'}
             />
-            {e.label && (
-              <text className="edge-label" dy="-6">
-                <textPath href={`#lbl-${i}`} startOffset="50%" textAnchor="middle">{e.label}</textPath>
-              </text>
-            )}
-            <path id={`lbl-${i}`} d={d} fill="none" stroke="none" />
+            {e.label && (() => {
+              // Plain text at the edge midpoint, NOT a textPath. A textPath is
+              // clipped to the length of its path, so "SELECT then UPDATE" on a
+              // short edge rendered as "ELECT then UPDAT" -- trimmed at both
+              // ends, which looks like a typo rather than a layout bug.
+              const mx = (a.cx + b.cx) / 2
+              const my = (a.cy + b.cy) / 2 - 9
+              const w = e.label.length * 5.4 + 8
+              return (
+                <g className="edge-label-g">
+                  <rect x={mx - w / 2} y={my - 8} width={w} height={12} rx={2} className="edge-label-bg" />
+                  <text className="edge-label" x={mx} y={my} textAnchor="middle">{e.label}</text>
+                </g>
+              )
+            })()}
           </g>
         )
       })}

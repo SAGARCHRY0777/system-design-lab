@@ -14,6 +14,7 @@
 .edge.async{stroke-dasharray:6 5}
 .edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
 .elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
 .head{fill:#b8c4bf}
 .title{fill:#16201e;font:600 14px system-ui,sans-serif}
 .sub{fill:#4a5854;font:12px system-ui,sans-serif}
@@ -29,6 +30,7 @@
   .note{fill:#6f817d}
   .edge{stroke:#344544}
   .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
   .head{fill:#344544}
   .title{fill:#e4ecea}
   .sub{fill:#9fb0ac}
@@ -42,15 +44,15 @@
 <text class="title" x="70" y="26">Ticket Booking</text>
 <text class="sub" x="40" y="46">Browsing swamps writes · p50 12ms · p99 90ms</text>
 <g transform="translate(0 62)">
-<path id="e0" class="edge sync" d="M172.0,115.0 C211.5,115.0 211.5,115.0 251.0,115.0"/>
-<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">HTTPS</textPath></text>
-<path id="e1" class="edge sync" d="M392.0,115.0 C431.5,115.0 431.5,115.0 471.0,115.0"/>
-<text class="elbl" dy="-6"><textPath href="#e1" startOffset="50%" text-anchor="middle">on miss</textPath></text>
-<path id="e2" class="edge sync" d="M612.0,115.0 C651.5,115.0 651.5,115.0 691.0,115.0"/>
-<path id="e3" class="edge sync" d="M832.0,115.0 C871.5,115.0 871.5,70.0 911.0,70.0"/>
-<text class="elbl" dy="-6"><textPath href="#e3" startOffset="50%" text-anchor="middle">seat map, ~2s stale</textPath></text>
-<path id="e4" class="edge sync" d="M832.0,115.0 C871.5,115.0 871.5,160.0 911.0,160.0"/>
-<text class="elbl" dy="-6"><textPath href="#e4" startOffset="50%" text-anchor="middle">purchase only</textPath></text>
+<path class="edge sync" d="M172.0,115.0 C211.5,115.0 211.5,115.0 251.0,115.0"/>
+<rect class="elbl-bg" x="198.5" y="98.0" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="106.0" text-anchor="middle">HTTPS</text>
+<path class="edge sync" d="M392.0,115.0 C431.5,115.0 431.5,115.0 471.0,115.0"/>
+<rect class="elbl-bg" x="413.1" y="98.0" width="45.8" height="12" rx="2"/><text class="elbl" x="436.0" y="106.0" text-anchor="middle">on miss</text>
+<path class="edge sync" d="M612.0,115.0 C651.5,115.0 651.5,115.0 691.0,115.0"/>
+<path class="edge sync" d="M832.0,115.0 C871.5,115.0 871.5,70.0 911.0,70.0"/>
+<rect class="elbl-bg" x="820.7" y="75.5" width="110.6" height="12" rx="2"/><text class="elbl" x="876.0" y="83.5" text-anchor="middle">seat map, ~2s stale</text>
+<path class="edge sync" d="M832.0,115.0 C871.5,115.0 871.5,160.0 911.0,160.0"/>
+<rect class="elbl-bg" x="836.9" y="120.5" width="78.2" height="12" rx="2"/><text class="elbl" x="876.0" y="128.5" text-anchor="middle">purchase only</text>
 <rect class="shape client" x="40" y="85.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="120.0" text-anchor="middle">Client</text>
 <polygon class="shape edge" points="276,85.0 376,85.0 392,145.0 260,145.0"/>

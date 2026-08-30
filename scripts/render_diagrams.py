@@ -48,6 +48,7 @@ CSS = """
 .edge.async{stroke-dasharray:6 5}
 .edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
 .elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
 .head{fill:#b8c4bf}
 .title{fill:#16201e;font:600 14px system-ui,sans-serif}
 .sub{fill:#4a5854;font:12px system-ui,sans-serif}
@@ -63,6 +64,7 @@ CSS = """
   .note{fill:#6f817d}
   .edge{stroke:#344544}
   .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
   .head{fill:#344544}
   .title{fill:#e4ecea}
   .sub{fill:#9fb0ac}
@@ -190,11 +192,21 @@ def render(scene: dict, version: dict) -> str:
         if e["from"] not in on or e["to"] not in on:
             continue
         d = edge_path(pos[e["from"]], pos[e["to"]])
-        parts.append(f'<path id="e{i}" class="edge {e["kind"]}" d="{d}"/>')
+        parts.append(f'<path class="edge {e["kind"]}" d="{d}"/>')
         if e.get("label"):
+            # Plain text at the midpoint, NOT a textPath. A textPath is clipped
+            # to the length of its path, so "SELECT then UPDATE" on a short edge
+            # rendered as "ELECT then UPDAT" -- trimmed at both ends, which
+            # reads as a typo rather than as a layout bug.
+            a, b = pos[e["from"]], pos[e["to"]]
+            mx = (a[2] + b[2]) / 2
+            my = (a[3] + b[3]) / 2 - 9
+            w = len(e["label"]) * 5.4 + 8
             parts.append(
-                f'<text class="elbl" dy="-6"><textPath href="#e{i}" '
-                f'startOffset="50%" text-anchor="middle">{escape(e["label"])}</textPath></text>'
+                f'<rect class="elbl-bg" x="{mx - w / 2:.1f}" y="{my - 8:.1f}" '
+                f'width="{w:.1f}" height="12" rx="2"/>'
+                f'<text class="elbl" x="{mx:.1f}" y="{my:.1f}" '
+                f'text-anchor="middle">{escape(e["label"])}</text>'
             )
 
     for nid in version["active"]:

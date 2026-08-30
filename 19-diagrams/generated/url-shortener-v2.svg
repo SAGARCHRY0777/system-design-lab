@@ -14,6 +14,7 @@
 .edge.async{stroke-dasharray:6 5}
 .edge.replication{stroke-dasharray:2 4;stroke-width:2.6;opacity:.8}
 .elbl{fill:#6d7c77;font:10px system-ui,sans-serif}
+.elbl-bg{fill:#f4f6f4}
 .head{fill:#b8c4bf}
 .title{fill:#16201e;font:600 14px system-ui,sans-serif}
 .sub{fill:#4a5854;font:12px system-ui,sans-serif}
@@ -29,6 +30,7 @@
   .note{fill:#6f817d}
   .edge{stroke:#344544}
   .elbl{fill:#6f817d}
+  .elbl-bg{fill:#0e1414}
   .head{fill:#344544}
   .title{fill:#e4ecea}
   .sub{fill:#9fb0ac}
@@ -42,10 +44,10 @@
 <text class="title" x="70" y="26">URL Shortener</text>
 <text class="sub" x="40" y="46">10M req/day · p50 30ms · p99 140ms</text>
 <g transform="translate(0 62)">
-<path id="e0" class="edge sync" d="M172.0,70.0 C211.5,70.0 211.5,70.0 251.0,70.0"/>
-<text class="elbl" dy="-6"><textPath href="#e0" startOffset="50%" text-anchor="middle">HTTPS</textPath></text>
-<path id="e1" class="edge sync" d="M392.0,70.0 C431.5,70.0 431.5,70.0 471.0,70.0"/>
-<path id="e2" class="edge sync" d="M612.0,70.0 C651.5,70.0 651.5,70.0 691.0,70.0"/>
+<path class="edge sync" d="M172.0,70.0 C211.5,70.0 211.5,70.0 251.0,70.0"/>
+<rect class="elbl-bg" x="198.5" y="53.0" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="61.0" text-anchor="middle">HTTPS</text>
+<path class="edge sync" d="M392.0,70.0 C431.5,70.0 431.5,70.0 471.0,70.0"/>
+<path class="edge sync" d="M612.0,70.0 C651.5,70.0 651.5,70.0 691.0,70.0"/>
 <rect class="shape client" x="40" y="40.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="75.0" text-anchor="middle">Client</text>
 <polygon class="shape lb" points="278,40.0 374,40.0 392,70.0 374,100.0 278,100.0 260,70.0"/>

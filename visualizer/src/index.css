@@ -512,3 +512,86 @@ footer p { margin: 0; max-width: 82ch; }
   border-left: 1px solid var(--line2); padding-left: 7px; margin-left: 1px;
 }
 .starbtn:hover .starcount { color: var(--accent); border-color: var(--accent); }
+
+/* Edge labels sit on a small plate so they stay readable where they cross a
+   line. Rendered as plain text at the midpoint rather than along a textPath,
+   which clips anything longer than the path it follows. */
+.edge-label-bg { fill: var(--panel); }
+
+/* ==========================================================================
+   Responsive
+   ==========================================================================
+   The important decision here is the diagram. A viewBox scales an SVG down to
+   whatever width it is given, so on a 375px phone a diagram laid out for ~900px
+   renders its 12px labels at about 5px -- technically responsive and completely
+   unreadable. So the canvas keeps a legible minimum width and PANS instead of
+   shrinking. Wide content scrolls in its own container; the page body never
+   scrolls sideways.
+   -------------------------------------------------------------------------- */
+
+.canvas-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+.canvas-scroll .canvas { min-width: 620px; }
+
+@media (max-width: 900px) {
+  .app { padding: 18px 16px 48px; }
+  .stage { padding: 14px 14px 8px; }
+  .stage-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .readout { align-items: flex-start; }
+  .vwhy { flex: 1 1 auto; }
+  .predict { padding: 20px 18px 22px; }
+}
+
+@media (max-width: 680px) {
+  /* The header is four flex children -- brand, nav, scene picker, tools. Below
+     this width they wrap into an unreadable stack, so they get explicit rows. */
+  .top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .brand { justify-content: flex-start; }
+
+  /* The view nav scrolls rather than wrapping: four tabs on two lines reads as
+     two separate controls. */
+  .viewnav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .viewnav::-webkit-scrollbar { display: none; }
+  .viewnav .tick { flex: 0 0 auto; }
+
+  .topright { justify-content: space-between; }
+  .scene-pick { flex: 1 1 auto; }
+  .scene-pick select { flex: 1 1 auto; min-width: 0; }
+
+  .pq-prompt { font-size: 17px; }
+  .vwhy .trigger { font-size: 14px; }
+  .lat strong { font-size: 22px; }
+  .metrics { gap: 12px; font-size: 12.5px; }
+  .controls { gap: 12px; }
+  .ctl { padding: 12px 13px 14px; }
+
+  /* A sticky sidebar on a phone eats the viewport it is meant to help with. */
+  .pat-side { position: static; max-height: none; }
+  .pat-list { max-height: 260px; }
+  .pat-detail { padding: 18px 16px 20px; }
+  .pat-detail h2 { font-size: 19px; }
+}
+
+@media (max-width: 420px) {
+  .app { padding: 14px 12px 40px; }
+  h1 { font-size: 15.5px; }
+  .play { min-width: 0; flex: 1 1 auto; }
+  .row { gap: 7px; }
+  .speeds { gap: 4px; }
+  .speeds .total { margin-left: 0; width: 100%; }
+  .starbtn span:not(.starcount) { display: none; }  /* keep the mark and the count */
+}

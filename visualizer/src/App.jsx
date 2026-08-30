@@ -158,6 +158,8 @@ export default function App() {
       {view === 'predict' && <Predict scene={scene} onReplay={replay} />}
 
       {view === 'architecture' && <>
+      <p className="summary"><strong>{scene.title}.</strong> {scene.summary}</p>
+
       <section className="stage">
         <div className="stage-head">
           <div className="vwhy">
@@ -191,6 +193,7 @@ export default function App() {
           </div>
         )}
 
+        <div className="canvas-scroll">
         <Canvas
           scene={scene}
           version={version}
@@ -204,6 +207,7 @@ export default function App() {
           downNodes={down}
           bottleneck={bottleneck}
         />
+        </div>
 
         <p className="simnote">
           Timings are illustrative orders of magnitude, stretched so they are watchable — the point
@@ -300,14 +304,24 @@ export default function App() {
       </>}
 
       <footer>
-        <p>
-          <strong>{scene.title}.</strong> {scene.summary}
-        </p>
-        <p>
-          Shapes follow the notation contract — dashed means safe to lose, a cylinder means losing it
-          costs data. Every architecture here is authored once as a scene file and drives both this
-          app and the diagrams committed in the repository.
-        </p>
+        {view === 'architecture' && (
+          <p>
+            Shapes follow the notation contract — <strong>dashed means safe to lose</strong>, a
+            cylinder means losing it costs data. Timings are illustrative orders of magnitude.
+          </p>
+        )}
+        {view === 'predict' && (
+          <p>
+            Every question and answer is derived from the scene file — the same data that draws the
+            diagram, so the quiz cannot disagree with what you are about to watch.
+          </p>
+        )}
+        {view === 'patterns' && (
+          <p>
+            Generated from the same tables that produce the repository&rsquo;s pattern catalogue, so
+            a pattern cannot say one thing on the page and another here.
+          </p>
+        )}
       </footer>
     </div>
   )
