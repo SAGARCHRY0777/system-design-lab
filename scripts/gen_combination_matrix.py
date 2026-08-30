@@ -348,12 +348,6 @@ PAIRS.update({
         "Kafka consumer group partition assignment",
         "Kafka documentation",
     ),
-    ("service", "breaker"): (
-        REAL,
-        "Same as breaker+service; listed for symmetry in the matrix.",
-        "Netflix Hystrix",
-        "Netflix TechBlog",
-    ),
     ("client", "ratelimit"): (
         REAL,
         "A limiter that says no without saying when guarantees an immediate retry. 429 plus "
@@ -390,7 +384,24 @@ PAIRS.update({
 
 
 def classify(a: str, b: str):
-    return PAIRS.get((a, b)) or PAIRS.get((b, a))
+    """Look up a pair in either order.
+
+    The relation is symmetric, so a key written one way round must not be
+    findable while the other resolves to something different. That happened:
+    ("breaker","service") was CORE and ("service","breaker") was a REAL entry
+    added "for symmetry", so the canonical lookup returned REAL while the grid
+    -- which probes both orderings -- drew CORE in one cell and REAL in its
+    mirror. One pair, two classifications, in the same table.
+
+    The duplicate is gone; this asserts it cannot come back.
+    """
+    fwd, rev = PAIRS.get((a, b)), PAIRS.get((b, a))
+    if fwd is not None and rev is not None and fwd != rev:
+        raise ValueError(
+            f"pair ({a}, {b}) is declared twice with different values -- "
+            "the relation is symmetric, so declare it once"
+        )
+    return fwd or rev
 
 
 # Triples that real architectures are actually made of.

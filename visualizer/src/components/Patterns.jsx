@@ -22,23 +22,66 @@ import CATALOGUE from '../../../13-design-patterns/patterns.json'
  * the distributed version has neither. Two boxes and an arrow say that faster
  * than the paragraph does -- and the paragraph is still there underneath.
  */
+/** Greedy word wrap to at most `max` lines of roughly `per` characters. */
+function wrap(text, per, max) {
+  const lines = []
+  let line = ''
+  for (const word of text.split(' ')) {
+    const candidate = line ? `${line} ${word}` : word
+    if (candidate.length <= per || !line) {
+      line = candidate
+    } else {
+      lines.push(line)
+      line = word
+      if (lines.length === max - 1) break
+    }
+  }
+  const used = lines.join(' ').split(' ').length
+  const rest = text.split(' ').slice(used).join(' ')
+  if (rest) lines.push(rest)
+  return lines.slice(0, max)
+}
+
 function BridgeDiagram({ name, bridge }) {
-  return (
-    <svg className="bridge-svg" viewBox="0 0 460 74" role="img"
-         aria-label={`In one process: ${name}. Across a network: ${bridge}.`}>
-      <rect className="bridge-box" x="1" y="20" width="176" height="40" rx="7" />
-      <text className="bridge-cap" x="89" y="14" textAnchor="middle">IN ONE PROCESS</text>
-      <text className="bridge-txt" x="89" y="45" textAnchor="middle">{name}</text>
+  // Wrap rather than truncate. The first version cut at 30 characters, so
+  // "Leader election - distributed lock" rendered as "...distributed..." with
+  // the full string repeated immediately below it -- an ellipsis and a
+  // duplicate, neither of which the reader needed.
+  const left = wrap(name, 20, 3)
+  const right = wrap(bridge, 22, 3)
+  const rows = Math.max(left.length, right.length)
+  const boxH = rows === 1 ? 40 : rows === 2 ? 52 : 64
+  const h = boxH + 34
+  const midY = 20 + boxH / 2
 
-      <line className="bridge-arrow" x1="182" y1="40" x2="272" y2="40" markerEnd="url(#bridge-tip)" />
-      <text className="bridge-cap mid" x="227" y="32" textAnchor="middle">no shared memory</text>
-      <text className="bridge-cap mid" x="227" y="56" textAnchor="middle">no shared clock</text>
-
-      <rect className="bridge-box to" x="278" y="20" width="181" height="40" rx="7" />
-      <text className="bridge-cap to" x="368" y="14" textAnchor="middle">ACROSS A NETWORK</text>
-      <text className="bridge-txt to" x="368" y="45" textAnchor="middle">
-        {bridge.length > 30 ? `${bridge.slice(0, 29)}…` : bridge}
+  const lines = (arr, x, cls) =>
+    arr.map((ln, i) => (
+      <text
+        key={i}
+        className={cls}
+        x={x}
+        y={20 + boxH / 2 + (i - (arr.length - 1) / 2) * 15 + 4.5}
+        textAnchor="middle"
+      >
+        {ln}
       </text>
+    ))
+
+  return (
+    <svg className="bridge-svg" viewBox={`0 0 460 ${h}`} role="img"
+         aria-label={`In one process: ${name}. Across a network: ${bridge}.`}>
+      <rect className="bridge-box" x="1" y="20" width="176" height={boxH} rx="7" />
+      <text className="bridge-cap" x="89" y="14" textAnchor="middle">IN ONE PROCESS</text>
+      {lines(left, 89, 'bridge-txt')}
+
+      <line className="bridge-arrow" x1="182" y1={midY} x2="272" y2={midY}
+            markerEnd="url(#bridge-tip)" />
+      <text className="bridge-cap mid" x="227" y={midY - 8} textAnchor="middle">no shared memory</text>
+      <text className="bridge-cap mid" x="227" y={midY + 16} textAnchor="middle">no shared clock</text>
+
+      <rect className="bridge-box to" x="278" y="20" width="181" height={boxH} rx="7" />
+      <text className="bridge-cap to" x="368" y="14" textAnchor="middle">ACROSS A NETWORK</text>
+      {lines(right, 368, 'bridge-txt to')}
 
       <defs>
         <marker id="bridge-tip" viewBox="0 0 10 10" refX="9" refY="5"
@@ -128,7 +171,6 @@ export default function Patterns() {
             {active.bridge && (
               <div className="pat-bridge">
                 <BridgeDiagram name={active.name} bridge={active.bridge} />
-                <strong>{active.bridge}</strong>
                 <p>{active.harder}</p>
               </div>
             )}

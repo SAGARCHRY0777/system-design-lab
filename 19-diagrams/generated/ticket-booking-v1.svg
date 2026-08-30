@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 652 202" width="652" height="202" role="img" aria-label="Ticket Booking version 1: One small venue">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 202" width="730" height="202" role="img" aria-label="Ticket Booking version 1: One small venue">
 <style><![CDATA[
 /* Light is the base, dark is the override -- same three-state structure as the
    app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
@@ -39,21 +39,21 @@
   .core{fill:#4fc3a1}
 }
 ]]></style>
-<rect class="bg" width="652" height="202"/>
+<rect class="bg" width="730" height="202"/>
 <text class="tag" x="40" y="26">V1</text>
 <text class="title" x="70" y="26">Ticket Booking</text>
 <text class="sub" x="40" y="46">One small venue · p50 40ms · p99 130ms</text>
 <g transform="translate(0 62)">
-<path class="edge sync" d="M172.0,70.0 C211.5,70.0 211.5,70.0 251.0,70.0"/>
-<rect class="elbl-bg" x="198.5" y="53.0" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="61.0" text-anchor="middle">HTTPS</text>
-<path class="edge sync" d="M392.0,70.0 C431.5,70.0 431.5,70.0 471.0,70.0"/>
-<rect class="elbl-bg" x="383.4" y="53.0" width="105.2" height="12" rx="2"/><text class="elbl" x="436.0" y="61.0" text-anchor="middle">SELECT then UPDATE</text>
+<path class="edge sync" d="M172.0,70.0 C231.0,70.0 231.0,70.0 290.0,70.0"/>
+<rect class="elbl-bg" x="218.0" y="53.0" width="35.0" height="12" rx="2"/><text class="elbl" x="235.5" y="61.0" text-anchor="middle">HTTPS</text>
+<path class="edge sync" d="M431.0,70.0 C490.0,70.0 490.0,70.0 549.0,70.0"/>
+<rect class="elbl-bg" x="441.9" y="53.0" width="105.2" height="12" rx="2"/><text class="elbl" x="494.5" y="61.0" text-anchor="middle">SELECT then UPDATE</text>
 <rect class="shape client" x="40" y="40.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="75.0" text-anchor="middle">Client</text>
-<rect class="shape service" x="260" y="40.0" width="132" height="60" rx="6"/>
-<text class="lbl" x="326.0" y="75.0" text-anchor="middle">App Servers</text>
-<path class="shape store" d="M480,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M480,49.0 a66.0,9 0 0 0 132,0"/>
-<text class="lbl" x="546.0" y="67.0" text-anchor="middle">Seat Inventory</text>
-<text class="note" x="546.0" y="84.0" text-anchor="middle">the source of truth</text>
-<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="3.38s" repeatCount="indefinite" path="M106.0,70.0 L326.0,70.0 L546.0,70.0 L326.0,70.0 L106.0,70.0"/></g>
+<rect class="shape service" x="299" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="365.0" y="75.0" text-anchor="middle">App Servers</text>
+<path class="shape store" d="M558,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M558,49.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="624.0" y="67.0" text-anchor="middle">Seat Inventory</text>
+<text class="note" x="624.0" y="84.0" text-anchor="middle">the source of truth</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="3.98s" repeatCount="indefinite" path="M106.0,70.0 L365.0,70.0 L624.0,70.0 L365.0,70.0 L106.0,70.0"/></g>
 </g></svg>

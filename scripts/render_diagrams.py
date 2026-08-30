@@ -29,7 +29,8 @@ SCENES = ROOT / "19-diagrams" / "scenes"
 OUT = ROOT / "19-diagrams" / "generated"
 
 NODE_W, NODE_H = 132, 60
-COL_GAP, ROW_GAP = 88, 30
+COL_GAP_MIN, ROW_GAP = 88, 30
+LABEL_CHAR_PX = 5.4  # width of one character of the 10px edge-label font
 PAD_X, PAD_Y = 40, 40
 SPEED = 260.0  # px/sec, matching the app so motion reads the same in both
 
@@ -89,8 +90,26 @@ def ranks(version: dict) -> dict[str, int]:
     return rank
 
 
+def column_gap(version: dict) -> int:
+    """Wide enough for the longest edge label in this version.
+
+    A fixed 88px gap meant any longer label overlapped the nodes at both ends --
+    "SELECT then UPDATE" needs about 105px. A diagram should make room for its
+    own labels rather than expecting the labels to be short. Mirrors
+    columnGap() in visualizer/src/lib/layout.js; the two must agree.
+    """
+    on = set(version["active"])
+    longest = max(
+        (len(e.get("label", "")) for e in version["edges"]
+         if e["from"] in on and e["to"] in on),
+        default=0,
+    )
+    return max(COL_GAP_MIN, int(longest * LABEL_CHAR_PX) + 30)
+
+
 def layout(version: dict):
     rank = ranks(version)
+    COL_GAP = column_gap(version)
     cols: dict[int, list[str]] = {}
     for nid in version["active"]:
         cols.setdefault(rank[nid], []).append(nid)

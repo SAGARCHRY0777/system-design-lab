@@ -13,7 +13,10 @@
 
 export const NODE_W = 132
 export const NODE_H = 60
-const COL_GAP = 88
+const COL_GAP_MIN = 88
+// Roughly the width of one character of the 10px edge-label font, measured
+// against the rendered SVG rather than guessed.
+const LABEL_CHAR_PX = 5.4
 const ROW_GAP = 30
 const PAD_X = 40
 const PAD_Y = 40
@@ -49,8 +52,24 @@ function ranks(version) {
 /**
  * @returns {{positions: Record<string,{x,y,cx,cy}>, width: number, height: number}}
  */
+/**
+ * Column gap wide enough for the longest edge label in this version.
+ *
+ * A fixed gap meant a label longer than the gap overlapped the nodes at both
+ * ends -- "SELECT then UPDATE" needs ~105px and the gap was 88. Deriving the
+ * gap from the content is the fix; a diagram should make room for its own
+ * labels rather than expecting the labels to be short.
+ */
+function columnGap(version) {
+  const longest = activeEdges(version)
+    .map(e => (e.label ?? '').length)
+    .reduce((a, b) => Math.max(a, b), 0)
+  return Math.max(COL_GAP_MIN, Math.ceil(longest * LABEL_CHAR_PX) + 30)
+}
+
 export function layout(version) {
   const rank = ranks(version)
+  const COL_GAP = columnGap(version)
 
   const columns = new Map()
   for (const id of version.active) {

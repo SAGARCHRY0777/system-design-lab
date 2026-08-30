@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 872 382" width="872" height="382" role="img" aria-label="Social Feed version 2: 500K users">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 989 382" width="989" height="382" role="img" aria-label="Social Feed version 2: 500K users">
 <style><![CDATA[
 /* Light is the base, dark is the override -- same three-state structure as the
    app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
@@ -39,32 +39,32 @@
   .core{fill:#4fc3a1}
 }
 ]]></style>
-<rect class="bg" width="872" height="382"/>
+<rect class="bg" width="989" height="382"/>
 <text class="tag" x="40" y="26">V2</text>
 <text class="title" x="70" y="26">Social Feed</text>
 <text class="sub" x="40" y="46">500K users · p50 18ms · p99 190ms</text>
 <g transform="translate(0 62)">
-<path class="edge sync" d="M172.0,160.0 C211.5,160.0 211.5,160.0 251.0,160.0"/>
-<rect class="elbl-bg" x="198.5" y="143.0" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="151.0" text-anchor="middle">HTTPS</text>
-<path class="edge sync" d="M392.0,160.0 C431.5,160.0 431.5,160.0 471.0,160.0"/>
-<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,70.0 691.0,70.0"/>
-<rect class="elbl-bg" x="603.4" y="98.0" width="105.2" height="12" rx="2"/><text class="elbl" x="656.0" y="106.0" text-anchor="middle">assembled timeline</text>
-<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,160.0 691.0,160.0"/>
-<rect class="elbl-bg" x="633.1" y="143.0" width="45.8" height="12" rx="2"/><text class="elbl" x="656.0" y="151.0" text-anchor="middle">on miss</text>
-<path class="edge sync" d="M612.0,160.0 C651.5,160.0 651.5,250.0 691.0,250.0"/>
-<rect class="elbl-bg" x="633.1" y="188.0" width="45.8" height="12" rx="2"/><text class="elbl" x="656.0" y="196.0" text-anchor="middle">on miss</text>
+<path class="edge sync" d="M172.0,160.0 C231.0,160.0 231.0,160.0 290.0,160.0"/>
+<rect class="elbl-bg" x="218.0" y="143.0" width="35.0" height="12" rx="2"/><text class="elbl" x="235.5" y="151.0" text-anchor="middle">HTTPS</text>
+<path class="edge sync" d="M431.0,160.0 C490.0,160.0 490.0,160.0 549.0,160.0"/>
+<path class="edge sync" d="M690.0,160.0 C749.0,160.0 749.0,70.0 808.0,70.0"/>
+<rect class="elbl-bg" x="700.9" y="98.0" width="105.2" height="12" rx="2"/><text class="elbl" x="753.5" y="106.0" text-anchor="middle">assembled timeline</text>
+<path class="edge sync" d="M690.0,160.0 C749.0,160.0 749.0,160.0 808.0,160.0"/>
+<rect class="elbl-bg" x="730.6" y="143.0" width="45.8" height="12" rx="2"/><text class="elbl" x="753.5" y="151.0" text-anchor="middle">on miss</text>
+<path class="edge sync" d="M690.0,160.0 C749.0,160.0 749.0,250.0 808.0,250.0"/>
+<rect class="elbl-bg" x="730.6" y="188.0" width="45.8" height="12" rx="2"/><text class="elbl" x="753.5" y="196.0" text-anchor="middle">on miss</text>
 <rect class="shape client" x="40" y="130.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="165.0" text-anchor="middle">Client</text>
-<polygon class="shape lb" points="278,130.0 374,130.0 392,160.0 374,190.0 278,190.0 260,160.0"/>
-<text class="lbl" x="326.0" y="165.0" text-anchor="middle">Load Balancer</text>
-<rect class="shape service" x="480" y="130.0" width="132" height="60" rx="6"/>
-<text class="lbl" x="546.0" y="165.0" text-anchor="middle">App Servers</text>
-<rect class="shape cache" x="700" y="40.0" width="132" height="60" rx="6"/>
-<text class="lbl" x="766.0" y="67.0" text-anchor="middle">Cache</text>
-<text class="note" x="766.0" y="84.0" text-anchor="middle">hot timelines</text>
-<path class="shape store" d="M700,139.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M700,139.0 a66.0,9 0 0 0 132,0"/>
-<text class="lbl" x="766.0" y="165.0" text-anchor="middle">Follow Graph</text>
-<path class="shape store" d="M700,229.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M700,229.0 a66.0,9 0 0 0 132,0"/>
-<text class="lbl" x="766.0" y="255.0" text-anchor="middle">Post Store</text>
-<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="8.73s" repeatCount="indefinite" path="M106.0,160.0 L326.0,160.0 L546.0,160.0 L766.0,70.0 L546.0,160.0 L766.0,160.0 L546.0,160.0 L766.0,250.0 L546.0,160.0 L106.0,160.0"/></g>
+<polygon class="shape lb" points="317,130.0 413,130.0 431,160.0 413,190.0 317,190.0 299,160.0"/>
+<text class="lbl" x="365.0" y="165.0" text-anchor="middle">Load Balancer</text>
+<rect class="shape service" x="558" y="130.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="624.0" y="165.0" text-anchor="middle">App Servers</text>
+<rect class="shape cache" x="817" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="883.0" y="67.0" text-anchor="middle">Cache</text>
+<text class="note" x="883.0" y="84.0" text-anchor="middle">hot timelines</text>
+<path class="shape store" d="M817,139.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M817,139.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="883.0" y="165.0" text-anchor="middle">Follow Graph</text>
+<path class="shape store" d="M817,229.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M817,229.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="883.0" y="255.0" text-anchor="middle">Post Store</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="10.20s" repeatCount="indefinite" path="M106.0,160.0 L365.0,160.0 L624.0,160.0 L883.0,70.0 L624.0,160.0 L883.0,160.0 L624.0,160.0 L883.0,250.0 L624.0,160.0 L106.0,160.0"/></g>
 </g></svg>

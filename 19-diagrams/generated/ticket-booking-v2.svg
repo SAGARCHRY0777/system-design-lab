@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 872 202" width="872" height="202" role="img" aria-label="Ticket Booking version 2: Overselling found">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1184 202" width="1184" height="202" role="img" aria-label="Ticket Booking version 2: Overselling found">
 <style><![CDATA[
 /* Light is the base, dark is the override -- same three-state structure as the
    app. A committed SVG is viewed on GitHub in whichever theme the reader uses,
@@ -39,24 +39,24 @@
   .core{fill:#4fc3a1}
 }
 ]]></style>
-<rect class="bg" width="872" height="202"/>
+<rect class="bg" width="1184" height="202"/>
 <text class="tag" x="40" y="26">V2</text>
 <text class="title" x="70" y="26">Ticket Booking</text>
 <text class="sub" x="40" y="46">Overselling found · p50 35ms · p99 120ms</text>
 <g transform="translate(0 62)">
-<path class="edge sync" d="M172.0,70.0 C211.5,70.0 211.5,70.0 251.0,70.0"/>
-<rect class="elbl-bg" x="198.5" y="53.0" width="35.0" height="12" rx="2"/><text class="elbl" x="216.0" y="61.0" text-anchor="middle">HTTPS</text>
-<path class="edge sync" d="M392.0,70.0 C431.5,70.0 431.5,70.0 471.0,70.0"/>
-<path class="edge sync" d="M612.0,70.0 C651.5,70.0 651.5,70.0 691.0,70.0"/>
-<rect class="elbl-bg" x="571.0" y="53.0" width="170.0" height="12" rx="2"/><text class="elbl" x="656.0" y="61.0" text-anchor="middle">UPDATE ... WHERE status='free'</text>
+<path class="edge sync" d="M172.0,70.0 C263.5,70.0 263.5,70.0 355.0,70.0"/>
+<rect class="elbl-bg" x="250.5" y="53.0" width="35.0" height="12" rx="2"/><text class="elbl" x="268.0" y="61.0" text-anchor="middle">HTTPS</text>
+<path class="edge sync" d="M496.0,70.0 C587.5,70.0 587.5,70.0 679.0,70.0"/>
+<path class="edge sync" d="M820.0,70.0 C911.5,70.0 911.5,70.0 1003.0,70.0"/>
+<rect class="elbl-bg" x="831.0" y="53.0" width="170.0" height="12" rx="2"/><text class="elbl" x="916.0" y="61.0" text-anchor="middle">UPDATE ... WHERE status='free'</text>
 <rect class="shape client" x="40" y="40.0" width="132" height="60" rx="26"/>
 <text class="lbl" x="106.0" y="75.0" text-anchor="middle">Client</text>
-<polygon class="shape lb" points="278,40.0 374,40.0 392,70.0 374,100.0 278,100.0 260,70.0"/>
-<text class="lbl" x="326.0" y="75.0" text-anchor="middle">Load Balancer</text>
-<rect class="shape service" x="480" y="40.0" width="132" height="60" rx="6"/>
-<text class="lbl" x="546.0" y="75.0" text-anchor="middle">App Servers</text>
-<path class="shape store" d="M700,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M700,49.0 a66.0,9 0 0 0 132,0"/>
-<text class="lbl" x="766.0" y="67.0" text-anchor="middle">Seat Inventory</text>
-<text class="note" x="766.0" y="84.0" text-anchor="middle">the source of truth</text>
-<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="5.08s" repeatCount="indefinite" path="M106.0,70.0 L326.0,70.0 L546.0,70.0 L766.0,70.0 L546.0,70.0 L106.0,70.0"/></g>
+<polygon class="shape lb" points="382,40.0 478,40.0 496,70.0 478,100.0 382,100.0 364,70.0"/>
+<text class="lbl" x="430.0" y="75.0" text-anchor="middle">Load Balancer</text>
+<rect class="shape service" x="688" y="40.0" width="132" height="60" rx="6"/>
+<text class="lbl" x="754.0" y="75.0" text-anchor="middle">App Servers</text>
+<path class="shape store" d="M1012,49.0 a66.0,9 0 0 1 132,0 v42 a66.0,9 0 0 1 -132,0 z"/><path class="shape store" fill="none" d="M1012,49.0 a66.0,9 0 0 0 132,0"/>
+<text class="lbl" x="1078.0" y="67.0" text-anchor="middle">Seat Inventory</text>
+<text class="note" x="1078.0" y="84.0" text-anchor="middle">the source of truth</text>
+<g><circle class="halo" r="11"/><circle class="core" r="5.5"/><animateMotion dur="7.48s" repeatCount="indefinite" path="M106.0,70.0 L430.0,70.0 L754.0,70.0 L1078.0,70.0 L754.0,70.0 L106.0,70.0"/></g>
 </g></svg>

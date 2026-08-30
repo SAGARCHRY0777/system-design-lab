@@ -15,8 +15,8 @@ Every `CORE` and `REAL` pair names a real system and a public source. **A combin
 
 | Class | Meaning | Count |
 |---|---|---|
-| ● **CORE** | Worth a full page of its own | 10 |
-| ○ **REAL** | Genuinely used; documented below | 27 |
+| ● **CORE** | Worth a full page of its own | 11 |
+| ○ **REAL** | Genuinely used; documented below | 26 |
 | · **SITU** | Occurs, but situational or often confused | 3 |
 | ⚠ **ANTI** | A known mistake — documented so it is recognised | 3 |
 | — **none** | No meaningful direct interaction | 110 |
@@ -34,7 +34,7 @@ Read either direction; the relation is symmetric.
 | **`cdn`** | ○ | ▪ | ● |  |  | · |  |  |  |  |  |  | ○ |  |  |  |  |  |
 | **`lb`** | ○ | ● | ▪ |  | ○ | ● |  |  |  |  |  |  |  |  | ● |  |  | ○ |
 | **`gate`** |  |  |  | ▪ | ○ |  | ⚠ |  |  |  |  |  |  |  | ○ | ○ |  |  |
-| **`serv`** |  |  | ○ | ○ | ▪ | ○ | ○ |  |  | ○ |  |  |  |  |  | ○ |  | ○ |
+| **`serv`** |  |  | ○ | ○ | ▪ | ○ | ○ |  |  | ○ |  |  |  |  |  | ● |  | ○ |
 | **`cach`** |  | · | ● |  | ○ | ▪ | ● | ○ |  | ● | ○ |  |  |  |  |  | ⚠ |  |
 | **`db`** |  |  |  | ⚠ | ○ | ● | ▪ | ● | ● | ● | ○ | ○ | ○ | ○ |  |  | · |  |
 | **`repl`** |  |  |  |  |  | ○ | ● | ▪ | ● |  |  |  |  |  |  |  |  |  |
@@ -92,6 +92,7 @@ These get their own page. Each one is a step in [the chain](../SYSTEM-DESIGN-THI
 | **Load Balancer + Rate Limiter** | Limit at the edge or per-server? Per-server means N servers each allow the full limit. Shared state at the edge is correct but adds a hop to every request. | Stripe API rate limits | Stripe engineering blog, Scaling your API with rate limiters |
 | **Queue + Worker** | Decouples arrival rate from processing rate, so a spike becomes a backlog instead of an outage. Buys at-least-once delivery, which forces idempotency. | Celery/Sidekiq shops; AWS SQS + Lambda | AWS SQS documentation |
 | **Read Replica + Shard** | Shard for write scale, replicate each shard for read scale and availability. The standard large-database shape -- and now every shard has its own failover story. | Vitess; MongoDB sharded clusters | MongoDB sharded cluster documentation |
+| **Service + Circuit Breaker** | Retries alone finish off a struggling dependency. The breaker is what makes retrying safe -- it converts 'slow' back into 'fast failure', which is the only mode you can route around. | Netflix Hystrix | Netflix TechBlog, Hystrix |
 
 ## ○ Real combinations
 
@@ -117,7 +118,6 @@ Genuinely shipped, documented here rather than given a page of their own.
 | **Queue + Circuit Breaker** | When the breaker opens, work can be parked on a queue instead of dropped -- so the outage degrades to a delay. | Common resilience shape | Google SRE Book, ch. 22 |
 | **Rate Limiter + Circuit Breaker** | Rate limiting protects you from callers; the circuit breaker protects you from dependencies. Inbound and outbound halves of the same idea. | Netflix Hystrix + Zuul | Netflix TechBlog |
 | **Service + Cache** | Read-through or cache-aside. Cache-aside puts invalidation in application code, which is where invalidation bugs live. | Ubiquitous | Kleppmann, DDIA ch. 1 |
-| **Service + Circuit Breaker** | Same as breaker+service; listed for symmetry in the matrix. | Netflix Hystrix | Netflix TechBlog |
 | **Service + Database** | The base case. Connection pool size, not database capacity, is usually the real throughput ceiling. | Every system | Little's Law |
 | **Service + Queue** | Producer side. Moving work off the request path is the single largest perceived latency win available. | Ubiquitous | AWS SQS documentation |
 | **Service + Service Discovery** | Services register; callers resolve. In Kubernetes this is DNS plus endpoint objects rather than a separate system. | Kubernetes, Consul | Kubernetes Service documentation |
