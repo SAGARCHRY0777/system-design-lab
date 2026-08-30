@@ -22,24 +22,42 @@ import CATALOGUE from '../../../13-design-patterns/patterns.json'
  * the distributed version has neither. Two boxes and an arrow say that faster
  * than the paragraph does -- and the paragraph is still there underneath.
  */
-/** Greedy word wrap to at most `max` lines of roughly `per` characters. */
+/**
+ * Greedy word wrap to at most `max` lines of roughly `per` characters.
+ *
+ * The first version never flushed the final line, so any text short enough to
+ * fit on one line came back as an EMPTY array -- "Adapter" rendered as a blank
+ * box -- and "Template Method" came back as ["Method"], silently dropping a
+ * word. Both bugs survived a verification pass because that pass only checked
+ * the multi-word `bridge` strings and never the `name` side.
+ *
+ * This version cannot lose text: when the line budget runs out, everything
+ * remaining is appended to the last line rather than discarded.
+ */
 function wrap(text, per, max) {
+  const words = String(text).split(' ').filter(Boolean)
+  if (!words.length) return []
+
   const lines = []
-  let line = ''
-  for (const word of text.split(' ')) {
-    const candidate = line ? `${line} ${word}` : word
-    if (candidate.length <= per || !line) {
+  let line = words[0]
+
+  for (let i = 1; i < words.length; i++) {
+    const candidate = `${line} ${words[i]}`
+    if (candidate.length <= per) {
       line = candidate
-    } else {
-      lines.push(line)
-      line = word
-      if (lines.length === max - 1) break
+      continue
     }
+    if (lines.length === max - 1) {
+      // Out of lines: the remainder joins this one rather than vanishing.
+      line = `${line} ${words.slice(i).join(' ')}`
+      break
+    }
+    lines.push(line)
+    line = words[i]
   }
-  const used = lines.join(' ').split(' ').length
-  const rest = text.split(' ').slice(used).join(' ')
-  if (rest) lines.push(rest)
-  return lines.slice(0, max)
+
+  lines.push(line)
+  return lines
 }
 
 function BridgeDiagram({ name, bridge }) {

@@ -397,6 +397,13 @@ availability; they are orthogonal and the standard large-database shape is both 
 - [ ] Resharding plan exists — ideally over-sharded logically from the start
 - [ ] Per-shard monitoring, not aggregate
 
+## 27. Implementation
+
+[Consistent hashing](../../18-implementations/consistent-hashing/) is implemented and measured. Adding
+one node to a ring of four remaps **19.8%** of keys against **80.2%** for `hash % N` — and the
+virtual-node effect is measured too: with one vnode per node the busiest owns 4.34x its fair share,
+with 150 it owns 1.08x.
+
 ## 33. Related
 
 - [Observability](../../11-observability/) — how you would know any of this broke

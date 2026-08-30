@@ -303,6 +303,13 @@ can always recover faster. Save synchronous replication for the ledger, not the 
 - [ ] Correctness is monitored, not only uptime
 - [ ] MTTR is measured, and rehearsed
 
+## 27. Implementation
+
+[A circuit breaker](../../18-implementations/circuit-breaker/) is implemented and measured. Against a
+dependency that hangs 10ms then fails, 200 calls take **2.061s without it and 0.051s with it** — and
+the dependency receives **5 requests instead of 200**. That is the breaker converting slow into
+fast-failure, which is the only mode a caller can route around.
+
 ## 33. Related
 
 - [Observability](../../11-observability/) — how you would know any of this broke

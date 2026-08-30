@@ -4,58 +4,112 @@
  * Node TYPE is never colour-coded -- the shape already does that, and the
  * drawing has to survive greyscale.
  *
- * Three theme states, not two. An explicit choice stamps data-theme on <html>;
- * the default "system" setting stamps nothing, so only prefers-color-scheme
- * separates light from dark there. Every colour is defined on bare :root and
- * only REDEFINED in the dark blocks -- a colour whose sole definition sits
- * inside a media query never applies in the unstamped state.
+ * Five themes plus system. Three states of choice, not two: an explicit pick
+ * stamps data-theme on <html>, and the default "system" setting stamps nothing,
+ * so only prefers-color-scheme separates light from dark there. Every colour is
+ * defined on bare :root and only REDEFINED per theme -- a colour whose sole
+ * definition sits inside a media query never applies in the unstamped state.
+ *
+ * Every --ink3 value is measured at >= 4.5:1 against BOTH --bg and --panel.
+ * Muted text is where contrast quietly fails, and it is the colour used for
+ * inactive tabs, units and captions -- the things a reader most needs to scan.
  */
 
-:root {
+:root {                     /* light */
   --bg:      #f4f6f4;
   --panel:   #ffffff;
   --sunken:  #eaeeec;
   --line:    #d7dedb;
   --line2:   #b8c4bf;
   --ink:     #16201e;
-  --ink2:    #4a5854;
-  --ink3:    #6d7c77;
-  --accent:  #1c6853;
-  --amber:   #8a5a0c;
-  --red:     #a3341f;
+  --ink2:    #43514d;
+  --ink3:    #5d6c67;
+  --accent:  #166050;
+  --amber:   #7a4f08;
+  --red:     #912d16;
   --radius:  9px;
   color-scheme: light;
 }
 
+/* The default "system" state: dark OS preference, no explicit choice. Uses
+   SLATE rather than midnight -- a soft dark is a better default than the
+   deepest one, and midnight stays available for anyone who wants it. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:      #0e1414;
-    --panel:   #151d1d;
-    --sunken:  #111818;
-    --line:    #253232;
-    --line2:   #344544;
-    --ink:     #e4ecea;
-    --ink2:    #9fb0ac;
-    --ink3:    #6f817d;
-    --accent:  #4fc3a1;
-    --amber:   #d9a441;
-    --red:     #e0705a;
+  :root:not([data-theme]) {
+    --bg:      #1e2426;
+    --panel:   #27302f;
+    --sunken:  #1a2022;
+    --line:    #313b3a;
+    --line2:   #45514f;
+    --ink:     #e6edeb;
+    --ink2:    #b3c0bd;
+    --ink3:    #93a19d;
+    --accent:  #63c8a9;
+    --amber:   #e0ad4c;
+    --red:     #ea7f68;
     color-scheme: dark;
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="light"] { color-scheme: light; }
+
+:root[data-theme="paper"] {
+  --bg:      #f7f4ee;
+  --panel:   #fffdf8;
+  --sunken:  #efe9df;
+  --line:    #ded5c7;
+  --line2:   #c3b7a4;
+  --ink:     #241f18;
+  --ink2:    #514639;
+  --ink3:    #6b5f4f;
+  --accent:  #7c4a1e;
+  --amber:   #7a5308;
+  --red:     #912d16;
+  color-scheme: light;
+}
+
+:root[data-theme="slate"] {
+  --bg:      #1e2426;
+  --panel:   #27302f;
+  --sunken:  #1a2022;
+  --line:    #313b3a;
+  --line2:   #45514f;
+  --ink:     #e6edeb;
+  --ink2:    #b3c0bd;
+  --ink3:    #93a19d;
+  --accent:  #63c8a9;
+  --amber:   #e0ad4c;
+  --red:     #ea7f68;
+  color-scheme: dark;
+}
+
+:root[data-theme="midnight"] {
   --bg:      #0e1414;
   --panel:   #151d1d;
   --sunken:  #111818;
   --line:    #253232;
   --line2:   #344544;
   --ink:     #e4ecea;
-  --ink2:    #9fb0ac;
-  --ink3:    #6f817d;
+  --ink2:    #a7b8b4;
+  --ink3:    #8b9c98;
   --accent:  #4fc3a1;
   --amber:   #d9a441;
   --red:     #e0705a;
+  color-scheme: dark;
+}
+
+:root[data-theme="ember"] {
+  --bg:      #1b1715;
+  --panel:   #241f1c;
+  --sunken:  #171310;
+  --line:    #332b26;
+  --line2:   #4d403a;
+  --ink:     #ece5e0;
+  --ink2:    #bdaea5;
+  --ink3:    #9c8d84;
+  --accent:  #e0975c;
+  --amber:   #d9a441;
+  --red:     #e8836a;
   color-scheme: dark;
 }
 
@@ -665,4 +719,48 @@ footer p { margin: 0; max-width: 82ch; }
 .iv-count {
   grid-column: 1 / -1;
   color: var(--ink3); font-size: 12.5px; margin: 4px 0 0;
+}
+
+/* ---------- theme picker ---------- */
+
+.themer { position: relative; }
+
+.themer-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  padding: 5px;
+  min-width: 208px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .22);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.themer-item {
+  display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 9px;
+  background: none; border: 0; border-radius: 6px;
+  padding: 7px 9px; cursor: pointer; text-align: left;
+  font: inherit; font-size: 13.5px; color: var(--ink2);
+}
+.themer-item:hover { background: var(--sunken); color: var(--ink); }
+.themer-item.on { background: var(--sunken); color: var(--ink); font-weight: 600; }
+.themer-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.themer-hint { font-size: 11px; color: var(--ink3); font-weight: 400; }
+
+/* Swatches are literal: each shows its own theme's background and accent, so
+   the menu previews the palette rather than naming it. */
+.swatch {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid var(--line2);
+  display: block;
+}
+.sw-system   { background: linear-gradient(135deg, #f4f6f4 0 50%, #1e2426 50% 100%); }
+.sw-light    { background: linear-gradient(135deg, #f4f6f4 0 60%, #166050 60% 100%); }
+.sw-paper    { background: linear-gradient(135deg, #f7f4ee 0 60%, #7c4a1e 60% 100%); }
+.sw-slate    { background: linear-gradient(135deg, #1e2426 0 60%, #63c8a9 60% 100%); }
+.sw-midnight { background: linear-gradient(135deg, #0e1414 0 60%, #4fc3a1 60% 100%); }
+.sw-ember    { background: linear-gradient(135deg, #1b1715 0 60%, #e0975c 60% 100%); }
+
+@media (max-width: 420px) {
+  .themebtn span { display: none; }
+  .themer-menu { right: auto; left: 0; }
 }

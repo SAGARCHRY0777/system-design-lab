@@ -332,7 +332,10 @@ That last line is the step people skip. See [the chain](../../SYSTEM-DESIGN-THIN
 
 ## 27. Implementation
 
-An LRU + TTL cache is on the roadmap for [18-implementations/](../../18-implementations/). The
+A working [LRU + TTL cache](../../18-implementations/lru-cache/) is in
+[18-implementations/](../../18-implementations/) — its benchmark is the scan vulnerability made
+measurable: a single pass over the keyspace takes the hit rate from **100% to 0%**, while a
+segmented LRU under the identical scan holds **100%**. The
 [rate limiter](../../18-implementations/rate-limiter/) already demonstrates the measurement
 discipline these use: real numbers, and an explicit list of what production adds.
 

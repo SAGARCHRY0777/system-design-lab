@@ -85,7 +85,7 @@ because in practice it is never traded alone — always against write latency.
 - [ ] Batching `[I]`
 - [ ] Retries `[B]`
 - [ ] Exponential backoff + jitter `[I]` — *needs retries*
-- [ ] Circuit breaker `[I]` — *needs retries*
+- [x] [Circuit breaker](18-implementations/circuit-breaker/) — 40x faster failure, measured `[I]` — *needs retries*
 - [ ] Rate limiting `[I]`
 - [ ] Backpressure `[A]`
 - [x] ★ [Sharding](05-databases/sharding/) `[A]`
@@ -132,9 +132,9 @@ in the visualizer.
 
 Python, stdlib-only, with tests and **executed** benchmarks.
 
-- [ ] Rate limiter — token bucket + sliding window `[I]`
-- [ ] Consistent hashing `[A]`
-- [ ] Cache — LRU + TTL `[I]`
+- [x] [Rate limiter](18-implementations/rate-limiter/) — token bucket, sliding window, fixed window `[I]`
+- [x] [Consistent hashing](18-implementations/consistent-hashing/) — 19.8% vs 80.2% remap, measured `[A]`
+- [x] [Cache](18-implementations/lru-cache/) — LRU + TTL, and the scan vulnerability measured `[I]`
 - [ ] Circuit breaker `[I]`
 - [ ] Worker pool `[I]`
 - [ ] Load balancer — the algorithms `[B]`
