@@ -1,0 +1,1195 @@
+{
+  "tracks": [
+    {
+      "id": "foundations",
+      "name": "Foundations",
+      "blurb": "Whether you can put arithmetic on a system instead of adjectives",
+      "questions": [
+        {
+          "id": "foundations-1",
+          "level": "basic",
+          "q": "Our dashboard says average response time is 40 ms and has not moved in a month. Support has a growing pile of tickets saying the app is slow. Which one is lying?",
+          "asking": "whether the candidate knows latency is a distribution and that the mean is the one statistic that hides its shape",
+          "answer": "Neither. Latency is a distribution, not a number, and it is right-skewed — a thousand 20 ms requests bury a handful of 8-second ones and the average barely twitches. The complaints are coming from the tail, p99 or p99.9, which is precisely the population that files tickets. p50 and p99 can differ by 50x, so *latency is 40 ms* is not a claim until it names a percentile. Track p50, p99 and p99.9 separately, per endpoint, and split successful requests from failed ones — fast errors otherwise flatter the number.",
+          "redFlags": [
+            "quotes an average latency and stops there",
+            "proposes a fix before naming which percentile moved",
+            "treats the mean as if the distribution were symmetric",
+            "cannot say which population is generating the complaints"
+          ],
+          "followUps": [
+            {
+              "q": "Your p99 turns out to be 100x your p50. What does that ratio alone tell you?",
+              "answer": "That the system is running close to saturation, and that the gap is almost certainly queueing rather than work. Queue wait scales as 1/(1 − utilisation): 50% utilisation is a 2x wait, 90% is 10x, 99% is 100x. The tell is that a p50/p99 decomposition usually shows four of the five time contributors identical in both rows, with the entire gap in the queueing term — which is invisible to a profiler, because the request has not begun executing while it accrues."
+            },
+            {
+              "q": "You double the fleet and the p99 halves. Explain that, given that adding servers does not buy latency.",
+              "answer": "Only the queueing term moved. Horizontal scaling buys throughput; nothing you can purchase halves the round trip to Sydney. The p99 improved because that latency was a capacity problem wearing a disguise, and the fact that p50 barely moved is the confirmation."
+            }
+          ],
+          "seeAlso": "00-foundations/latency/"
+        },
+        {
+          "id": "foundations-2",
+          "level": "basic",
+          "q": "A request touches four services in series, each independently measured at 99.9%. What is the availability of the request, and roughly how many hours a year is that?",
+          "asking": "whether availability arithmetic is reflex rather than vocabulary — and whether they notice this is the strongest technical argument against gratuitous microservices",
+          "answer": "0.999 to the fourth is 99.6%, which is about 35 hours a year — four times the downtime of any single link. Chains multiply, so a chain is always less available than its weakest member; ten dependencies at 99.9% each give you 99%, or 3.65 days. The running product falls by the same 0.1% at every hop, and it falls by that amount regardless of how good the hop is. That means adding a synchronous dependency has a price you can compute before you add it, and paying that price does not require the dependency to be bad.",
+          "redFlags": [
+            "answers 99.9%, taking the availability of the weakest link",
+            "cannot convert nines into hours per year",
+            "says add redundancy without noting that series and parallel are opposite arithmetic",
+            "assumes the failures are independent without saying the word"
+          ],
+          "followUps": [
+            {
+              "q": "You make two of them redundant pairs. What is the new arithmetic, and which word is doing all the work?",
+              "answer": "Parallel multiplies unavailability rather than availability, so it can only rise: two components at 99% each give 1 − 0.01 x 0.01 = 99.99%. The word doing all the work is *independent*. Two servers in the same rack share a power supply, two availability zones share a region, and two regions share your deployment pipeline and your DNS — correlated failure is what turns a calculated 99.99% into a real 99.5%."
+            },
+            {
+              "q": "Given that, which buys more nines: another standby, or staged rollout?",
+              "answer": "Staged rollout, and it is not close. Most outages are deploys, config changes, certificate expiry and capacity exhaustion rather than hardware. A power feed at least fails one rack at a time; a config push reaches every replica in every region within seconds, and redundancy does nothing at all against it."
+            },
+            {
+              "q": "Your cloud provider promises 99.95%. Can you promise a customer 99.99%?",
+              "answer": "Not on the synchronous path. Your availability is capped by your least available critical dependency, so check what your provider, your payment processor and your DNS actually promise before you write a number into a contract. You can beat it only by removing them from the critical path — making the call asynchronous, optional, or cached."
+            }
+          ],
+          "seeAlso": "00-foundations/availability/"
+        },
+        {
+          "id": "foundations-3",
+          "level": "intermediate",
+          "q": "You need to serve 1,000 requests per second and each one takes 50 ms. How many requests are in flight, and what happens if your connection pool is set to 10?",
+          "asking": "whether Little's Law is a tool they use or a phrase they have heard — pool sizes are the most common invisible ceiling in a system",
+          "answer": "Little's Law: concurrency = throughput x latency, so 1,000 x 0.05 = 50 requests in flight, and you need about 50 slots. A pool of 10 caps you at 10 / 0.05 = 200 rps, and no quantity of hardware raises that ceiling. A pool of 5,000 fails in the opposite direction and does it silently — you never reach the ceiling, so you never learn that the bottleneck moved to whatever the small pool was inadvertently protecting. This is why *we added capacity and nothing happened* ends in a config file far more often than on the architecture diagram.",
+          "redFlags": [
+            "sizes the pool from a default or a round number",
+            "gives a server count without computing concurrency at all",
+            "proposes more servers when the ceiling is a pool",
+            "quotes throughput with no latency — 1M rps at 30 seconds each is not a working system"
+          ],
+          "followUps": [
+            {
+              "q": "You raise the pool to 500 and throughput does not move. What now?",
+              "answer": "The bottleneck moved, which is the normal loop rather than a surprise. Throughput is bounded by the narrowest stage, so find it rather than optimising anything else — a chain of 1000, 1000, 50, 1000 rps is a 50 rps system and improving any other stage changes nothing. Measure throughput per instance: if it falls as you add instances, you have found contention rather than capacity."
+            },
+            {
+              "q": "Queue depth is growing by 200 a second while the throughput graph sits perfectly flat at 1,000 rps. Which graph is lying?",
+              "answer": "Neither, and the flat one is the dangerous one. Throughput is flat because it is pinned at the ceiling, not because demand is satisfied — arrivals are 1,200 and completions are 1,000, so the first graph anyone checks reports maximum health at precisely the moment the system stops coping. Queue depth moves minutes before latency does, which is why it is the signal to alert on."
+            }
+          ],
+          "seeAlso": "00-foundations/throughput/"
+        },
+        {
+          "id": "foundations-4",
+          "level": "intermediate",
+          "q": "Your service runs at 60% CPU. Finance has noticed and wants you at 90% to cut the bill by a third. Do you agree?",
+          "asking": "whether they can decline a plausible cost argument with arithmetic — queueing is non-linear, and the headroom that looks like waste is exactly what absorbs spikes",
+          "answer": "No, and the reason is arithmetic rather than caution. Queue wait scales as 1/(1 − utilisation): 50% is a 2x wait, 80% is 5x, 90% is 10x, 95% is 20x, 99% is 100x. Moving from 60% to 90% buys a third of the bill and roughly 4x the wait, and it leaves nothing to absorb a traffic spike — the headroom that looks like waste on a cost dashboard is the identical headroom that was absorbing your spikes. The right answer to the cost question is not no but *cheaper capacity, not less headroom*: fewer larger instances, or autoscaling. Target below about 70%.",
+          "redFlags": [
+            "agrees because 60% sounds like there is room",
+            "treats latency as linear in utilisation",
+            "refuses without offering a cheaper-capacity alternative",
+            "has no target utilisation number at all"
+          ],
+          "followUps": [
+            {
+              "q": "Compare a 10-point traffic rise at 50% utilisation and at 90%.",
+              "answer": "At 50% going to 60% the relative wait goes from 2x to 2.5x and nobody notices. At 90% going to 100% the queue never drains, because 1/(1 − utilisation) has no finite value at 1 — wait is then bounded only by your timeout. Same 10 points of traffic, entirely different system."
+            },
+            {
+              "q": "So what is the timeout actually doing for you there?",
+              "answer": "It converts *slow* into *down*, which is the only failure mode you can actually handle. A dead dependency fails fast and you route around it; a slow one holds every thread that touches it and takes down callers that do not even depend on it. That is why timeouts are not optional and why *slow is worse than down* is a real ordering rather than a slogan."
+            }
+          ],
+          "seeAlso": "00-foundations/latency/"
+        },
+        {
+          "id": "foundations-5",
+          "level": "advanced",
+          "q": "One page fans out to 100 backend services, each with a 1% chance of being slow on any given call. How often is the page slow, and whose dashboard shows the problem?",
+          "asking": "tail amplification — whether they know a fan-out inherits the maximum of its dependencies rather than their average",
+          "answer": "1 − 0.99 to the hundredth, which is about 63%: nearly two thirds of page loads hit somebody's p99. At scale your p99 becomes your typical experience. Nobody's dashboard shows it, because every one of the hundred services is meeting its own SLO and looks excellent in isolation — a hundred excellent services compose into a page that is slow most of the time. Latency adds along the synchronous path and does not along the asynchronous one, so the levers are reducing the number of synchronous hops, parallelising what remains, and hedging the ones you cannot remove.",
+          "redFlags": [
+            "multiplies or averages the dependency latencies",
+            "concludes the page is fine because each service is fine",
+            "proposes optimising the median of the slowest service",
+            "no mention of fan-out, or of maximum versus average"
+          ],
+          "followUps": [
+            {
+              "q": "Which of those services do you fix first?",
+              "answer": "None of them individually — you cannot fix a hundred p99s, and each team will correctly tell you their service is healthy. Reduce the fan-out, make what remains parallel rather than serial so you pay the maximum once instead of the sum, and add hedged requests after p95 for the hops you cannot remove."
+            },
+            {
+              "q": "Hedging duplicates work. When is that the wrong trade?",
+              "answer": "When the dependency is anywhere near saturation, because hedging adds load exactly where there is none to spare and converts a tail problem into a capacity problem. It also requires the operation to be idempotent — you are deliberately sending the same request twice and taking whichever answer arrives first."
+            }
+          ],
+          "seeAlso": "00-foundations/latency/"
+        }
+      ]
+    },
+    {
+      "id": "caching",
+      "name": "Caching",
+      "blurb": "Whether you know a cache is a bet on skew, and what it costs when it dies",
+      "questions": [
+        {
+          "id": "caching-1",
+          "level": "basic",
+          "q": "What is a cache, and when does adding one not help at all?",
+          "asking": "whether they know a cache is a bet on SKEW — a candidate who defines it perfectly and never says the word has answered the wrong question fluently",
+          "answer": "A smaller, faster copy of data kept nearer the reader, so repeated reads avoid the source. It is a bet on two properties of the access pattern: temporal locality, and skew — a small fraction of keys taking most of the reads. The arithmetic makes the bet visible: a cache sized at 20% of the dataset over uniformly random access returns a 20% hit rate, while the same 20% over a Zipf-distributed workload can return 95%. So it does nothing for uniform access over a large keyspace, does not make writes faster, does not fix a slow query, and is by definition allowed to lose everything at any moment.",
+          "redFlags": [
+            "defines a cache correctly and never says skew or hit rate",
+            "treats the cache as capacity the system can rely on",
+            "sizes it as a fraction of the dataset rather than from the working set",
+            "cannot name a workload where a cache is worthless"
+          ],
+          "followUps": [
+            {
+              "q": "Your hit rate is 90%. Is pushing it to 99% worth the effort?",
+              "answer": "Yes, and it is worth more than the first 90% was. With a 1 ms cache and a 50 ms database, 90% gives 5.9 ms average and 99% gives 1.5 ms — but the number that matters is origin load, which goes from one tenth to one hundredth. Each additional nine removes 90% of the *remaining* load on the source, which is what decides whether the database survives."
+            },
+            {
+              "q": "Your hit rate is 95% and p50 looks superb. Why is p99 still 50 ms?",
+              "answer": "Because the tail is the miss path. Every miss pays the original cost in full, so a 95% hit rate means p95 looks great and p99 is still the uncached query. A cache does not fix a slow query — it hides one until the miss, and the tail is what users complain about."
+            }
+          ],
+          "seeAlso": "04-caching/fundamentals/"
+        },
+        {
+          "id": "caching-2",
+          "level": "basic",
+          "q": "Should the cache live in the application process or in a shared tier?",
+          "asking": "whether they know local caches get worse as the fleet grows — which is precisely when they are most needed",
+          "answer": "Shared, in almost every case. With 100 servers and a local cache, each server must independently miss on a key before it caches it, so the origin sees 100 misses per key per TTL — origin load then scales with fleet size rather than with traffic, and doubling the fleet doubles the misses at the same request rate. The correctness half is worse: 100 copies exist, they can disagree, and no invalidation can reach them all. A shared tier gives one miss per key per TTL and one thing to invalidate. Local caches are for tiny read-only reference data.",
+          "redFlags": [
+            "picks local because it is faster, with no account of hit rate at fleet size",
+            "does not separate the performance problem from the correctness one",
+            "assumes an invalidation message reaches every copy",
+            "no mention that origin load scales with the fleet"
+          ],
+          "followUps": [
+            {
+              "q": "Your shared cache is sharded and one key takes all the traffic. What breaks?",
+              "answer": "One key lives on one node, so all the traffic for it lands on a single shard while the rest idle. The mitigations are to replicate the hot key across nodes, or to put a small local tier in front of it — which is the one case where a local cache genuinely earns its place."
+            },
+            {
+              "q": "That local tier reintroduces the invalidation problem you just avoided. How do you bound it?",
+              "answer": "With a deliberately short TTL, measured in seconds. You are trading a bounded staleness window for shielding one node, and the bound is the entire point — a TTL is the only invalidation that tier has, so it must be chosen rather than inherited."
+            }
+          ],
+          "seeAlso": "04-caching/fundamentals/"
+        },
+        {
+          "id": "caching-3",
+          "level": "intermediate",
+          "q": "A report endpoint takes 4 seconds. The query sequentially scans a 200-million-row table. An engineer proposes caching the result. Do you approve it?",
+          "asking": "whether they can decline a reasonable-sounding proposal, and whether they know a cache hides a slow query rather than removing it",
+          "answer": "Not yet. A cache would hide the missing index rather than remove it, and hidden problems survive for years. Every miss still pays the 4 seconds, so p99 stays at 4 seconds, and the first request after every invalidation is a user waiting for a full scan. Fix the query first: an index here is routinely a 10-100x improvement, it is free, and it is reversible this afternoon. Cache afterwards if it is still worth caching — and if your options table has no row for *do nothing*, you have not finished thinking.",
+          "redFlags": [
+            "approves it because the endpoint gets faster",
+            "no mention that every miss still pays the full cost",
+            "does not ask what the query is actually doing",
+            "has no do-nothing row in the options"
+          ],
+          "followUps": [
+            {
+              "q": "You add the index and it is now 40 ms. Cache it?",
+              "answer": "Probably not — you have removed the reason. A cache now buys a small latency win and costs staleness, invalidation logic scattered through the write paths, and a component whose death sends a step change at the database. The absence of a bottleneck is a complete answer."
+            },
+            {
+              "q": "Suppose it is 40 ms but called 50,000 times a second against the same ten rows. Now?",
+              "answer": "Now yes, because that is skew, and skew is the actual precondition. What changed is not the latency but the access pattern — the bet a cache makes is finally one you would take."
+            }
+          ],
+          "seeAlso": "04-caching/fundamentals/"
+        },
+        {
+          "id": "caching-4",
+          "level": "intermediate",
+          "q": "Your cache tier dies at peak traffic. What does the database see in the next second?",
+          "asking": "whether they understand the cache stopped being an optimisation the moment the database could no longer serve the traffic unaided",
+          "answer": "At a 95% hit rate, a 20x step change in one instant — every read that was being absorbed arrives at once. Most databases do not survive that, which is how a cache outage becomes a full outage. The structural part is the uncomfortable part: the cache became a load-bearing dependency the moment the origin could not serve the traffic alone, and it is usually still labelled *safe to lose* on the diagram. Decide in advance whether a cache outage should fail open — fall through and risk the origin — or fail closed and serve errors to protect it. Both are defensible and the default is usually neither, because nobody chose.",
+          "redFlags": [
+            "says the system degrades gracefully with no multiplier attached",
+            "assumes the database absorbs it",
+            "has not decided fail-open versus fail-closed",
+            "still calls the cache safe to lose while the origin cannot serve the traffic"
+          ],
+          "followUps": [
+            {
+              "q": "The cache is healthy but one hot key expires with 5,000 requests in flight. Same problem?",
+              "answer": "Different mechanism, same shape — a thundering herd. All 5,000 miss simultaneously and send a byte-identical query to the origin, which is 4,999 more than were needed, and it happens to the most popular key at the busiest moment because that is what hot means. Origin load was flat one millisecond earlier, so it is invisible in request-rate graphs and shows up only as a periodic spike at the TTL interval."
+            },
+            {
+              "q": "Name two fixes and say why they work.",
+              "answer": "Request coalescing, or single-flight: one request fetches and the other 4,999 wait on that in-progress fetch. And probabilistic early expiry: a key is refreshed slightly before its TTL with a probability that rises as expiry nears, so one unlucky request rebuilds it while everyone else still gets a hit. Both work because there is only ever one useful query in the herd."
+            },
+            {
+              "q": "You choose fail open. What has to be true for that to be safe?",
+              "answer": "The origin must be able to absorb the multiplier, or be protected by a circuit breaker plus request coalescing plus real capacity headroom. Fail open without one of those is not a decision, it is the absence of one — and you will discover which during the outage."
+            }
+          ],
+          "seeAlso": "04-caching/fundamentals/"
+        },
+        {
+          "id": "caching-5",
+          "level": "advanced",
+          "q": "Two code paths update the same row. One of them forgets to invalidate the cache. Which strategy made that possible, and what removes the possibility?",
+          "asking": "whether *cache-aside or read-through* is understood as a question about who owns invalidation, rather than as a pair of definitions",
+          "answer": "Cache-aside. Its defining property is that invalidation lives in application code, so correctness depends on every write path remembering — and the one that forgets is found in production, months later, by a user looking at stale data. Read-through moves population into the cache itself, and CDC-driven invalidation derives it from the database's change log, so no human has to remember. The real question behind the choice is never the definition; it is *who owns invalidation*.",
+          "redFlags": [
+            "recites the five strategies without naming who owns invalidation",
+            "proposes a code review checklist as the fix",
+            "cannot name a strategy that removes the whole class of bug",
+            "confuses write-through with write-behind"
+          ],
+          "followUps": [
+            {
+              "q": "Which of the five strategies can lose acknowledged data?",
+              "answer": "Write-behind, and only write-behind. It acknowledges before the database commit, so a crash in the flush window loses a write the user was told was saved. Cache-aside and write-through can only ever serve *wrong* data; write-behind can serve *no* data, because the only copy of an acknowledged write lived in a component that is allowed to lose everything."
+            },
+            {
+              "q": "So is write-behind a performance decision?",
+              "answer": "No — it is a durability decision wearing one. Choose it deliberately, for data whose loss is survivable: counters, telemetry. Never for anything a user was told was saved."
+            }
+          ],
+          "seeAlso": "04-caching/fundamentals/"
+        }
+      ]
+    },
+    {
+      "id": "databases",
+      "name": "Databases",
+      "blurb": "Whether you have an ordered list of options, or a favourite one",
+      "questions": [
+        {
+          "id": "databases-1",
+          "level": "basic",
+          "q": "Reads are slow and the database is the suspect. Walk me through your options, in order.",
+          "asking": "whether they have an ordered list at all, and whether the ordering is by cost and reversibility rather than by preference",
+          "answer": "Five steps, and the order is forced. One: fix the queries — indexes, N+1, unnecessary columns — routinely 10-100x, free, and undoable this afternoon. Two: scale up; modern machines are enormous and this needs no architectural change. Three: cache, which absorbs skewed reads. Four: read replicas, which buy read scale and introduce lag. Five: shard, which buys write scale and is the last resort because it is near-irreversible. Steps one to three solve the overwhelming majority of real problems, and most teams skip to step five.",
+          "redFlags": [
+            "starts at sharding or at swapping the database for NoSQL",
+            "no mention of measuring or profiling first",
+            "cannot say what each step costs",
+            "treats the ordering as a matter of taste"
+          ],
+          "followUps": [
+            {
+              "q": "Why is sharding last rather than merely hard?",
+              "answer": "Because everything above it is reversible and sharding is not. It changes what the application can *express*, permanently: no cross-shard joins, no cheap COUNT(*), no global secondary index, and a shard key you live with forever. Re-sharding a live database means moving terabytes while serving traffic without losing writes — that is a project, not a maintenance window."
+            },
+            {
+              "q": "Someone added three read replicas and writes got slower. Why?",
+              "answer": "Every replica does 100% of the writes. Ten replicas do ten times the write work in total and each one still does all of it, so the leader has exactly as much write capacity as it had before and the cluster is doing far more work. Replication buys read scale and availability; it never buys write scale."
+            },
+            {
+              "q": "Why is the cache third rather than first? It is the fastest to add.",
+              "answer": "Because it is the first step that is neither free nor behaviour-preserving. It hides a slow query rather than removing it, it introduces staleness and invalidation logic across every write path, and it adds a component that can take the database down when it dies. Steps one and two change no behaviour at all, which is why they come first."
+            }
+          ],
+          "seeAlso": "05-databases/fundamentals/"
+        },
+        {
+          "id": "databases-2",
+          "level": "basic",
+          "q": "When would you choose a NoSQL store over a relational one?",
+          "asking": "whether *we might need to scale* is recognised as a hypothesis rather than an argument",
+          "answer": "Relational is the correct default and everything else needs an argument. The legitimate arguments are narrow: access is always by a single key and the value is opaque, which is a key-value store; write volume genuinely exceeds one machine and the data partitions cleanly, which is wide-column; the query *is* a traversal, which is a graph; ranking and relevance matter more than exactness, which is a search index. The expensive mistake is the other direction — teams who chose a distributed store on day one and spent two years reimplementing joins in application code.",
+          "redFlags": [
+            "says NoSQL scales better, full stop",
+            "chooses for scale that has never been measured",
+            "cannot name what is being given up",
+            "models entities rather than queries"
+          ],
+          "followUps": [
+            {
+              "q": "You picked a wide-column store. What is the modelling rule, and what does getting it wrong cost?",
+              "answer": "Design for the query, not the entity. Get it wrong and the query is not slow, it is impossible without a migration — there is no index you can add afterwards to rescue an access pattern the table was not laid out for. In a relational database the same mistake costs a query plan; here it costs a data migration."
+            },
+            {
+              "q": "Your relational database has fifteen indexes, added one incident at a time. What is that costing?",
+              "answer": "Every index is a tax on every insert, update and delete, so writes quietly become the bottleneck while everyone is still discussing reads. And several of those indexes are probably never used: an index on a low-selectivity column — a boolean matching half the rows — will be ignored by the planner because a scan is cheaper."
+            }
+          ],
+          "seeAlso": "05-databases/fundamentals/"
+        },
+        {
+          "id": "databases-3",
+          "level": "intermediate",
+          "q": "Two transactions each read a balance of 100 and each write 90. No error is raised anywhere. What happened, and at which isolation level?",
+          "asking": "whether they know read committed is fine right up until you do a read-modify-write, and that the anomaly is silent",
+          "answer": "A lost update. Two debits of 10 were applied, the balance is 90, and it should be 80 — with no error raised. This is permitted at read committed, which is the Postgres default: no dirty reads, but non-repeatable reads and phantoms are both allowed. The anomaly lives in the overlap rather than in either transaction, because each one is individually correct. Three fixes: SELECT ... FOR UPDATE, an atomic UPDATE ... SET balance = balance - 10, or serializable isolation.",
+          "redFlags": [
+            "blames application code without naming the anomaly",
+            "says use a transaction — both of them were in transactions",
+            "cannot name the default isolation level of any database",
+            "proposes a retry, which simply repeats the anomaly"
+          ],
+          "followUps": [
+            {
+              "q": "Your team standardises on repeatable read everywhere. Is the level name a specification?",
+              "answer": "No. MySQL and InnoDB permit phantoms at repeatable read; Postgres also prevents them there, which the SQL standard does not require. Two databases at the same named level behave differently, which is exactly why the level name alone is not a specification and the anomalies you care about have to be listed."
+            },
+            {
+              "q": "Inside that transaction, the code makes an HTTP call to a payment provider while holding the row lock. What is wrong?",
+              "answer": "You are holding locks for the duration of someone else's outage. The transaction's lifetime is now set by a third party's p99, and every other writer to that row queues behind it. Take the lock, do the local work, commit — then make the call, with an idempotency key."
+            }
+          ],
+          "seeAlso": "05-databases/fundamentals/"
+        },
+        {
+          "id": "databases-4",
+          "level": "intermediate",
+          "q": "Writes are slow and the team proposes turning off fsync. Do you approve it?",
+          "asking": "whether they know durability is the WAL and the fsync, and that the same log is serving three purposes at once",
+          "answer": "No, unless someone writes down that this data is disposable and signs it. A database with fsync off is fast and is lying to you about what it has saved. The part people miss is that durability, replication and change data capture are three readers of one append-only sequence, so turning it off does not degrade one guarantee — it silently removes all three at once. If writes are genuinely slow, look at the index count, batch the commits, or use a group-commit setting that bounds the exposure window explicitly rather than removing it.",
+          "redFlags": [
+            "approves because the benchmark improves",
+            "thinks it only affects crash recovery",
+            "cannot say what the write-ahead log is for",
+            "no stated, explicit durability window"
+          ],
+          "followUps": [
+            {
+              "q": "Your nightly backup has reported success for two years. Are you protected?",
+              "answer": "Unknown. An untested backup is a hypothesis. State RPO and RTO as numbers rather than adjectives, and restore from the backup on a schedule — the incident is a poor time to discover that the restore path is broken."
+            },
+            {
+              "q": "The site is returning errors and the database CPU is at 5%. First guess?",
+              "answer": "Connection pool exhaustion. Everything fails while the database sits comfortably idle, which is why this is so routinely misdiagnosed as a database problem. Size the pool with Little's Law rather than a default, and give background workers their own pool so neither workload can starve the other."
+            }
+          ],
+          "seeAlso": "05-databases/fundamentals/"
+        },
+        {
+          "id": "databases-5",
+          "level": "advanced",
+          "q": "Write throughput is fine but p99 write latency spikes every few minutes. The storage engine is LSM-based. What is happening?",
+          "asking": "whether they know neither engine avoids the work — B-tree and LSM differ only in when it is paid and who waits for it",
+          "answer": "Compaction. An LSM turns writes into cheap sequential appends and defers the merging to a background process; when that process runs it competes for the same disk and CPU as your foreground writes, and if it cannot keep up with the write rate it loses the race, at which point read amplification climbs too. A B-tree pays a steady in-place tax on every write instead and has a flatter tail. Neither engine avoids the work — it is a steady tax versus a cheap write plus a background process that can lose a race with your write rate.",
+          "redFlags": [
+            "blames the network or a noisy neighbour without checking compaction",
+            "believes LSM is simply faster than B-tree",
+            "proposes read replicas, which multiply the write work",
+            "no mention of background work competing for the same disk"
+          ],
+          "followUps": [
+            {
+              "q": "Which engine for a write-heavy time-series workload, and which for a read-heavy transactional one?",
+              "answer": "LSM for the first: sequential appends suit a high ingest rate, and time-series access rarely needs a point read of an arbitrary old key. B-tree for the second: predictable read latency, in-place updates, and the steady write tax is affordable at that write rate."
+            },
+            {
+              "q": "Defend the claim that the storage engine matters more than the vendor.",
+              "answer": "Because the engine sets write amplification, read amplification and the shape of your tail latency, and those survive a vendor change. Swapping Postgres for MySQL changes your operational surface; swapping a B-tree for an LSM changes which of your queries has a p99 problem."
+            }
+          ],
+          "seeAlso": "05-databases/fundamentals/"
+        }
+      ]
+    },
+    {
+      "id": "sharding-replication",
+      "name": "Sharding and Replication",
+      "blurb": "Whether you can tell read scale from write scale, and reversible from permanent",
+      "questions": [
+        {
+          "id": "sharding-replication-1",
+          "level": "basic",
+          "q": "A user creates a record, is shown 201 Created, immediately loads their list of records, and the list is empty. Nothing is broken. Explain, and give the cheapest fix.",
+          "asking": "whether read-your-writes is a named guarantee to them, and whether they reach for the cheap fix or the expensive one",
+          "answer": "The write went to the leader and the read went to an asynchronous follower that has not applied it yet. Read-your-writes is the guarantee being violated, and it is the single most common consistency bug in any system with replicas. The cheapest fix is not strong consistency — it is routing that user's reads to the leader for a few seconds after they write. Reaching for linearizability here is paying a permanent latency cost on every operation to solve a routing problem.",
+          "redFlags": [
+            "calls it an application bug",
+            "reaches for linearizability or a distributed transaction",
+            "says eventually consistent with no bound on the window",
+            "cannot name the guarantee being violated"
+          ],
+          "followUps": [
+            {
+              "q": "Give me the three fixes in order of cost.",
+              "answer": "One: route reads to the leader for N seconds after a write — simple, effective, mildly wasteful. Two: pin the session to a replica that has caught up, which needs per-replica lag tracking. Three: pass the write's log position with the read and have the replica wait until it reaches it — most precise, most machinery."
+            },
+            {
+              "q": "Your lag dashboard reads zero. Are you safe?",
+              "answer": "Not necessarily. Lag is computed as last position received minus last position applied, so a completely stopped replication stream reports zero lag — nothing is arriving, so the two numbers are equal. Monitor stream health as a separate signal from lag, or a dead replica looks like a perfect one."
+            }
+          ],
+          "seeAlso": "05-databases/replication/"
+        },
+        {
+          "id": "sharding-replication-2",
+          "level": "basic",
+          "q": "Is replication a backup?",
+          "asking": "whether they will give a flat no and name the failure class — replication is faithful, and that is exactly the problem",
+          "answer": "No. Backups protect you against mistakes; replicas reproduce your mistakes perfectly. A DELETE without a WHERE clause replicates to every copy in milliseconds, and you now have several identical copies of the wrong thing. They protect against different failures: replication against a machine dying, a backup against you. The nearest middle ground is a deliberately delayed replica — kept, say, an hour behind — which gives you an hour to notice the bad DELETE before it lands there too.",
+          "redFlags": [
+            "says yes, or sort of",
+            "counts replicas as copies when stating an RPO",
+            "no mention that the failure being defended against is human",
+            "cannot name the delayed-replica trick"
+          ],
+          "followUps": [
+            {
+              "q": "The leader dies with 2 seconds of asynchronous replication lag. What did you lose?",
+              "answer": "Every write acknowledged inside that 2-second window. The client is holding a 201 for data that now exists nowhere, which is worse than an error would have been — a loud failure can be retried, and a silent one propagates."
+            },
+            {
+              "q": "So switch to synchronous replication?",
+              "answer": "Only with the cost stated. Synchronous puts the slowest follower on the critical path of every write, so one slow replica slows all writes and the followers can now affect your availability. Semi-synchronous is the usual compromise: one follower acknowledges synchronously and the rest catch up asynchronously. Sync does not remove the cost so much as relocate it — out of a rare failover and into every single write."
+            }
+          ],
+          "seeAlso": "05-databases/replication/"
+        },
+        {
+          "id": "sharding-replication-3",
+          "level": "intermediate",
+          "q": "You shard sixteen ways on hash(tenant_id). The hash is uniform and the tenants are spread evenly across shards. One shard sits at 95% CPU while the rest idle at 10%. What happened?",
+          "asking": "whether they know hashing distributes keys and not load — this is sharding's defining failure rather than an edge case",
+          "answer": "One tenant is ten times the size of the others, or there is a celebrity account, or one product is on the front page. Hashing distributes keys evenly and never promised to distribute load, so a perfectly balanced hash gives you a badly balanced system. Nothing in the key distribution is wrong, no rebalancing helps, and re-hashing simply moves the celebrity to a different shard which then becomes the hot one. Note also that an aggregate CPU dashboard would have read about 15% and told you nothing, which is why per-shard monitoring is not a nice-to-have.",
+          "redFlags": [
+            "proposes a better hash function",
+            "says rebalance the shards",
+            "reads the aggregate CPU dashboard and concludes the cluster is healthy",
+            "assumes uniform hashing prevents hot shards"
+          ],
+          "followUps": [
+            {
+              "q": "Name your options and price each one.",
+              "answer": "Isolate that tenant onto its own shard; split the hot range; or put a cache in front of the hot key. Changing the shard key is the option people name first and it is the one that rewrites every row and usually part of the application, which is why it is not really on the list."
+            },
+            {
+              "q": "You shard by user_id and product asks for all orders placed today. What does that query cost?",
+              "answer": "It is a scatter-gather across every shard and it takes the slowest shard's latency, every time. A secondary index does not rescue it, because indexes are per-shard and no shard holds the global answer. Your options are a dedicated index shard, a search index, or a denormalised copy — all of which are new systems to run."
+            }
+          ],
+          "seeAlso": "05-databases/sharding/"
+        },
+        {
+          "id": "sharding-replication-4",
+          "level": "intermediate",
+          "q": "You are at 3 TB, growing 100 GB a month, and the team has a sharding design ready to go. Do you approve it?",
+          "asking": "whether they know sharding solves exactly two problems, and whether they will look for the reversible option before the permanent one",
+          "answer": "No. 3 TB is well inside one modern machine, and sharding solves exactly two problems — one machine's write throughput and one machine's storage capacity — neither of which has been demonstrated here. It does not help read latency, does not improve availability, and does not fix a slow query; it distributes it. A great many *we need sharding* conversations are really *we have five years of data nobody queries sitting in the same table as today's*: archiving cold data is reversible and takes a week, sharding is close to permanent and takes a quarter.",
+          "redFlags": [
+            "approves because the number sounds large",
+            "cannot name what sharding gives up",
+            "no mention of archiving cold data or of scaling up first",
+            "treats sharding as an incremental step like adding a replica"
+          ],
+          "followUps": [
+            {
+              "q": "Suppose the write rate genuinely does exceed one machine. What must be true before you shard?",
+              "answer": "Queries optimised and indexed, scaled up as far as is reasonable, caching absorbing what it can, replicas carrying the read load — and then writes or storage still exceeding one machine. Plus a key with three properties that pull against each other: high cardinality, even distribution, and presence in most queries. That third one is the trap."
+            },
+            {
+              "q": "You use hash(key) % N and add a fifth machine. What moves?",
+              "answer": "Roughly (N−1)/N of all keys — about 80% at N=5. Because N appears in the mapping function, a key's shard is defined relative to how many shards exist, so changing the count redefines every key at once, and every cache keyed by shard goes cold in the same instant. Consistent hashing moves about 1/N instead, because a key maps to a fixed position and each machine owns a range of positions."
+            }
+          ],
+          "seeAlso": "05-databases/sharding/"
+        },
+        {
+          "id": "sharding-replication-5",
+          "level": "advanced",
+          "q": "Walk me through re-sharding a live database without losing writes.",
+          "asking": "whether they know the ordering constraints are where the correctness lives, and whether they include the step everyone skips",
+          "answer": "Six steps, two of which are ordering constraints rather than actions. Stand up the new shards; begin dual-writing to old and new; backfill the historical data; verify by comparing row counts and checksums; cut reads over shard by shard; then stop dual-writing and decommission. Dual-writing must begin *before* the backfill, or every row written during the backfill window falls into the gap between the snapshot and the cutover and is silently missing. Dual-writing must stop *last*, because while the old shard still receives every write it remains a complete copy — which is the only thing that makes rollback a single configuration change.",
+          "redFlags": [
+            "backfills first and starts dual-writing afterwards",
+            "skips the verification step",
+            "has no rollback story",
+            "plans it as a maintenance window rather than a multi-week project"
+          ],
+          "followUps": [
+            {
+              "q": "What would you have done at the start to make this far cheaper?",
+              "answer": "Over-shard: create 1,024 logical shards on four physical machines from day one. Re-sharding then becomes moving logical shards, which is a data-movement problem rather than a re-keying problem. It costs almost nothing to adopt early and it is the single best trick available here."
+            },
+            {
+              "q": "You now have eight shards, each 99.9% available. What happened to availability?",
+              "answer": "It fell to about 99.2%, and the shape is worse than the number: losing one shard takes an eighth of your users fully down rather than degrading everyone slightly. Sharding without a replica per shard converts one single point of failure into eight. Sharding buys write scale, replication buys availability, they are orthogonal, and you need both."
+            }
+          ],
+          "seeAlso": "05-databases/sharding/"
+        }
+      ]
+    },
+    {
+      "id": "messaging",
+      "name": "Messaging",
+      "blurb": "Delivery semantics, backpressure, and what a queue quietly stops doing for you",
+      "questions": [
+        {
+          "id": "messaging-1",
+          "level": "basic",
+          "q": "You move email sending behind a queue whose vendor advertises exactly-once delivery. A user reports receiving the same email four times. Who is wrong?",
+          "asking": "whether they know exactly-once does not exist end to end, and whether they can locate the exact boundary at which the guarantee stops",
+          "answer": "Not the vendor — the design, about what that guarantee covers. Exactly-once does not exist end to end. What is sold as exactly-once is at-least-once plus deduplication *inside* the broker's boundary; the moment an effect leaves that boundary — an SMTP call, a card charge — the acknowledgement can be lost after the work succeeded, and the message comes back. Four deliveries means the worker died or timed out after sending and before acking, three times. The fix is an idempotent consumer, and checking that the ack happens after the work is durable rather than before.",
+          "redFlags": [
+            "blames the vendor",
+            "believes a better broker would give true exactly-once",
+            "adds retries without mentioning idempotency",
+            "cannot say where the guarantee's boundary lies"
+          ],
+          "followUps": [
+            {
+              "q": "Then why not just acknowledge before processing?",
+              "answer": "Because that converts at-least-once into at-most-once and silently loses work on every crash. It is a one-line change and a data-loss bug. The crash window is exactly the same size either way — what changes is which side of the ack the durable copy sits on, and only one of those is recoverable. It is also the invisible one: no error, no retry, no metric, and queue depth looks perfectly healthy."
+            },
+            {
+              "q": "How does the broker know a worker has died?",
+              "answer": "It does not. Receiving a message makes it invisible for a visibility timeout; only the ack deletes it. Nothing observable distinguishes a crashed worker from a slow one — both are silence. So the timeout is a bet: set it below your slowest job and you manufacture duplicates on healthy workers, set it far above and a genuinely dead worker's message sits undelivered for that long."
+            }
+          ],
+          "seeAlso": "06-messaging/queues/"
+        },
+        {
+          "id": "messaging-2",
+          "level": "basic",
+          "q": "An internal call takes 5 ms and succeeds 99.99% of the time. A colleague proposes putting it behind a queue. Do you?",
+          "asking": "whether they will decline asynchrony — most material's reflex answer is queue it, and here that is wrong",
+          "answer": "No. A queue is a distributed system's worth of complexity — a broker to run, two more failure modes, duplicate and ordering semantics to reason about — for work that finishes in 5 ms and essentially always succeeds. It also makes the answer eventual, so if a human is waiting on the result you have made the experience worse rather than better. Queue work that is slow, that can be retried later, or whose result the caller does not need. This is none of those.",
+          "redFlags": [
+            "queues it because asynchronous sounds more scalable",
+            "no account of what a broker costs to run and operate",
+            "cannot name a case where a synchronous call is the right answer",
+            "treats the queue as free decoupling"
+          ],
+          "followUps": [
+            {
+              "q": "Where is the line? What would make you queue it?",
+              "answer": "When the work is slow enough that a user is waiting on something they do not need — sending email, generating a PDF, re-encoding video — or when it must survive the caller going away. And when you do reach for one, SELECT ... FOR UPDATE SKIP LOCKED on a Postgres table is a perfectly good queue up to a few thousand jobs a second and removes an entire component from the architecture."
+            },
+            {
+              "q": "You add a queue and it absorbs your traffic spike beautifully. What has it not done?",
+              "answer": "Added capacity. A queue defers work; it does not create throughput. If producers sustainably outpace consumers the queue grows without bound until memory or disk runs out, and you have converted a slowdown into an outage. It buys time to absorb a spike, never a permanent deficit."
+            }
+          ],
+          "seeAlso": "06-messaging/queues/"
+        },
+        {
+          "id": "messaging-3",
+          "level": "intermediate",
+          "q": "What signal do you autoscale a worker fleet on?",
+          "asking": "whether they know CPU is the standard wrong answer for I/O-bound consumers, and whether they pair depth with a rate comparison",
+          "answer": "Queue depth, paired with processing rate against arrival rate. CPU tells you how hard the existing workers are working; depth tells you whether the fleet is keeping up. A worker fleet at 20-30% CPU with a growing backlog needs more workers, and a CPU-based policy will never add them — the work is I/O-bound, which is the normal case, so by its own signal the fleet is idle. Alert on message *age* as well as depth: ten messages three hours old is a worse signal than ten thousand one second old, and a depth-only alert misses it entirely.",
+          "redFlags": [
+            "says CPU",
+            "no comparison of arrival rate against processing rate",
+            "alerts on depth alone",
+            "cannot explain why an I/O-bound fleet looks idle"
+          ],
+          "followUps": [
+            {
+              "q": "Depth is the right signal, and it is also what aims the fleet at your database. Explain.",
+              "answer": "After a backlog builds, depth is enormous, so the policy adds workers until it is not — the fleet is now sized by the backlog rather than by anything downstream can absorb. Meanwhile the queue removed the natural backpressure the request path had: on the request path a slow database slows the client, which throttles arrival, and behind a queue nothing pushes back at all."
+            },
+            {
+              "q": "Give me the number that decides whether the database survives.",
+              "answer": "Total fleet concurrency: workers multiplied by per-worker concurrency. Twenty workers at concurrency 50 is a thousand simultaneous operations, and nobody ever configured a thousand — two people configured 20 and 50, in two different files, probably in different quarters. Bound it against measured downstream capacity and give workers their own connection pool."
+            },
+            {
+              "q": "You must drain 500,000 messages in an hour and each job takes 200 ms. Size it.",
+              "answer": "500,000 over 3,600 seconds is about 139 jobs a second; Little's Law gives 139 x 0.2, so roughly 28 concurrent slots across the whole fleet. The arithmetic is the easy half — the ceiling is set by what the dependency can absorb rather than by what the backlog demands, and if that means the drain takes three hours then it takes three hours."
+            }
+          ],
+          "seeAlso": "06-messaging/workers/"
+        },
+        {
+          "id": "messaging-4",
+          "level": "intermediate",
+          "q": "A colleague says the pipeline obviously needs ordered delivery. Price it for me.",
+          "asking": "whether they know global ordering and parallel consumption are mutually exclusive, and can name what the compromise actually costs",
+          "answer": "Global ordering and parallel consumption are mutually exclusive: one consumer, one message at a time, and your throughput is one worker's throughput forever. The standard compromise is ordering within a partition key — all messages for user 42 go to one partition and are processed in order, while different users proceed in parallel. Nothing whatsoever orders user 42 against user 7, which is fine, because no invariant spanned them. The bill is that your consumer count can never usefully exceed your partition count, and a poorly distributed key recreates the single-consumer bottleneck with extra machinery on top.",
+          "redFlags": [
+            "agrees to global ordering without pricing it",
+            "does not know parallelism is capped by partition count",
+            "picks a low-cardinality partition key",
+            "assumes the broker orders messages by default"
+          ],
+          "followUps": [
+            {
+              "q": "One message in a partition can never succeed. What happens?",
+              "answer": "Without a delivery cap it retries forever, and because ordering is enforced it blocks everything behind it — one malformed message stops the entire pipeline. Cap the delivery count, then route it to a dead letter queue."
+            },
+            {
+              "q": "You have a DLQ. Are you done?",
+              "answer": "Only if someone is alerted on it. A DLQ nobody monitors is a data-loss mechanism with extra steps, so the alert matters more than the queue does — and the threshold is anything above zero, because a message sitting there is work that silently did not happen."
+            }
+          ],
+          "seeAlso": "06-messaging/queues/"
+        },
+        {
+          "id": "messaging-5",
+          "level": "advanced",
+          "q": "When would you choose a log or stream over a queue?",
+          "asking": "whether they know the confusion is expensive, and can name the single property that decides it",
+          "answer": "When you might want the data twice. A queue deletes on consumption; a log retains, and each consumer holds an independent offset. That one difference decides replay: a bug found on Tuesday can be fixed by resetting the offset to Monday, whereas with a queue the messages are gone and the data is unrecoverable. It also changes how you scale — you add workers to a queue and partitions to a log. For anything resembling an event, the replay property alone usually justifies the log.",
+          "redFlags": [
+            "treats Kafka and SQS as interchangeable",
+            "no mention of retention or of independent offsets",
+            "says the log is simply faster",
+            "cannot name a case where a plain queue is the better choice"
+          ],
+          "followUps": [
+            {
+              "q": "Your consumer group has 8 partitions and is lagging. Add workers?",
+              "answer": "Not usefully beyond eight — consumer count cannot exceed partition count. You add partitions, and that is not free: it changes the key-to-partition mapping, which breaks per-key ordering across the boundary for keys that are in flight when you do it."
+            },
+            {
+              "q": "Your distributed trace stops at the queue boundary. Why does that matter more than it sounds?",
+              "answer": "Because the queue is exactly where work goes missing. Propagate the correlation ID through message headers across asynchronous hops — a trace that ends at the broker is the most common gap in an otherwise good observability setup, and it is a gap sitting precisely over the component whose failures are least visible."
+            }
+          ],
+          "seeAlso": "06-messaging/queues/"
+        }
+      ]
+    },
+    {
+      "id": "api-design",
+      "name": "API Design",
+      "blurb": "The contract other teams build on, and the defaults in it that are quietly wrong",
+      "questions": [
+        {
+          "id": "api-design-1",
+          "level": "basic",
+          "q": "You are building a feed endpoint and a colleague writes LIMIT 20 OFFSET ?. What is wrong with it?",
+          "asking": "whether they know offset pagination silently skips AND duplicates rows, and why no test they write will ever catch it",
+          "answer": "OFFSET n means discard the first n rows of the result as it exists right now, and the result as it exists right now is not the result the caller was traversing. Insert a row above the window between page 1 and page 2 and the offset lands one short, so a row is delivered twice. Delete a row above the window and the offset lands one long, so a row is never delivered at all. Every individual response is correct for the state at the instant it was asked, which is why no participant is in a position to notice — and the bug is invisible in testing because test data does not move.",
+          "redFlags": [
+            "sees nothing wrong with it",
+            "says it is fine because the tests pass",
+            "cannot say which direction produces a skip and which a duplicate",
+            "treats the skip and the duplicate as equally serious"
+          ],
+          "followUps": [
+            {
+              "q": "Which of the two is worse?",
+              "answer": "The skip. A duplicate is at least visible to any client that de-duplicates by primary key; a skipped row is silent data loss with a clean success log. That is why a nightly warehouse sync losing rows looks one-directional — the duplicates were de-duped at load, so only the skips survive as visible symptoms."
+            },
+            {
+              "q": "A crawler walks to page 50,000. What does that cost you?",
+              "answer": "OFFSET is O(offset), not O(limit): the engine cannot jump to row 1,000,000, it must produce and discard the preceding million every single time. LIMIT 20 OFFSET 1000000 produces 1,000,020 rows to return 20, so the cost per page grows the deeper the caller goes. A crawler does not need to be malicious to take the database down; it merely needs to be thorough."
+            },
+            {
+              "q": "You switch to cursor pagination. What have you still not fixed?",
+              "answer": "Sorting on a mutable key. Paginate by updated_at, a relevance score or a vote count and rows cross the boundary and are seen twice or never, exactly as with offset — the cursor is correct with respect to the ordering, and the ordering itself moved. You have also given up page numbers, because keyset traversal is inherently sequential; there is no jumping to page 7."
+            }
+          ],
+          "seeAlso": "07-api-design/pagination/"
+        },
+        {
+          "id": "api-design-2",
+          "level": "basic",
+          "q": "A client's request times out. Did the operation happen?",
+          "asking": "whether they understand a timeout is an unknown outcome rather than a failure, and that the fix cannot live on the client",
+          "answer": "Unknown, and that is the entire point. The caller's information after a timeout is identical whether the request never arrived or the reply never came back, so *retry only if it did not happen* is not implementable on the client at all — it is choosing between a possible duplicate and a possible loss, blind. That is what forces the fix onto the server as an idempotency key, stored with the result so a repeat replays the original response instead of re-executing. Exactly-once delivery does not exist; exactly-once *effect* does, and idempotency is how you get it.",
+          "redFlags": [
+            "says the client should check first, which is a race",
+            "adds retries with no idempotency story",
+            "stores the key but not the response body",
+            "assumes a timeout or a 500 means it did not happen"
+          ],
+          "followUps": [
+            {
+              "q": "Walk me through the server side. Where does it usually go wrong?",
+              "answer": "Insert the key with state in_progress and let the unique constraint arbitrate — not SELECT-then-INSERT, which is a read-modify-write race where two concurrent retries both find nothing and both execute. Then write the effect and the completed record with its response in one transaction. That single atomicity requirement is the mechanism; everything else is bookkeeping. A crash between the effect and the key write is precisely the bug it prevents."
+            },
+            {
+              "q": "How long do you keep the keys?",
+              "answer": "Longer than the maximum age of anything that can retry into you: SDK backoff is seconds, mobile offline resume is hours, queue redelivery and a manual DLQ replay after an incident is days. Twenty-four hours is the common default and seven days is reasonable for financial endpoints — publish the number, because retention shorter than the retry horizon re-executes exactly the case you were protecting."
+            }
+          ],
+          "seeAlso": "07-api-design/idempotency/"
+        },
+        {
+          "id": "api-design-3",
+          "level": "intermediate",
+          "q": "You are adding a field to a response and the team proposes shipping it as /v2. Do you?",
+          "asking": "whether they know additive changes are safe and that the hard part of versioning is deprecation, not versioning",
+          "answer": "No. Adding a response field is not breaking, provided readers are tolerant — and if some caller's strict schema validator rejects unknown fields, the thing to fix is that validator, not to fork the whole API. Versioning does not remove old code, it accumulates it: teams who solved versioning by adding /v2 frequently still have v1 traffic five years later, and every live version is a permanent tax. Version the API rather than the endpoint, support N and N−1 and nothing older, and if your options table has no row for *do not version at all*, you have not finished thinking.",
+          "redFlags": [
+            "ships a new version for any change at all",
+            "versions per endpoint, producing a matrix nobody can reason about",
+            "announces a deprecation before instrumenting usage",
+            "cannot name which changes are actually breaking"
+          ],
+          "followUps": [
+            {
+              "q": "Name three changes people believe are safe and are not.",
+              "answer": "Adding an enum value breaks exhaustive matching in generated clients. Changing the default sort order or page size breaks anyone who relied on it. Changing an error code or error shape breaks error handling, which is client code too and is the least tested client code there is. Making a call ten times slower is breaking as well — client timeouts are part of your contract whether you agreed to them or not."
+            },
+            {
+              "q": "You are ready to remove v1 and three callers have never replied. What do you do?",
+              "answer": "A brownout: return 410 Gone for five minutes at a fixed announced time, then for an hour a fortnight later. It converts silence into a support ticket from exactly the team you needed to talk to, and it is the only technique that finds the caller who never read anything. Before any of it, instrument — tag every request with caller identity, version and endpoint, because announcing a deprecation you cannot measure is how sunset dates become fictional."
+            }
+          ],
+          "seeAlso": "07-api-design/versioning/"
+        },
+        {
+          "id": "api-design-4",
+          "level": "intermediate",
+          "q": "A GraphQL query fetches 100 posts and each post's author. Your rate limiter records one request. What does the database see?",
+          "asking": "whether they know N+1 here is a structural property of resolver-per-field execution rather than a bug somebody introduced",
+          "answer": "101 queries — one for the posts and one per author. The cause is architectural rather than careless: a field resolver is invoked once per parent object and is handed only that parent, so it is structurally incapable of noticing that 99 near-identical queries are about to run beside it. DataLoader collapses them, but only within a single request, only if every resolver is written to use it, and never across concurrent requests. The N+1 is a permanent property of the execution model; the batching is a discipline. The signal that catches a new one is database queries per API request.",
+          "redFlags": [
+            "says DataLoader fixes it",
+            "counts the client's single request as the load",
+            "rate limits a GraphQL endpoint by request count",
+            "has no metric relating database queries to API requests"
+          ],
+          "followUps": [
+            {
+              "q": "Your limiter allows 100 requests a minute and the caller stays under it. Why did the database fall over?",
+              "answer": "Because request count is meaningless when request cost is unbounded. A query under 100 characters can be a combinatorial traversal of your entire social graph, and 100 of those a minute is not a modest load, it is an attack. A public GraphQL endpoint without query-cost limits is a denial-of-service endpoint you built and hosted for the attacker."
+            },
+            {
+              "q": "So what actually works?",
+              "answer": "Persisted queries: clients register their operations ahead of time and the endpoint refuses anything not on the allow-list. Depth limits and complexity scoring help, but that is the one that works. Notice what you have then got back — a finite set of known operations you can cost, cache and rate limit, which is what REST gave you for free. Locking GraphQL down enough to operate it safely removes most of the reason you adopted it."
+            }
+          ],
+          "seeAlso": "07-api-design/rest-grpc-graphql/"
+        },
+        {
+          "id": "api-design-5",
+          "level": "advanced",
+          "q": "You moved internal traffic to gRPC. One of six pods sits at 90% CPU while the others idle at 15%, and the load balancer reports a perfectly even split. Explain.",
+          "asking": "whether they know the layer you balance at must match the layer your protocol multiplexes at",
+          "answer": "HTTP/2 multiplexes every call over one long-lived TCP connection, and a connection-level balancer makes exactly one routing decision, at connect time. So the split is genuinely even in connections and wildly uneven in requests — the dashboard is telling the truth about the wrong unit. This is structural rather than a misconfiguration. The fixes, in increasing order of correctness: set max_connection_age so connections churn, put an L7 proxy in that balances per request, or do client-side load balancing with service discovery.",
+          "redFlags": [
+            "blames the pod, the autoscaler or a noisy neighbour",
+            "adds more pods, which does not change the mapping",
+            "reads the even connection split as evidence the balancer is fine",
+            "no mention of HTTP/2 multiplexing"
+          ],
+          "followUps": [
+            {
+              "q": "Same architecture, and a downstream call hangs. What is gRPC's default timeout?",
+              "answer": "There is none. A gRPC call with no deadline waits indefinitely, so a hung callee holds the caller's thread forever. Set a deadline on every call and propagate the remaining budget downstream — slow is worse than down, and this particular default makes slow unbounded."
+            },
+            {
+              "q": "The team justified gRPC on payload size. Is that its strongest argument?",
+              "answer": "No, it is the weakest of its four. Protobuf is several times smaller than equivalent JSON and then gzip closes most of that gap on the wire. The durable wins are the mandatory schema, generated clients that fail at compile time rather than in production, native bidirectional streaming, and cheap parsing at high call rates."
+            }
+          ],
+          "seeAlso": "07-api-design/rest-grpc-graphql/"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "blurb": "Whether you authorise the object, and whether you state your revocation window",
+      "questions": [
+        {
+          "id": "security-1",
+          "level": "basic",
+          "q": "What is the difference between authentication and authorisation, and which of the two causes more breaches?",
+          "asking": "whether they can name the specific failure the conflation produces, rather than reciting the dictionary distinction",
+          "answer": "Authentication asks who is this; authorisation asks what may they do. Authorisation causes far more breaches, and specifically object-level authorisation. The signature failure: a team builds excellent authentication — hashed passwords, MFA, short-lived tokens — bolts it on as middleware, and ships an API where any logged-in user reads any other user's invoice by changing a number in the URL. Every control worked, nobody was impersonated, and the data left anyway. That is OWASP API1, Broken Object Level Authorization, and it is first on that list because it is first in reality.",
+          "redFlags": [
+            "gives the dictionary definitions and stops there",
+            "answers authentication, because passwords feel like the risky part",
+            "uses the word auth for both in the same breath",
+            "cannot say where in the request the object check must happen"
+          ],
+          "followUps": [
+            {
+              "q": "Where in the request must that check live, and why can a gateway not do it?",
+              "answer": "At the point where the object is loaded. A gateway can answer *may a logged-in user call this endpoint*, because that is a property of the route. It cannot answer *does invoice 8842 belong to user 7*, because nothing outside the data layer knows which object the request will touch — and its presence makes teams believe it did."
+            },
+            {
+              "q": "How do you make forgetting that check impossible rather than merely unlikely?",
+              "answer": "Design so that absence of the check fails closed. Scope the query so the query *is* the authorisation — current_user.orders.find(id) rather than Order.find(id) — or use a repository layer that requires a subject argument, or row-level security in the database. Relying on every developer remembering an if statement on every endpoint forever is not a control; it is a hope with a code review attached."
+            },
+            {
+              "q": "One token produces 4,000 authorisation failures in an hour across thousands of distinct object ids. Is that an incident?",
+              "answer": "Yes, even though every control held. That is enumeration in progress, and the 403 rate per principal is the most useful security signal an API has — almost nobody alerts on it. Suspend the credential, capture the full request log before retention expires, and check which object ids returned 200 in the same window: that is your exposure list."
+            }
+          ],
+          "seeAlso": "12-security/api-security/"
+        },
+        {
+          "id": "security-2",
+          "level": "basic",
+          "q": "Why can you not revoke a JWT?",
+          "asking": "whether the revocation window is understood as the thing they bought, and whether they will describe their own system honestly",
+          "answer": "Because verification is a local signature check with no call back to the issuer — which is the entire speed advantage, and precisely why the gate cannot be told the holder was ejected. A user disabled at 10:00 holding a 60-minute token issued at 09:55 keeps access until 10:55, and nothing in any log looks wrong: the cause is a missing arrow rather than a broken one. Every strategy that revokes quickly is server state, which is what JWTs were adopted to avoid. The best value by a distance is a per-user token version — one integer per user — which revokes all of that user's tokens at once.",
+          "redFlags": [
+            "calls the system stateless while maintaining a denylist",
+            "proposes introspection on every request without noticing they have rebuilt sessions",
+            "has no stated revocation window anywhere",
+            "cannot name an option between short expiry and a full session store"
+          ],
+          "followUps": [
+            {
+              "q": "Product wants suspension effective within one second, and the architecture document says stateless. Reconcile those.",
+              "answer": "You cannot have both, so state the number instead of the adjective. A per-user token version in a replicated cache gives near-immediate revocation bounded by cache propagation — measure it and publish it, and if it is 200 ms you meet the requirement. Every JWT is stale on arrival; the only question is by how much, and a stated bound beats a claimed zero."
+            },
+            {
+              "q": "Which validation step do people skip, and what does skipping it cost?",
+              "answer": "aud and iss. Skipping them turns a perfectly valid token minted for somewhere else into an authorisation bypass — a staging token working against production is the friendly version of that bug. Also pin the algorithm server-side and never let the token choose, or alg:none and HS256/RS256 confusion both work. In real code review the mistake that outnumbers all of them is calling decode instead of verify; grep for it."
+            }
+          ],
+          "seeAlso": "12-security/jwt/"
+        },
+        {
+          "id": "security-3",
+          "level": "intermediate",
+          "q": "Your login endpoint uses bcrypt at cost 12. Someone starts sending 5,000 password attempts a second. What happens?",
+          "asking": "whether they see the login endpoint as a CPU-bound service, and whether they know the two tempting fixes are both wrong",
+          "answer": "You go down without a single password being guessed. Cost 12 is roughly 250 ms of CPU per verification, so a 40-core fleet does about 160 verifications a second — at 5,000 attempts a second the queue is unbounded, CPU pins, and already-authenticated users start timing out. The asymmetry is about 100,000 to 1 in the attacker's favour: a few hundred bytes buys 250 ms of your CPU, and they do not need to guess correctly even once. Your login endpoint is a CPU-bound service wearing a web endpoint's clothes, and nobody capacity-plans it that way. Rate limit before the key derivation function, not after, and isolate the login path so it cannot starve everything else.",
+          "redFlags": [
+            "lowers the cost factor under incident pressure",
+            "autoscales, which scales into the attacker's bill",
+            "rate limits after the password hash rather than before",
+            "treats login as an ordinary I/O-bound endpoint"
+          ],
+          "followUps": [
+            {
+              "q": "Why is lowering the cost factor the wrong reflex?",
+              "answer": "Because it permanently weakens every stored hash to solve a temporary traffic problem, and it never gets raised again. Decide the floor in advance and write it down. Tune the cost to a time budget rather than a constant — roughly 100-250 ms per verification on production hardware, re-measured yearly — and monitor KDF verification latency, because if it suddenly halves, somebody lowered it to make a graph look better."
+            },
+            {
+              "q": "You rate limit per account. What does that miss?",
+              "answer": "Password spraying: one common password against many accounts is invisible to a per-account limit. Per-IP misses it too, because a botnet rotates addresses freely and IPv6 hands a single host a whole /64, while a corporate NAT presents thousands of real users as one address. Neither dimension catches spraying — for that you need the global failure ratio."
+            }
+          ],
+          "seeAlso": "12-security/authentication/"
+        },
+        {
+          "id": "security-4",
+          "level": "intermediate",
+          "q": "A partner integration is failing with a CORS error. The quickest fix reflects the Origin header back with Access-Control-Allow-Credentials set to true. Do you ship it?",
+          "asking": "whether they know CORS is a browser rule rather than an access control, and can recognise the single most dangerous configuration in the area",
+          "answer": "No. That combination lets any website in the world make authenticated requests as your logged-in users and read the responses. It is strictly worse than the CSRF it resembles, because CSRF can normally only write blind and this hands over the response body as well. It is almost always introduced by someone trying to make a CORS error go away quickly. The fix is an explicit allowlist compared exactly — the literal string https://app.partner.com, not a prefix match and not a regex with an unescaped dot.",
+          "redFlags": [
+            "ships it because it unblocks the partner today",
+            "believes CORS protects the API",
+            "reads a CORS error as proof the request was blocked",
+            "matches Origin with a prefix check or a regex"
+          ],
+          "followUps": [
+            {
+              "q": "The partner says they got a CORS error so nothing happened. Are they right?",
+              "answer": "No. CORS is evaluated after your code has run — even in the browser lane the write already happened, and CORS withheld the response rather than the effect. And curl, Postman, a mobile app and any server-side script ignore it entirely: it is a rule a browser applies to its own scripts, and it grants nothing on your server."
+            },
+            {
+              "q": "The same integration leaks an API key into a public repository. It is reverted and force-pushed within ten minutes. Is the incident over?",
+              "answer": "No. A force-push rewrites the branch pointer; it does not reliably destroy the object. The blob remains in every clone, the reflog, forks, CI caches and the code review tool's stored diff. Revocation is what ends the incident and deleting the line is cosmetic — and the real finding is how long rotation takes, because rotation speed matters far more than secret complexity."
+            }
+          ],
+          "seeAlso": "12-security/api-security/"
+        },
+        {
+          "id": "security-5",
+          "level": "advanced",
+          "q": "Your login-with-a-provider flow takes the OAuth access token, calls /userinfo, and signs the user in. What is wrong?",
+          "asking": "whether they know OAuth 2.0 is delegated authorisation rather than login, and can walk the token substitution attack end to end",
+          "answer": "You have built a token substitution vulnerability. An attacker registers an ordinary-looking application with the same provider, gets a victim to sign in to it, and now holds a valid access token for the victim's account. They replay it at your login endpoint; you call /userinfo, are truthfully told the token belongs to the victim, and sign the attacker in as them. Nothing was forged — the token was valid, it was simply never meant for you, and an access token carries nothing that says who it was minted for. The fix is the OIDC ID token, whose aud claim names the client. Valid and intended-for-me are different questions, and only the second is a security check.",
+          "redFlags": [
+            "cannot distinguish OAuth 2.0 from OIDC",
+            "treats a /userinfo response as authentication",
+            "has the client parsing the access token",
+            "says scopes are the permission model"
+          ],
+          "followUps": [
+            {
+              "q": "Your team says PKCE is unnecessary because you are a confidential client with a secret. Respond.",
+              "answer": "The client secret protects the token request; PKCE protects the code, and the code travels through the browser where the secret gives it no protection at all. The code leaks through Referer headers, browser history, proxy logs and any open redirect on your own domain. The secret is one static value shared across the whole fleet, quite possibly in a container image and three CI systems, whereas PKCE adds a per-request secret. OAuth 2.1 requires it for every client, because conditional security requirements are the ones that get dropped."
+            },
+            {
+              "q": "You need immediate revocation at 40,000 rps, and introspection per request would put the authorisation server on your read path. What do you do?",
+              "answer": "Shorten access tokens to about five minutes and make the refresh path the enforcement point, plus a per-user token version held in a local cache. Then be honest in writing about the residual window — a stated five-second window everyone understands beats a claimed zero that is actually fifteen minutes. And note the failure mode you just bought: short tokens plus a dead authorisation server logs out the world in fifteen minutes."
+            }
+          ],
+          "seeAlso": "12-security/oauth/"
+        },
+        {
+          "id": "security-6",
+          "level": "advanced",
+          "q": "A PDF report endpoint burns 4 seconds of CPU, is uncached, and is available to any authenticated user. You have 200 cores and a DDoS scrubbing provider. Are you protected?",
+          "asking": "whether they can compute cost asymmetry and see that essentially none of the perimeter helps against a logic attack",
+          "answer": "No, and almost nothing you have bought helps. 200 cores divided by 4 seconds is 50 reports a second at absolute saturation, so a sustained 25 rps consumes half the fleet and 50 rps takes the service down. One authenticated user on a home connection produces 50 rps of small POSTs without effort — well under a megabit of upload. Scrubbing sees nothing because the traffic is tiny, the edge cache cannot help because the responses are per-user, and a WAF sees well-formed authenticated requests. The number that matters is not requests per second but cost asymmetry: what one request costs the attacker versus what it costs you.",
+          "redFlags": [
+            "points at the scrubbing provider",
+            "expects the WAF to catch it",
+            "proposes autoscaling, which is a payment plan rather than a defence",
+            "reasons in requests per second instead of CPU-seconds per request"
+          ],
+          "followUps": [
+            {
+              "q": "Your rate limiter allows 100 requests a minute. Does that fix it?",
+              "answer": "No. A flat limit allows 100 reports a minute, which is still fatal. The limit has to be cost-weighted, so that one report consumes the same quota as several hundred ordinary requests. The real fix is in the application: accept the request, enqueue it, return a job id, and cap per-user concurrency at one."
+            },
+            {
+              "q": "Suppose instead it is a genuine 400 Gbps volumetric flood. Why is your firewall irrelevant?",
+              "answer": "Because the firewall sits behind the link that is already full. You cannot rate-limit a packet you have already paid to receive — if your uplink is 10 Gbps, 97% of legitimate packets never arrived either, and what your software decides afterwards changes nothing. That layer has to be handled upstream by anycast and scrubbing, because attack capacity is a shared-cost good and buying your own would cost more than the company."
+            }
+          ],
+          "seeAlso": "12-security/ddos/"
+        }
+      ]
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "blurb": "Whether you would know it broke, and whether the pager still means anything",
+      "questions": [
+        {
+          "id": "observability-1",
+          "level": "basic",
+          "q": "To chase one customer complaint, an engineer adds user_id as a label on the HTTP request metric. The deploy goes out at 14:00. Predict 14:30.",
+          "asking": "whether they know metric labels multiply, and that the backend dies during the very incident that prompted the label",
+          "answer": "The metrics backend runs out of memory and you go blind, plausibly just before the next real incident. Labels multiply into time series: method, status and endpoint might be 4 x 6 x 50 = 1,200 series, and a million user ids makes that 1.2 billion. The unbounded label did not add a million, it multiplied the 1,200 that were fine. Metric labels must be bounded; per-request identity belongs in logs or traces, which are built for unbounded cardinality and pay for it with sampling and retention limits.",
+          "redFlags": [
+            "sees no problem because it is only one more label",
+            "plans to remove it later",
+            "cannot say why logs or traces are the right home",
+            "does not realise series count is a product"
+          ],
+          "followUps": [
+            {
+              "q": "A colleague adds the same label to a metric that has no other dimensions. Same severity?",
+              "answer": "No, and that is the subtle part: series count is a product, so the damage a label does depends on every other label already present. A million series is survivable; 1.2 billion is not — and nothing at the call site distinguishes the two. It is also why removing *other* labels is a genuine mitigation."
+            },
+            {
+              "q": "Which pillar answers how often, and which answers why this one request?",
+              "answer": "Metrics detect, traces localise, logs explain. Metrics cannot tell you which request or why; logs cannot tell you how often at any sane cost; traces cannot tell you anything at all about unsampled requests. Each pillar's blind spot is the next one's strength, which is why none of them substitutes for another."
+            }
+          ],
+          "seeAlso": "11-observability/"
+        },
+        {
+          "id": "observability-2",
+          "level": "basic",
+          "q": "Your CPU alert fires at 80% every night during the batch job. What is wrong with the alert?",
+          "asking": "whether they alert on symptoms or causes, and whether they understand what a noisy pager actually costs",
+          "answer": "It is a cause alert rather than a symptom alert. CPU above 80% may or may not matter — a healthy batch job can legitimately pin CPU for an hour — whereas p99 latency above one second is a symptom, meaning users are affected. Cause alerts are how you train people to ignore the pager, and a team that has learned its pager is usually noise will miss the one that is not. Every page must be actionable: if the runbook says *check whether it recovers*, it should have been a ticket.",
+          "redFlags": [
+            "raises the threshold to 90% and calls it fixed",
+            "adds a time-of-day exclusion instead of changing the signal",
+            "cannot propose a symptom-based alternative",
+            "has no sense of what the page is costing the rotation"
+          ],
+          "followUps": [
+            {
+              "q": "What should page, then?",
+              "answer": "User impact, and error budget burning fast. Three gates: are users affected now or certainly within the hour; is there something a human can actually do right now; and does waiting until business hours cost anything. Only the third one pages — read it as a filter rather than a router, where dashboard is the default destination and a page is the rare thing you argue your way to."
+            },
+            {
+              "q": "Give me one rule that catches both a fast catastrophe and a slow leak.",
+              "answer": "Burn rate. A single failed request should never page; consuming 5% of the monthly error budget in an hour should. One rule covers both shapes, and it is the single biggest improvement available to most alerting setups."
+            }
+          ],
+          "seeAlso": "11-observability/"
+        },
+        {
+          "id": "observability-3",
+          "level": "intermediate",
+          "q": "Define SLI, SLO and error budget — and tell me what you do when the budget is unspent.",
+          "asking": "whether the error budget is a two-directional mechanism to them, or merely a stick",
+          "answer": "The SLI is the measured indicator, for example the fraction of requests served under 300 ms. The SLO is the target for it: 99.9% over 30 days. The error budget is 1 minus the SLO, which at 99.9% over 30 days is about 43 minutes of failure you are permitted. If the budget is exhausted you stop shipping features and fix reliability. If it is unspent you are being too cautious and should ship faster — both directions matter, and teams usually implement only the second.",
+          "redFlags": [
+            "treats the error budget purely as a brake",
+            "proposes raising the SLO when the budget goes unspent",
+            "sets an SLO of 100%",
+            "cannot convert an SLO into minutes"
+          ],
+          "followUps": [
+            {
+              "q": "Why not simply raise the SLO instead of shipping faster?",
+              "answer": "Because it removes the slack without any user noticing an improvement, and makes the mechanism harsher for no return. Set the SLO below what users currently experience but above what they would complain about. An SLO of 100% is not a target, it is a refusal to make a decision, and it guarantees the budget is always exhausted so the mechanism does nothing at all."
+            },
+            {
+              "q": "Of the four golden signals, which one do people omit?",
+              "answer": "Saturation, and it is the one that predicts. Latency and errors tell you it has already gone wrong; a connection pool at 90% or a queue depth climbing tells you it is about to. That is the difference between an alert you can act on and a post-mortem."
+            }
+          ],
+          "seeAlso": "11-observability/"
+        },
+        {
+          "id": "observability-4",
+          "level": "intermediate",
+          "q": "The team wants to trace 100% of requests so that nothing is ever missed. Do you approve it?",
+          "asking": "whether they can decline more observability, and whether they know tail-based sampling exists",
+          "answer": "No. Tracing every request at scale costs more than the system it observes, and the marginal benefit is close to zero — you keep millions of identical healthy traces in order to catch the few that are not. Sample traces and keep all errors. Head-based sampling decides at the start, typically at 1%: cheap, and it misses rare failures. Tail-based sampling decides after seeing the whole trace and keeps the slow and failed ones — it costs more and keeps what you actually need.",
+          "redFlags": [
+            "approves because more data is always better",
+            "does not distinguish head-based from tail-based sampling",
+            "no mention of cost at all",
+            "would add dashboards before adding the first alert"
+          ],
+          "followUps": [
+            {
+              "q": "Where would you spend that budget instead?",
+              "answer": "On the first alert, and on structured logging. The first alert is worth more than the third dashboard, and a dashboard with no owner and no question is decoration — nobody is watching a dashboard at 3am. Structured logs cost the same as unstructured ones and are the difference between usable and unusable during an incident."
+            },
+            {
+              "q": "Your logging pipeline runs through the service that is down. What have you built?",
+              "answer": "A system that goes blind exactly when it is needed. The observability path must not share fate with the system it observes — the same reason a cardinality explosion is so damaging is that it kills the metrics backend during the incident that prompted the label. Also worth pricing honestly: a self-hosted stack means you now operate a distributed system in order to watch your distributed system."
+            }
+          ],
+          "seeAlso": "11-observability/"
+        },
+        {
+          "id": "observability-5",
+          "level": "advanced",
+          "q": "You compute p99 latency per host and average those across the fleet for the dashboard. What is wrong?",
+          "asking": "a small, precise error that separates people who have built dashboards from people who have read about them — percentiles do not average",
+          "answer": "Percentiles do not average. The mean of per-host p99s is not the fleet's p99 and has no statistical interpretation at all: a host serving ten requests contributes as much as one serving ten million, and the fleet's true p99 can sit outside the range of the per-host values entirely. Aggregate the underlying distribution instead — sum histogram buckets across hosts, then compute the quantile once. And track p50, p99 and p99.9 separately, per endpoint, splitting successful requests from failed ones, because fast errors otherwise flatter the number.",
+          "redFlags": [
+            "sees nothing wrong with it",
+            "offers the max of the per-host p99s without noting that is a different statistic",
+            "no mention of histograms or of aggregating the distribution",
+            "does not separate error latency from success latency"
+          ],
+          "followUps": [
+            {
+              "q": "Your traces show a 900 ms gap with no span in it. Where do you look?",
+              "answer": "At an asynchronous boundary first, and at the clock second. Trace context dropped at a queue hop is the most common gap of all, and clock skew across hosts makes cross-host timestamps unreliable — rely on span durations rather than wall-clock differences, and make sure NTP is actually running."
+            },
+            {
+              "q": "You have excellent dashboards and a 40-pages-a-week rotation. What is the real problem?",
+              "answer": "Alert fatigue, and it is a correctness problem rather than a comfort one — the responder has learned that the pager is noise and will miss the one that is not. Move cause alerts to tickets, page only on burn rate and user impact, put a runbook link on every page, and delete the dashboards nobody owns."
+            }
+          ],
+          "seeAlso": "11-observability/"
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "blurb": "Naming the bottleneck before drawing the box, and scaling one at a time",
+      "questions": [
+        {
+          "id": "architecture-1",
+          "level": "basic",
+          "q": "A six-person team wants to split their monolith into eight microservices. What do you say?",
+          "asking": "whether they know microservices are an organisational solution to a team-scaling problem, and whether they do the availability arithmetic unprompted",
+          "answer": "No, and the arithmetic is the argument rather than my taste. Eight synchronous services at 99.9% each gives 0.999 to the eighth, about 99.2% — roughly 70 hours a year against the 8.8 they have now — and that is the optimistic figure, because it assumes independent failures and ignores the shared database, the retry storms and the deploys. Separately, six people cannot operate eight services: not should not, cannot. Each one carries a repository, a pipeline, a runtime to patch, dashboards, tuned alerts and a slot in somebody's head. Start with a modular monolith, which is the default and is not a compromise.",
+          "redFlags": [
+            "reaches for microservices before naming a bottleneck",
+            "claims microservices are faster",
+            "does no availability arithmetic",
+            "treats monolith as a synonym for unstructured"
+          ],
+          "followUps": [
+            {
+              "q": "They say the monolith is a tangle and the network will force the boundaries. Respond.",
+              "answer": "What they want to escape is a ball of mud, and there are three options rather than two — the middle one is a modular monolith with boundaries enforced by the compiler, package visibility and architecture tests. If you cannot maintain module boundaries in one process you will not maintain them across a network; you will have the same tangle with worse latency and no stack traces. Do it in the monolith, where a violation is a build failure instead of an incident."
+            },
+            {
+              "q": "What would actually justify a split?",
+              "answer": "A named, specific constraint — most often two teams measurably and repeatedly blocking each other on releases. Otherwise a genuinely divergent scaling profile where the divergent part is separable, a divergent availability requirement across an asynchronous boundary, or regulatory data residency. Notice how many of those are about organisations, contracts and legislation rather than about computers."
+            }
+          ],
+          "seeAlso": "02-architecture/monolith-vs-microservices/"
+        },
+        {
+          "id": "architecture-2",
+          "level": "basic",
+          "q": "Walk me through scaling a read-heavy web application from one server to a hundred times the traffic.",
+          "asking": "whether they scale one bottleneck at a time and name what each change cost, or recite a finished architecture they have seen in a diagram",
+          "answer": "One bottleneck at a time, naming the cost of each. Start with client, server, database, and say plainly what rps that is correct up to and what saturates first. Then: fix the queries and add indexes, routinely 10-100x and free; scale up, which needs no architectural change; make the app tier stateless and put a redundant pair of load balancers in front; add a shared cache if and only if access is skewed, which buys staleness and invalidation; add read replicas, which buy read scale and introduce lag and the read-your-writes bug; move slow work behind a queue, which removes backpressure. Sharding is last and is close to irreversible — most systems never leave the first three steps.",
+          "redFlags": [
+            "draws the finished architecture in the first five minutes",
+            "adds a cache before demonstrating the bottleneck",
+            "no number anywhere in the answer",
+            "a single load balancer in a design sold as highly available"
+          ],
+          "followUps": [
+            {
+              "q": "You put the load balancer in so no single machine can take the site down. How many single points of failure does the system now have?",
+              "answer": "At least one and probably three. The load balancer itself, unless it is a redundant pair — five servers behind one balancer is a system with the availability of one machine. DNS is now on the critical path too, and the five servers almost certainly share one database. Three app servers in front of one primary has the primary's availability; redundancy at the wrong layer buys nothing."
+            },
+            {
+              "q": "At which step did you first buy a new failure mode, and what is it?",
+              "answer": "The cache. It is the first component whose absence changes behaviour rather than capacity: at a 95% hit rate, losing it sends a 20x step change at the database in a single instant. That is how a cache outage becomes a full outage, and the cache is usually still labelled safe to lose on the diagram."
+            }
+          ],
+          "seeAlso": "SYSTEM-DESIGN-THINKING.md"
+        },
+        {
+          "id": "architecture-3",
+          "level": "intermediate",
+          "q": "How do you tell whether a team has microservices or a distributed monolith?",
+          "asking": "whether they have a measurable diagnostic rather than an aesthetic judgement",
+          "answer": "One question: how many services must be released together for a typical feature? If the answer is greater than one, it is a distributed monolith — and it is worth charting monthly, because it is the single best architectural health metric available. The corroborating symptoms: one feature touches four repositories, services share a database schema, you cannot run or test one service alone, and release order matters and is written down somewhere, which means deployment has become a distributed transaction performed by humans. A distributed monolith is worse than a monolith on every axis, and there is no benefit column.",
+          "redFlags": [
+            "judges by the number of services",
+            "counts a shared database as a service boundary",
+            "offers no measurable diagnostic",
+            "would never consider merging services back together"
+          ],
+          "followUps": [
+            {
+              "q": "Three of those symptoms are present. What is the correct response?",
+              "answer": "Usually to merge services back together. Nobody wants to and it is almost always right — recognising a wrong boundary and undoing it is a sign of competence rather than failure. Check also whether the split came with a reorganisation, because adopting microservices without reorganising is a rename: team boundaries are a physical fact and repository boundaries are a suggestion."
+            },
+            {
+              "q": "Where should the line have gone?",
+              "answer": "Where the transactions are. If two operations must be atomic they belong in the same service — splitting an invariant buys you a saga with explicit compensating actions for every failure point, plus eventual consistency and reconciliation, forever. The classic mistake is one service per noun, User and Order and Product, which guarantees chatty synchronous fan-out and split invariants."
+            }
+          ],
+          "seeAlso": "02-architecture/monolith-vs-microservices/"
+        },
+        {
+          "id": "architecture-4",
+          "level": "intermediate",
+          "q": "A team proposes building a release-orchestration tool so their twelve services deploy in the correct order. Do you fund it?",
+          "asking": "whether they can spot a tool that automates a symptom and thereby entrenches the disease",
+          "answer": "No. Release order mattering is the diagnostic for a distributed monolith, and a tool that makes the ordering reliable removes the pain that would otherwise force the real fix. The problem is compatibility, not orchestration: apply expand-contract to the service interfaces so any version can run beside any other, and the ordering question disappears. Note that during a rolling deploy old and new code are already both running, so every change has to be backwards compatible for the length of the rollout regardless.",
+          "redFlags": [
+            "funds it because it reduces incidents this quarter",
+            "treats deploy ordering as a normal operational cost",
+            "no mention of backwards compatibility or expand-contract",
+            "cannot name what the tool would be hiding"
+          ],
+          "followUps": [
+            {
+              "q": "Twelve synchronous services at 99.9% each. What have they actually got?",
+              "answer": "0.999 to the twelfth, about 98.8%, which is over four days of downtime a year — before counting deploys, and deploys cause most outages. Twelve services that are each individually excellent give an application that is not, and nobody is at fault: no team missed its SLO, the architecture did this on its own."
+            },
+            {
+              "q": "Name the only three things that break that multiplication.",
+              "answer": "Make the hop asynchronous, which is the single most effective availability intervention in a service architecture. Make the dependency optional and degrade, because a dependency you can fall back from is not in the product. Or cache its answers and accept the staleness. Retries, circuit breakers and bulkheads limit the blast radius; they do not remove the term."
+            }
+          ],
+          "seeAlso": "02-architecture/monolith-vs-microservices/"
+        },
+        {
+          "id": "architecture-5",
+          "level": "advanced",
+          "q": "A worker fleet drains a two-hour backlog into the same primary database that serves user traffic. Autoscaling is keyed on queue depth, which is correct. The website goes down. Walk the mechanism.",
+          "asking": "whether they can compose four individually reasonable decisions into one outage — the class of failure no single-component page can teach",
+          "answer": "Four things compose, and each was individually reasonable. Moving work behind a queue removed the natural backpressure the request path had: on the request path a slow database slows the client, which throttles arrival, and behind a queue nothing pushes back. Depth is the right autoscaling signal and it is also what aims the fleet at the database, because depth is enormous so the policy adds workers until it is not. The number that decides the outcome is total fleet concurrency — workers times per-worker concurrency — and nobody set it: twenty workers at concurrency 50 is a thousand simultaneous operations, configured by two people in two files. Finally the connection pool is shared with the request path, so it exhausts and the site returns errors while the database itself sits comfortably idle.",
+          "redFlags": [
+            "blames the autoscaler and switches the signal to CPU",
+            "reads the idle database CPU as evidence the database is healthy",
+            "no mention of fleet concurrency being a product of two numbers",
+            "believes the queue added capacity"
+          ],
+          "followUps": [
+            {
+              "q": "What do you change?",
+              "answer": "Bound total fleet concurrency against measured downstream capacity and cap the autoscaler's maximum to respect it. Give workers their own connection pool so neither workload can starve the other. And accept that the drain now takes longer, because the backlog has no user waiting on it and the website does."
+            },
+            {
+              "q": "State the general shape in one sentence.",
+              "answer": "A queue does not add capacity, it moves the moment you pay for the shortfall. Two correct components and one bad interaction — and the asymmetry underneath it is that the request path passes through three implicit limits before reaching the database, a load balancer, a sized pool and clients that time out and give up, while the worker path passes through none of them."
+            }
+          ],
+          "seeAlso": "14-component-combinations/MATRIX.md"
+        }
+      ]
+    }
+  ]
+}

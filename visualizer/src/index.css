@@ -611,3 +611,58 @@ footer p { margin: 0; max-width: 82ch; }
 .bridge-cap.mid { letter-spacing: .04em; font-size: 8px; }
 .bridge-arrow { stroke: var(--line2); stroke-width: 1.4; }
 .bridge-tip { fill: var(--line2); }
+
+/* ---------- interview ---------- */
+
+.iv-levels { display: flex; gap: 4px; }
+.iv-levels .tick { flex: 1 1 auto; font-family: inherit; font-size: 11px; padding: 4px 6px; }
+
+.pat-item .lv {
+  display: inline-block; font-style: normal;
+  font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  font-family: ui-monospace, monospace; margin-top: 3px;
+}
+.lv-basic { color: var(--accent); }
+.lv-intermediate { color: var(--amber); }
+.lv-advanced { color: var(--red); }
+
+.iv-lv {
+  display: inline-block; margin-bottom: 6px;
+  font-size: 10px; letter-spacing: .11em; text-transform: uppercase; font-weight: 600;
+  font-family: ui-monospace, monospace;
+  border: 1px solid currentColor; border-radius: 4px; padding: 2px 7px;
+}
+
+.iv .pat-detail h2 { font-size: 19px; line-height: 1.4; margin-bottom: 14px; }
+
+.iv-asking {
+  border-left: 2px solid var(--accent); padding-left: 13px; margin: 0 0 18px;
+}
+.iv-asking span {
+  display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--accent); font-weight: 600; margin-bottom: 4px;
+}
+.iv-asking p { margin: 0; font-size: 15px; color: var(--ink); max-width: 70ch; }
+
+.iv-h {
+  display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink3); font-weight: 600; margin-bottom: 6px;
+}
+.iv-answer { margin: 18px 0; }
+.iv-answer p { margin: 0; font-size: 15px; line-height: 1.62; max-width: 72ch; color: var(--ink2); }
+
+.iv-flags { margin: 0 0 18px; }
+.iv-flags ul { margin: 0; padding-left: 20px; }
+.iv-flags li { color: var(--red); font-size: 14px; margin-bottom: 4px; }
+
+.iv-followups { border-top: 1px solid var(--line); padding-top: 16px; margin-bottom: 16px; }
+.iv-fu {
+  border-left: 2px solid var(--line2); padding-left: 13px; margin: 0 0 14px;
+}
+.iv-fu strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.iv-fu p { margin: 0; color: var(--ink2); font-size: 14.5px; max-width: 70ch; }
+
+.iv-count {
+  grid-column: 1 / -1;
+  color: var(--ink3); font-size: 12.5px; margin: 4px 0 0;
+}

@@ -116,4 +116,4 @@ cannot.
 - [System design thinking](SYSTEM-DESIGN-THINKING.md) — the long form
 - [Trade-off framework](TRADEOFF-FRAMEWORK.md) — decision trees
 - [Estimation guide](ESTIMATION-GUIDE.md) — the arithmetic
-- Interview guide — timing and communication
+- [Interview guide](20-system-design-interview/) — 46 questions with follow-up chains, and the 5/15/30/45-minute approaches

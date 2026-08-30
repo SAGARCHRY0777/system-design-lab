@@ -111,6 +111,7 @@ systems are made of.
 | [13-design-patterns/](13-design-patterns/) | **78 patterns**, incl. all 23 Gang of Four with distributed counterparts |
 | [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |
 | [15-real-world-problems/](15-real-world-problems/url-shortener/) | Full designs, V1→V8 — start with the URL shortener |
+| [20-system-design-interview/](20-system-design-interview/) | 46 questions, 98 follow-ups, basic to advanced |
 | [18-implementations/](18-implementations/) | Working Python code + measured benchmarks |
 | [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated diagrams |
 | ADRs/ · anti-patterns/ · comparisons/ | Judgment |

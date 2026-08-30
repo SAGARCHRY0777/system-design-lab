@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
 import Patterns from './components/Patterns.jsx'
+import Interview from './components/Interview.jsx'
 import Predict from './components/Predict.jsx'
 import StarButton from './components/StarButton.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
@@ -138,9 +139,13 @@ export default function App() {
             className={view === 'patterns' ? 'tick on' : 'tick'}
             onClick={() => setView('patterns')}
           >Patterns</button>
+          <button
+            className={view === 'interview' ? 'tick on' : 'tick'}
+            onClick={() => setView('interview')}
+          >Interview</button>
         </nav>
         <div className="topright">
-          {view !== 'patterns' && (
+          {(view === 'architecture' || view === 'predict') && (
             <label className="scene-pick">
               <span>System</span>
               <select value={sceneId} onChange={e => setSceneId(e.target.value)}>
@@ -154,6 +159,8 @@ export default function App() {
       </header>
 
       {view === 'patterns' && <Patterns />}
+
+      {view === 'interview' && <Interview />}
 
       {view === 'predict' && <Predict scene={scene} onReplay={replay} />}
 
@@ -314,6 +321,12 @@ export default function App() {
           <p>
             Every question and answer is derived from the scene file — the same data that draws the
             diagram, so the quiz cannot disagree with what you are about to watch.
+          </p>
+        )}
+        {view === 'interview' && (
+          <p>
+            The follow-ups are the point — anyone can recite a first answer. Generated from the same
+            data as the repository&rsquo;s question bank, so the two cannot drift.
           </p>
         )}
         {view === 'patterns' && (

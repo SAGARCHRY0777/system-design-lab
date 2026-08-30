@@ -160,7 +160,7 @@ Written in the exercises format from the start rather than retrofitted.
       queue without backpressure, no idempotency, no timeout
 - [ ] Comparisons: monolith vs microservices · SQL vs NoSQL · Kafka vs RabbitMQ ·
       strong vs eventual · polling vs websocket
-- [ ] Interview guide: 5 / 15 / 30 / 45-minute approaches
+- [x] [Interview guide](20-system-design-interview/) — 46 questions, 98 follow-ups, 9 tracks, basic to advanced `[B-A]`
 
 ---
 
