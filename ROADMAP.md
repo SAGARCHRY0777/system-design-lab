@@ -155,12 +155,14 @@ Written in the exercises format from the start rather than retrofitted.
 
 ## Phase 8 — Judgment
 
-- [ ] ADRs with the template and 3 worked records
-- [ ] Anti-patterns: premature microservices, cache everything, retry storm, distributed monolith,
-      queue without backpressure, no idempotency, no timeout
-- [ ] Comparisons: monolith vs microservices · SQL vs NoSQL · Kafka vs RabbitMQ ·
-      strong vs eventual · polling vs websocket
+- [x] [ADRs](ADRs/) — template plus 4 worked records, each with a revisit condition `[I-A]`
+- [x] [Anti-patterns](anti-patterns/) — premature microservices, cache everything, retry storm,
+      distributed monolith, queue without backpressure, no idempotency, no timeout `[B-A]`
+- [x] [Comparisons](comparisons/) — monolith vs microservices · SQL vs NoSQL · Kafka vs RabbitMQ ·
+      strong vs eventual · polling vs websocket · Redis vs Memcached `[B-A]`
 - [x] [Interview guide](20-system-design-interview/) — 46 questions, 98 follow-ups, 9 tracks, basic to advanced `[B-A]`
+- [x] [Case studies](17-case-studies/CASE-STUDIES.md) — 10 real systems, every one with a public
+      primary source, 40 decisions with their costs, and a `when not to copy this` per case `[I-A]`
 
 ---
 
@@ -169,9 +171,9 @@ Written in the exercises format from the start rather than retrofitted.
 Directory and template only for now — real content in a later pass. Listed so the absence is a
 decision rather than an oversight.
 
-Case studies (§17) · design exercises (§16)
+Design exercises (§16)
 
-[Observability](11-observability/) is now written.
+[Observability](11-observability/) and [case studies](17-case-studies/) are now written.
 
 ---
 

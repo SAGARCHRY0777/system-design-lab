@@ -216,4 +216,6 @@ Working checklist: [DESIGN-CHECKLIST.md](DESIGN-CHECKLIST.md).
 - [Estimation guide](ESTIMATION-GUIDE.md) — putting numbers on step 6
 - [Design checklist](DESIGN-CHECKLIST.md) — the interview-time short form
 - [Diagram notation](19-diagrams/README.md) — how to draw any of this
-- Anti-patterns — the chain applied too early, or not at all
+- [Anti-patterns](anti-patterns/) — the chain applied too early, or not at all
+- [ADRs](ADRs/) — one decision per record, with the condition that reopens it
+- [Comparisons](comparisons/) — the deciding question behind each recurring choice

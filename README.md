@@ -2,11 +2,10 @@
 
 # System Design Lab
 
-**A practical system design and architecture learning laboratory** — fundamentals, distributed
-systems, scalability patterns, real-world problems, working implementations, and an interactive
-visualizer for watching architectures evolve.
+**A system design learning laboratory** — 101 pages, 252 diagrams, 398 hidden-answer exercises,
+4 measured implementations, and an interactive lab where you commit to an answer before you see one.
 
-[Start learning](#where-to-start) · [Open the visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) · [Patterns](13-design-patterns/CATALOGUE.md) · [Combinations](14-component-combinations/MATRIX.md) · [Roadmap](ROADMAP.md) · [Gaps](GAPS.md)
+[Take the diagnostic](DIAGNOSTIC.md) · [Open the lab](https://SAGARCHRY0777.github.io/system-design-lab/) · [Patterns](13-design-patterns/CATALOGUE.md) · [Combinations](14-component-combinations/MATRIX.md) · [Case studies](17-case-studies/) · [Interview](20-system-design-interview/) · [Gaps](GAPS.md)
 
 </div>
 
@@ -14,16 +13,12 @@ visualizer for watching architectures evolve.
 
 ## What this is
 
-Not notes. A **method** for reasoning about systems you have never seen before.
-
-Most system design material is a catalogue: here is a load balancer, here is Kafka, here is sharding.
-A catalogue does not help when someone hands you a blank page. This repository is organised around a
-different idea:
+Not notes. A **method** for reasoning about systems you have never seen, built around one idea:
 
 > **Architecture is not designed. It is forced.** Every component in a mature system was added
 > because something specific broke — and every one of them broke something else in turn.
 
-So every topic here answers the same four questions, and they are the point of the whole thing:
+So every topic answers the same four questions, and that block is the spine of the repository:
 
 ```
 Without it   →  what problem appears?
@@ -34,44 +29,45 @@ Next         →  which component does that force?
 
 Learn the chain and you can *derive* most architectures instead of memorising them.
 
-## The visualizer
+**And it asks you things.** 398 questions here have their answers folded away, and the lab makes you
+commit before it reveals. Reading an answer you did not attempt teaches nothing.
 
-Reading that a cache reduces latency is not the same as watching a request stop short of the database.
+## The lab
 
 <div align="center">
-  <img src="19-diagrams/generated/url-shortener-v4.svg" alt="URL shortener architecture at version 4, with a request animating from client through load balancer and app servers to the cache" width="760">
+  <img src="19-diagrams/generated/url-shortener-v4.svg" alt="URL shortener at version 4, a request animating from client through load balancer and app servers to the cache" width="760">
 </div>
 
-The [interactive lab](https://SAGARCHRY0777.github.io/system-design-lab/) lets you:
+**[SAGARCHRY0777.github.io/system-design-lab](https://SAGARCHRY0777.github.io/system-design-lab/)** — five tabs:
 
-| Control | Question it answers |
+| Tab | What it does |
 |---|---|
-| **▶ Animate a request** | How does a request actually flow? Watch a cache hit stop early and a miss go all the way. |
-| **Scrub V1 → V8** | *Why* did the architecture change? Every step shows the failure that forced it. |
-| **Switch a component off** | What breaks without it? Kill the cache and watch the thundering herd. |
-| **Bottleneck highlight** | Where does it break first as load grows? |
+| **Architectures** | Scrub a system V1→V8 and see *why* each change happened. Animate a request in simulated time — it dwells inside each component for what that component costs, so a database visit visibly takes 30× a cache lookup. Switch a component off and the request **stops there**. |
+| **Predict** | 69 questions derived from the scenes. The reveal is locked until you commit, then it corrects you using the scene's own text — and offers **Watch it happen**. |
+| **Patterns** | 78 patterns, searchable, each with a diagram. Every Gang of Four entry shows what it becomes **across a network**, and why that is harder. |
+| **Case studies** | 10 real systems with primary sources. The field given most weight is *when this does **not** apply to you*. |
+| **Interview** | 46 questions, 98 follow-ups revealed **one at a time** — because anyone can recite a first answer. |
 
-Every architecture is authored **once**, as a [scene file](19-diagrams/scenes/SCHEMA.md), which drives
-both the app and the diagrams committed here. They cannot drift apart.
+Six themes, responsive. Every architecture is authored **once** as a
+[scene file](19-diagrams/scenes/SCHEMA.md) that drives both the app and the diagrams committed here,
+so the two cannot disagree.
 
 ## Where to start
 
-**Not sure where you are?** Take the [diagnostic](DIAGNOSTIC.md) — twelve questions, ordered easy to
-expert, that route you to the right starting point. A missed question tells you more than the score.
+**Not sure where you are?** [The diagnostic](DIAGNOSTIC.md) — 17 questions, easy to expert, routing
+you by *what you get wrong*. A missed question is worth more than the score.
 
-**New to system design** — read in this order, it is a deliberate sequence:
+**New to this** — in order, it is a deliberate sequence:
 
 1. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
-2. [Estimation Guide](ESTIMATION-GUIDE.md) — how to put numbers on a problem in your head
+2. [Estimation Guide](ESTIMATION-GUIDE.md) — putting numbers on a problem in your head
 3. [Trade-off Framework](TRADEOFF-FRAMEWORK.md) — how to *choose*, with decision trees
 4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
-5. Open the [visualizer](https://SAGARCHRY0777.github.io/system-design-lab/) and scrub the URL shortener from V1 to V8
+5. [The URL shortener](15-real-world-problems/url-shortener/), V1→V8 — the whole method on one problem
 
-**Already comfortable** — go straight to the [combination matrix](14-component-combinations/MATRIX.md),
-which is the part most material skips, or the [pattern catalogue](13-design-patterns/CATALOGUE.md).
-What is deliberately **not** covered is listed in [GAPS.md](GAPS.md).
-
-**Preparing for an interview** — [Design Checklist](DESIGN-CHECKLIST.md) is the 45-minute short form.
+**Already comfortable** — the [combination matrix](14-component-combinations/MATRIX.md) and the
+[case studies](17-case-studies/). **Interviewing** — [the checklist](DESIGN-CHECKLIST.md) and
+[the question bank](20-system-design-interview/).
 
 ## Learning path
 
@@ -79,10 +75,10 @@ What is deliberately **not** covered is listed in [GAPS.md](GAPS.md).
 flowchart TD
     F["FOUNDATIONS<br/><i>latency · availability · consistency · CAP</i>"] --> E["ESTIMATION<br/><i>put numbers on it</i>"]
     E --> C["COMPONENTS<br/><i>load balancer · cache · database · queue</i>"]
-    C --> P["PATTERNS<br/><i>batching · retries · circuit breaker · sharding</i>"]
+    C --> P["PATTERNS<br/><i>78, with distributed counterparts</i>"]
     P --> K["COMBINATIONS<br/><i>how components behave together</i>"]
-    K --> R["REAL SYSTEMS<br/><i>V1 → V8 evolution</i>"]
-    R --> A["ADVANCED<br/><i>consensus · multi-region · disaster recovery</i>"]
+    K --> R["REAL SYSTEMS<br/><i>V1 to V8, and 10 case studies</i>"]
+    R --> A["JUDGEMENT<br/><i>ADRs · anti-patterns · comparisons</i>"]
 
     style F fill:#1c6853,stroke:#4fc3a1,color:#e4ecea
     style K fill:#2a2317,stroke:#d9a441,color:#e4ecea
@@ -90,7 +86,7 @@ flowchart TD
 ```
 
 The amber box is the one to linger on. Knowing what a cache is and what a queue is does not tell you
-what happens when a queue backs up *behind* a cache miss storm — and that interaction is what real
+what happens when a queue backs up *behind* a cache-miss storm — and that interaction is what real
 systems are made of.
 
 ## Map
@@ -100,58 +96,70 @@ systems are made of.
 | [00-foundations/](00-foundations/) | Latency, throughput, scalability, availability, reliability, consistency, CAP |
 | [01-networking/](01-networking/) | DNS, TCP/UDP, HTTP/1-2-3, WebSockets, TLS |
 | [02-architecture/](02-architecture/) | Monolith vs microservices — when to split, and when not to |
+| [03-load-balancing/](03-load-balancing/fundamentals/) · [04-caching/](04-caching/fundamentals/) | ★ Flagship components |
+| [05-databases/](05-databases/fundamentals/) | Database, [sharding](05-databases/sharding/), [replication](05-databases/replication/), [schema migration](05-databases/schema-migration/), [data modelling](05-databases/data-modelling/) |
+| [06-messaging/](06-messaging/queues/) | Queues, workers, delivery semantics |
 | [07-api-design/](07-api-design/) | REST/gRPC/GraphQL, versioning, pagination, idempotency |
-| [03-load-balancing/](03-load-balancing/fundamentals/) · [04-caching/](04-caching/fundamentals/) | ★ Flagship components, full depth |
-| [05-databases/](05-databases/fundamentals/) · [06-messaging/](06-messaging/queues/) | ★ Storage and asynchrony |
-| [schema-migration/](05-databases/schema-migration/) · [data-modelling/](05-databases/data-modelling/) | Zero-downtime change, and designing for the query |
-| 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
-| 09-scalability/ | Batching, async processing |
-| [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |
+| 08-reliability/ | *Not written yet* — retries, circuit breaker, rate limiting, backpressure. See [GAPS.md](GAPS.md) |
+| [09-scalability/](09-scalability/) | Batch vs stream, multi-tenancy, cost as an architectural constraint |
 | [11-observability/](11-observability/) | Three pillars, cardinality trap, SLI/SLO/error budgets, alerting |
-| [13-design-patterns/](13-design-patterns/) | **78 patterns**, incl. all 23 Gang of Four with distributed counterparts |
-| [14-component-combinations/](14-component-combinations/) | **All 153 component pairs**, classified, with real systems |
-| [15-real-world-problems/](15-real-world-problems/url-shortener/) | Full designs, V1→V8 — start with the URL shortener |
-| [20-system-design-interview/](20-system-design-interview/) | 46 questions, 98 follow-ups, basic to advanced |
-| [18-implementations/](18-implementations/) | Working Python code + measured benchmarks |
-| [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated diagrams |
-| ADRs/ · anti-patterns/ · comparisons/ | Judgment |
+| [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |
+| [13-design-patterns/](13-design-patterns/) | **78 patterns** in the [catalogue](13-design-patterns/CATALOGUE.md), every one with a diagram and a case study |
+| [14-component-combinations/](14-component-combinations/) | **All 153 pairs** classified; 11 with full pages |
+| [15-real-world-problems/](15-real-world-problems/url-shortener/) | Full designs, V1→V8 |
+| [17-case-studies/](17-case-studies/) | **10 real systems**, each with a primary source, its costs, and when *not* to copy it |
+| [18-implementations/](18-implementations/) | Working Python, **measured** benchmarks, 103 tests |
+| [19-diagrams/](19-diagrams/) | Notation contract, scenes, generated SVGs |
+| [20-system-design-interview/](20-system-design-interview/) | 46 questions, 98 follow-ups |
+| [ADRs/](ADRs/) · [anti-patterns/](anti-patterns/) · [comparisons/](comparisons/) | Judgement — decisions with revisit conditions, mistakes with their steelman, and the deciding question behind each recurring choice |
+| [_templates/](_templates/) | Concept page, **HLD**, **LLD** |
 
 ## Conventions
 
-Every concept page has the same shape, so you always know where to look:
-definition → *explain like I'm new* → technical → engineering at scale → when to use → **when not
-to** → trade-offs → failure modes → the four-line chain block.
+Every concept page has the same shape, so you always know where to look: definition → *explain like
+I'm new* → technical → engineering at scale → when to use → **when not to** → trade-offs → failure
+modes → the four-line chain block → exercises with hidden answers.
 
-Diagrams follow a [notation contract](19-diagrams/README.md). The one rule worth knowing up front:
+Diagrams follow a [notation contract](19-diagrams/README.md). The rule worth knowing up front:
 **dashed means safe to lose**, a cylinder means losing it costs data.
 
 Technology comes last, deliberately. You learn *caching* — what it is for and what properties it
 needs — before you learn that Redis is one way to do it. The architecture does not change when you
 swap Memcached for Redis.
 
-## Running it locally
+## Running it
 
 ```bash
-# the visualizer
-cd visualizer && npm install && npm run dev
-
-# regenerate diagrams after editing a scene
-python scripts/render_diagrams.py
-
-# the checks CI runs
-python scripts/check_links.py        # every relative link resolves
-python scripts/check_scenes.py       # every scene is valid
-python scripts/render_diagrams.py --check
-pytest 18-implementations -q
+cd visualizer && npm install && npm run dev     # the lab
+python scripts/render_diagrams.py               # regenerate diagrams after editing a scene
 ```
 
-Benchmarks in [18-implementations/](18-implementations/) are **executed, never estimated**. Anything
-not actually measured says so.
+The checks CI runs, because a claim nobody verifies decays:
+
+```bash
+python scripts/check_links.py        # links resolve, no orphans, exercise answers hidden
+python scripts/check_scenes.py       # scenes valid; no flow crosses an inactive node
+python scripts/check_mermaid.py      # every diagram parses
+python scripts/render_diagrams.py --check
+python scripts/gen_combination_matrix.py --check
+python scripts/gen_pattern_catalogue.py --check
+python scripts/gen_interview.py --check
+python scripts/gen_case_studies.py --check
+pytest 18-implementations -q         # 103 tests, none of which sleep
+cd visualizer && npm run check       # lint, quiz answer keys, build
+```
+
+Benchmarks are **executed, never estimated** — anything not measured says so.
 
 ## Status
 
-Built in phases; see [ROADMAP.md](ROADMAP.md) for what is done and what is next. Sections not yet
-written are absent rather than stubbed, so the map above never promises coverage that is not there.
+[ROADMAP.md](ROADMAP.md) tracks what is built. [GAPS.md](GAPS.md) tracks what is not — including
+topics that were never in the original plan, which is the more dangerous category, because an
+unplanned gap looks exactly like coverage.
+
+The largest remaining hole is **`08-reliability/`**: retries, circuit breaker, rate limiting and
+backpressure appear in the catalogue and three have working implementations, but none has a concept
+page. After that, 7 of 8 real-world problems are unwritten.
 
 ## License
 

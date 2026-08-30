@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Canvas from './components/Canvas.jsx'
+const CaseStudies = lazy(() => import('./components/CaseStudies.jsx'))
 const Patterns = lazy(() => import('./components/Patterns.jsx'))
 const Interview = lazy(() => import('./components/Interview.jsx'))
 const Predict = lazy(() => import('./components/Predict.jsx'))
@@ -140,6 +141,10 @@ export default function App() {
             onClick={() => setView('patterns')}
           >Patterns</button>
           <button
+            className={view === 'cases' ? 'tick on' : 'tick'}
+            onClick={() => setView('cases')}
+          >Case studies</button>
+          <button
             className={view === 'interview' ? 'tick on' : 'tick'}
             onClick={() => setView('interview')}
           >Interview</button>
@@ -161,6 +166,12 @@ export default function App() {
       {view === 'patterns' && (
         <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
           <Patterns />
+        </Suspense>
+      )}
+
+      {view === 'cases' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <CaseStudies />
         </Suspense>
       )}
 
@@ -333,6 +344,13 @@ export default function App() {
           <p>
             Every question and answer is derived from the scene file — the same data that draws the
             diagram, so the quiz cannot disagree with what you are about to watch.
+          </p>
+        )}
+        {view === 'cases' && (
+          <p>
+            Ten systems, each with a primary source. The field that matters most is
+            <strong> when this does not apply to you</strong> — a case study read without it becomes
+            a licence to copy Dynamo into a service doing forty requests a second.
           </p>
         )}
         {view === 'interview' && (

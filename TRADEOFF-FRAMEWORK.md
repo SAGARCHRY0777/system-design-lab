@@ -176,5 +176,6 @@ little. It is **"is this worth what it costs to run for the next three years?"**
 - [System design thinking](SYSTEM-DESIGN-THINKING.md) — the method these choices sit inside
 - [Estimation guide](ESTIMATION-GUIDE.md) — the numbers that drive the trees
 - [Design checklist](DESIGN-CHECKLIST.md)
-- Anti-patterns — what these trade-offs look like when ignored
-- ADRs — recording a decision and the condition that would reverse it
+- [Anti-patterns](anti-patterns/) — what these trade-offs look like when ignored
+- [ADRs](ADRs/) — recording a decision and the condition that would reverse it
+- [Comparisons](comparisons/) — the deciding question behind each recurring choice

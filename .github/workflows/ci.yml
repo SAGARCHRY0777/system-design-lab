@@ -45,6 +45,12 @@ jobs:
       - name: Interview bank matches its generator
         run: python scripts/gen_interview.py --check
 
+      # Every figure in a case study is traceable to a named primary source.
+      # The generator also refuses a decision with no cost and a doesNotApply
+      # that has decayed into a disclaimer -- the two fields the section is for.
+      - name: Case studies match their generator
+        run: python scripts/gen_case_studies.py --check
+
   visualizer:
     name: Visualizer · lint + build
     runs-on: ubuntu-latest
