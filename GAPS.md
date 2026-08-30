@@ -62,7 +62,7 @@ What a high-level design document is expected to contain.
 | **Architecture + component diagrams** | ✅ | [Notation contract](19-diagrams/README.md) and generated SVGs |
 | **Deployment diagrams** | ◐ | Named as a diagram type; no example |
 | **Data flow diagrams** | ✅ | Notation contract |
-| **ER / schema diagrams** | ❌ | Not a supported diagram type; data modelling is not covered |
+| **ER / schema diagrams** | ✅ | [data-modelling](05-databases/data-modelling/) — including a Mermaid erDiagram |
 | **An HLD / LLD document template** | ❌ | The biggest single miss here — there is no template for the artefact itself |
 
 ---
@@ -77,8 +77,8 @@ What a high-level design document is expected to contain.
 
 
 | **HLD / LLD templates** | The document people are actually asked to produce. |
-| **Schema migration** | Zero-downtime change: expand-contract, dual writes, backfills. The most common way a deploy causes an outage. |
-| **Data modelling / ER** | Normalisation, access-pattern modelling, ER diagrams. |
+
+
 | **Batch vs stream processing** | OLTP vs OLAP, ETL, windowing, Lambda/Kappa. |
 | ~~SLI / SLO / error budgets~~ | Now in [observability](11-observability/#11-sli-slo-error-budget). |
 | **Multi-tenancy** | Isolation, noisy neighbours, per-tenant limits. |

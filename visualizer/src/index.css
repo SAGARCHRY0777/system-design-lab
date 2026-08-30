@@ -595,3 +595,19 @@ footer p { margin: 0; max-width: 82ch; }
   .speeds .total { margin-left: 0; width: 100%; }
   .starbtn span:not(.starcount) { display: none; }  /* keep the mark and the count */
 }
+
+/* The GoF bridge, drawn. Two boxes and an arrow carry the idea faster than the
+   paragraph does; the paragraph stays underneath for the detail. */
+.bridge-svg { width: 100%; height: auto; max-width: 470px; display: block; margin: 0 0 12px; }
+.bridge-box { fill: var(--sunken); stroke: var(--line2); stroke-width: 1.4; }
+.bridge-box.to { stroke: var(--accent); }
+.bridge-txt { fill: var(--ink); font-size: 13px; font-weight: 500; }
+.bridge-txt.to { fill: var(--accent); }
+.bridge-cap {
+  fill: var(--ink3); font-size: 8.5px; font-weight: 600;
+  letter-spacing: .1em; font-family: ui-monospace, monospace;
+}
+.bridge-cap.to { fill: var(--accent); }
+.bridge-cap.mid { letter-spacing: .04em; font-size: 8px; }
+.bridge-arrow { stroke: var(--line2); stroke-width: 1.4; }
+.bridge-tip { fill: var(--line2); }

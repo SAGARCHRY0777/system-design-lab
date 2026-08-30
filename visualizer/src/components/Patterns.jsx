@@ -13,6 +13,43 @@ import CATALOGUE from '../../../13-design-patterns/patterns.json'
  * once it crosses a network) and `top1` (what an experienced engineer does that
  * a competent one does not). Everything else is available in any reference.
  */
+
+/**
+ * The bridge, drawn rather than described.
+ *
+ * Every GoF pattern's distributed counterpart is harder for the same reason:
+ * the single-process version quietly relies on shared memory and one clock, and
+ * the distributed version has neither. Two boxes and an arrow say that faster
+ * than the paragraph does -- and the paragraph is still there underneath.
+ */
+function BridgeDiagram({ name, bridge }) {
+  return (
+    <svg className="bridge-svg" viewBox="0 0 460 74" role="img"
+         aria-label={`In one process: ${name}. Across a network: ${bridge}.`}>
+      <rect className="bridge-box" x="1" y="20" width="176" height="40" rx="7" />
+      <text className="bridge-cap" x="89" y="14" textAnchor="middle">IN ONE PROCESS</text>
+      <text className="bridge-txt" x="89" y="45" textAnchor="middle">{name}</text>
+
+      <line className="bridge-arrow" x1="182" y1="40" x2="272" y2="40" markerEnd="url(#bridge-tip)" />
+      <text className="bridge-cap mid" x="227" y="32" textAnchor="middle">no shared memory</text>
+      <text className="bridge-cap mid" x="227" y="56" textAnchor="middle">no shared clock</text>
+
+      <rect className="bridge-box to" x="278" y="20" width="181" height="40" rx="7" />
+      <text className="bridge-cap to" x="368" y="14" textAnchor="middle">ACROSS A NETWORK</text>
+      <text className="bridge-txt to" x="368" y="45" textAnchor="middle">
+        {bridge.length > 30 ? `${bridge.slice(0, 29)}…` : bridge}
+      </text>
+
+      <defs>
+        <marker id="bridge-tip" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" className="bridge-tip" />
+        </marker>
+      </defs>
+    </svg>
+  )
+}
+
 export default function Patterns() {
   const [familyId, setFamilyId] = useState(CATALOGUE.families[0].id)
   const [query, setQuery] = useState('')
@@ -90,7 +127,7 @@ export default function Patterns() {
 
             {active.bridge && (
               <div className="pat-bridge">
-                <span className="pat-bridge-h">Across a network this becomes</span>
+                <BridgeDiagram name={active.name} bridge={active.bridge} />
                 <strong>{active.bridge}</strong>
                 <p>{active.harder}</p>
               </div>

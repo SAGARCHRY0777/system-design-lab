@@ -103,6 +103,7 @@ systems are made of.
 | [07-api-design/](07-api-design/) | REST/gRPC/GraphQL, versioning, pagination, idempotency |
 | [03-load-balancing/](03-load-balancing/fundamentals/) · [04-caching/](04-caching/fundamentals/) | ★ Flagship components, full depth |
 | [05-databases/](05-databases/fundamentals/) · [06-messaging/](06-messaging/queues/) | ★ Storage and asynchrony |
+| [schema-migration/](05-databases/schema-migration/) · [data-modelling/](05-databases/data-modelling/) | Zero-downtime change, and designing for the query |
 | 08-reliability/ | Retries, circuit breakers, rate limiting, backpressure |
 | 09-scalability/ | Batching, async processing |
 | [12-security/](12-security/) | Authn/authz, OAuth, JWT, API security, DDoS |

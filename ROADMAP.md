@@ -145,6 +145,8 @@ Python, stdlib-only, with tests and **executed** benchmarks.
 
 Written in the exercises format from the start rather than retrofitted.
 
+- [x] [Schema migration](05-databases/schema-migration/) — expand-contract, the overlap window `[A]`
+- [x] [Data modelling](05-databases/data-modelling/) — query-first, ER, keys `[I]`
 - [x] [Networking](01-networking/) — DNS, TCP/UDP, HTTP/1-2-3, WebSockets, TLS `[I]`
 - [x] [API design](07-api-design/) — REST/gRPC/GraphQL, versioning, pagination, idempotency `[I]`
 - [x] ★ [Monolith vs microservices](02-architecture/monolith-vs-microservices/) `[A]`
