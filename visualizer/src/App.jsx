@@ -5,6 +5,8 @@ const Patterns = lazy(() => import('./components/Patterns.jsx'))
 const Interview = lazy(() => import('./components/Interview.jsx'))
 const Predict = lazy(() => import('./components/Predict.jsx'))
 const Studio = lazy(() => import('./components/Studio.jsx'))
+const Bench = lazy(() => import('./components/Bench.jsx'))
+import Palette from './components/Palette.jsx'
 import StarButton from './components/StarButton.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { SCENES } from './scenes/index.js'
@@ -21,15 +23,42 @@ const SPEEDS = [
   { label: '4×', factor: 480 },
 ]
 
+const VIEWS = ['architecture', 'predict', 'studio', 'patterns', 'cases', 'bench', 'interview']
+
+/**
+ * Read the opening state out of the URL.
+ *
+ * `#/architecture/url-shortener/8/v8-failover` -- so a specific version of a
+ * specific system with a specific request selected is a link somebody can send.
+ * Before this, every share of this app was a share of its front page plus
+ * instructions.
+ */
+function fromHash() {
+  const [, view, sceneId, v, flowId] = (location.hash || '').split('/')
+  return {
+    view: VIEWS.includes(view) ? view : 'architecture',
+    sceneId: SCENES.some(s => s.id === sceneId) ? sceneId : SCENES[0].id,
+    v: Number(v) || null,
+    flowId: flowId ? decodeURIComponent(flowId) : null,
+  }
+}
+
 export default function App() {
-  const [sceneId, setSceneId] = useState(SCENES[0].id)
-  const [vIndex, setVIndex] = useState(0)
-  const [flowId, setFlowId] = useState(null)
+  const initial = useMemo(fromHash, [])
+  const [sceneId, setSceneId] = useState(initial.sceneId)
+  const [vIndex, setVIndex] = useState(() => {
+    const s = SCENES.find(x => x.id === initial.sceneId) ?? SCENES[0]
+    const i = s.versions.findIndex(x => x.v === initial.v)
+    return i >= 0 ? i : 0
+  })
+  const [flowId, setFlowId] = useState(initial.flowId)
   const [playing, setPlaying] = useState(false)
   const [speedIdx, setSpeedIdx] = useState(3)
-  const [view, setView] = useState('architecture')
+  const [view, setView] = useState(initial.view)
   const [down, setDown] = useState(() => new Set())
   const [simMs, setSimMs] = useState(0)
+  const [extraCommands, setExtraCommands] = useState([])
+  const [palOpen, setPalOpen] = useState(false)
 
   const scene = useMemo(() => SCENES.find(s => s.id === sceneId) ?? SCENES[0], [sceneId])
   const version = scene.versions[Math.min(vIndex, scene.versions.length - 1)]
@@ -121,8 +150,143 @@ export default function App() {
   const blocked = timeline?.blockedAt !== null && timeline?.blockedNode
   const reachedBlock = blocked && simMs >= timeline.totalMs - 1
 
+  // Keep the URL in step with what is on screen.
+  //
+  // replaceState rather than assigning location.hash: dragging the version
+  // slider would otherwise push a history entry per frame, and the back button
+  // would take fifty presses to leave. The URL stays copyable, which is the
+  // point -- it just does not accumulate.
+  useEffect(() => {
+    const parts = view === 'architecture'
+      ? ['', view, sceneId, String(version.v), flowId ? encodeURIComponent(flowId) : '']
+      : ['', view]
+    const hash = `#${parts.join('/').replace(/\/+$/, '')}`
+    if (location.hash !== hash) history.replaceState(null, '', hash)
+  }, [view, sceneId, version.v, flowId])
+
+  // Someone edits the URL, or uses the back button out of a deep link.
+  useEffect(() => {
+    const onHash = () => {
+      const h = fromHash()
+      setView(h.view)
+      setSceneId(h.sceneId)
+      if (h.v != null) {
+        const s = SCENES.find(x => x.id === h.sceneId) ?? SCENES[0]
+        const i = s.versions.findIndex(x => x.v === h.v)
+        if (i >= 0) setVIndex(i)
+      }
+      if (h.flowId) setFlowId(h.flowId)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const go = (v, opts = {}) => {
+    setView(v)
+    if (opts.sceneId) setSceneId(opts.sceneId)
+    if (opts.vIndex != null) setVIndex(opts.vIndex)
+    if (opts.flowId !== undefined) setFlowId(opts.flowId)
+    if (opts.down) setDown(new Set(opts.down))
+    if (opts.play) { setSimMs(0); setPlaying(true) }
+  }
+
+  /**
+   * Everything the palette can reach.
+   *
+   * Built from SCENES, which is already in the main bundle, so the palette costs
+   * no extra download. The parameter decisions live in the studio's lazy chunk
+   * and are pulled in the first time the palette opens -- indexing them eagerly
+   * would put 33 KB of prose back on the critical path to make search slightly
+   * better on first keystroke.
+   */
+  const commands = useMemo(() => {
+    const out = []
+    const TABS = {
+      architecture: 'Scrub a system V1→V8 and animate a request',
+      predict: 'Commit to an answer before it corrects you',
+      studio: 'Produce a design, then set its parameters',
+      patterns: '78 patterns, each with a diagram',
+      cases: '10 real systems with primary sources',
+      bench: 'Why p99 collapses before you run out of servers',
+      interview: '46 questions, follow-ups one at a time',
+    }
+    for (const [id, subtitle] of Object.entries(TABS)) {
+      out.push({
+        id: `tab:${id}`,
+        group: 'Go to',
+        title: id === 'cases' ? 'Case studies' : id[0].toUpperCase() + id.slice(1),
+        subtitle,
+        run: () => go(id),
+      })
+    }
+
+    for (const s of SCENES) {
+      out.push({
+        id: `scene:${s.id}`,
+        group: 'Systems',
+        title: s.title,
+        subtitle: s.summary.slice(0, 90),
+        run: () => go('architecture', { sceneId: s.id, vIndex: 0, flowId: null, down: [] }),
+      })
+
+      s.versions.forEach((ver, i) => {
+        out.push({
+          id: `v:${s.id}:${ver.v}`,
+          group: 'Versions',
+          title: `${s.title} · V${ver.v} — ${ver.label}`,
+          subtitle: ver.trigger.slice(0, 110),
+          run: () => go('architecture', { sceneId: s.id, vIndex: i, flowId: null, down: [] }),
+        })
+      })
+
+      for (const f of s.flows) {
+        const i = s.versions.findIndex(ver => ver.v >= (f.minVersion ?? 1))
+        out.push({
+          id: `flow:${s.id}:${f.id}`,
+          group: 'Request flows',
+          title: `${s.title} · ${f.label}`,
+          subtitle: f.outcome?.slice(0, 110),
+          run: () => go('architecture', {
+            sceneId: s.id, vIndex: Math.max(0, i), flowId: f.id, down: [], play: true,
+          }),
+        })
+      }
+
+      for (const f of s.failures) {
+        const i = s.versions.findIndex(ver => ver.v >= (f.minVersion ?? 1))
+        out.push({
+          id: `fail:${s.id}:${f.id}`,
+          group: 'Failure modes',
+          title: `${s.title} · ${s.nodes[f.node]?.label ?? f.node} goes down`,
+          subtitle: f.effect.slice(0, 110),
+          run: () => go('architecture', {
+            sceneId: s.id, vIndex: Math.max(0, i), down: [f.node], play: true,
+          }),
+        })
+      }
+    }
+    return [...out, ...extraCommands]
+  }, [extraCommands])
+
+  // First open pulls the decision prose out of the studio chunk.
+  const loadExtra = () => {
+    if (extraCommands.length) return
+    // Same specifier the studio uses statically, so both share one chunk.
+    import('./scenes/decisions.js').then(({ allDecisions }) => {
+      const titles = Object.fromEntries(SCENES.map(s => [s.id, s.title]))
+      setExtraCommands(allDecisions().map(d => ({
+        id: `dec:${d.scene}:${d.id}`,
+        group: 'Parameter decisions',
+        title: `${titles[d.scene] ?? d.scene} · ${d.parameter}`,
+        subtitle: `${d.reversibility === 'one-way' ? 'One-way door — ' : ''}${d.question}`,
+        run: () => go('studio'),
+      })))
+    }).catch(() => { /* search simply stays narrower */ })
+  }
+
   return (
     <div className="app">
+      <Palette commands={commands} open={palOpen} setOpen={setPalOpen} onOpen={loadExtra} />
       <header className="top">
         <div className="brand">
           <span className="dot" aria-hidden="true" />
@@ -150,6 +314,10 @@ export default function App() {
             onClick={() => setView('cases')}
           >Case studies</button>
           <button
+            className={view === 'bench' ? 'tick on' : 'tick'}
+            onClick={() => setView('bench')}
+          >Bench</button>
+          <button
             className={view === 'interview' ? 'tick on' : 'tick'}
             onClick={() => setView('interview')}
           >Interview</button>
@@ -163,6 +331,13 @@ export default function App() {
               </select>
             </label>
           )}
+          <button
+            className="tick pal-open"
+            onClick={() => setPalOpen(true)}
+            title="Search everything (Ctrl/⌘ K)"
+          >
+            <span aria-hidden="true">⌕</span> Search <kbd>⌘K</kbd>
+          </button>
           <ThemeToggle />
           <StarButton />
         </div>
@@ -195,6 +370,12 @@ export default function App() {
       {view === 'predict' && (
         <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
           <Predict scene={scene} onReplay={replay} />
+        </Suspense>
+      )}
+
+      {view === 'bench' && (
+        <Suspense fallback={<p className="hint" style={{ marginTop: 24 }}>Loading…</p>}>
+          <Bench />
         </Suspense>
       )}
 

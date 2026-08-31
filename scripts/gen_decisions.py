@@ -74,13 +74,21 @@ def scene_page(scene_id: str) -> str:
     out.append("")
     out.append(f"# {scene['title']} — parameter decisions")
     out.append("")
+    problem = rel_problem(scene_id)
+    built = f"[{scene['title']}]({problem})" if problem else f"**{scene['title']}**"
     out.append(
-        f"{len(decisions)} decisions taken while building "
-        f"[{scene['title']}]({rel_problem(scene_id)}). Not *which component* — that is the "
-        "other exercise. These are the values you set once the component is there, which is "
-        "the half that ends up in the postmortem."
+        f"{len(decisions)} decisions taken while building {built}. Not *which component* — "
+        "that is the other exercise. These are the values you set once the component is "
+        "there, which is the half that ends up in the postmortem."
     )
     out.append("")
+    if not problem:
+        out.append(
+            f"> This system is animated, quizzed and gradeable in the "
+            f"[lab](https://sagarchry0777.github.io/system-design-lab/), but its V1→V8 prose "
+            f"page is not written yet — see [gaps](../GAPS.md)."
+        )
+        out.append("")
     out.append(
         "**Commit to an answer before opening the box.** A parameter question you read the "
         "answer to teaches nothing; the correction only lands if there was a prediction for it "
@@ -130,18 +138,31 @@ def scene_page(scene_id: str) -> str:
     out.append("")
     out.append("## Related")
     out.append("")
-    out.append(f"- [{scene['title']} — the full design]({rel_problem(scene_id)})")
+    if problem:
+        out.append(f"- [{scene['title']} — the full design]({problem})")
+    else:
+        out.append("- [Real-world problems](../15-real-world-problems/) — the systems that "
+                   f"*do* have a written V1→V8 design ({scene['title']} does not yet)")
     out.append("- [All parameter decisions](README.md)")
     out.append("- [Trade-off framework](../TRADEOFF-FRAMEWORK.md)")
     out.append("")
     return "\n".join(out)
 
 
-def rel_problem(scene_id: str) -> str:
-    """Link to the worked problem if one exists, else the case-study hub."""
-    if (ROOT / "15-real-world-problems" / scene_id / "README.md").exists():
-        return f"../15-real-world-problems/{scene_id}/"
-    return "../17-case-studies/"
+def has_problem(scene_id: str) -> bool:
+    return (ROOT / "15-real-world-problems" / scene_id / "README.md").exists()
+
+
+def rel_problem(scene_id: str) -> str | None:
+    """The worked problem page, or None if this scene does not have one yet.
+
+    Returning a fallback here was a quiet bug: social feed and ticket booking
+    have scenes but no written problem, so both pages advertised
+    "<title> — the full design" pointing at the case-study hub. The link
+    RESOLVED, so check_links.py was satisfied; the label was simply false. A
+    working link that lies is worse than a broken one, because nothing flags it.
+    """
+    return f"../15-real-world-problems/{scene_id}/" if has_problem(scene_id) else None
 
 
 def index_page() -> str:

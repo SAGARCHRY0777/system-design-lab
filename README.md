@@ -38,7 +38,7 @@ commit before it reveals. Reading an answer you did not attempt teaches nothing.
   <img src="19-diagrams/generated/url-shortener-v4.svg" alt="URL shortener at version 4, a request animating from client through load balancer and app servers to the cache" width="760">
 </div>
 
-**[SAGARCHRY0777.github.io/system-design-lab](https://SAGARCHRY0777.github.io/system-design-lab/)** — six tabs:
+**[SAGARCHRY0777.github.io/system-design-lab](https://SAGARCHRY0777.github.io/system-design-lab/)** — seven tabs:
 
 | Tab | What it does |
 |---|---|
@@ -47,9 +47,20 @@ commit before it reveals. Reading an answer you did not attempt teaches nothing.
 | **Design studio** | 33 briefs and [24 parameter decisions](16-design-exercises/). You are handed the system, the traffic and the symptom, and you **produce** the architecture — then set its shard key, TTL and timeouts. Over-building is marked as harshly as under-building, and every decision is labelled by how expensive it is to undo. |
 | **Patterns** | 78 patterns, searchable, each with a diagram. Every Gang of Four entry shows what it becomes **across a network**, and why that is harder. |
 | **Case studies** | 10 real systems with primary sources. The field given most weight is *when this does **not** apply to you*. |
+| **Bench** | A live queueing simulator. Drag the arrival rate and watch response time go vertical **at 85%, not 100%** — Poisson arrivals and exponential service, with the closed-form Erlang C prediction drawn on top. Also shows why splitting one queue into four costs you 2× the latency for identical capacity. |
 | **Interview** | 46 questions, 98 follow-ups revealed **one at a time** — because anyone can recite a first answer. |
 
-Six themes, responsive. Every architecture is authored **once** as a
+**Press <kbd>⌘K</kbd>** (or <kbd>/</kbd>) for a command palette over every system, version, request
+flow, failure mode and parameter decision — 177 of them. Typing `thundering` finds the cache
+failure that causes it; `oversell` lands on the version where it was found.
+
+**Every view is a URL.**
+[`#/architecture/url-shortener/8/v8-failover`](https://SAGARCHRY0777.github.io/system-design-lab/#/architecture/url-shortener/8/v8-failover)
+opens the URL shortener mid-regional-failure with that request selected, so a specific thing is
+something you can send someone.
+
+Six themes, responsive, and the bench honours `prefers-reduced-motion` by running to a steady state
+instead of animating. Every architecture is authored **once** as a
 [scene file](19-diagrams/scenes/SCHEMA.md) that drives both the app and the diagrams committed here,
 so the two cannot disagree.
 

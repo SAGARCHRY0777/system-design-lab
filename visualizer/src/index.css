@@ -930,3 +930,142 @@ footer p { margin: 0; max-width: 82ch; }
   font-style: normal; font-size: 11px; letter-spacing: .04em;
   color: var(--amber); margin-right: 10px;
 }
+
+/* ============================================================================
+   COMMAND PALETTE
+   Six systems, forty-eight versions, sixty flows and thirty-five failure modes
+   were previously reachable only through three dropdowns and a slider.
+   ========================================================================== */
+.pal-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: color-mix(in srgb, #000 55%, transparent);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 12vh 16px 16px;
+  backdrop-filter: blur(2px);
+}
+.pal {
+  width: min(680px, 100%);
+  max-height: 70vh;
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px color-mix(in srgb, #000 45%, transparent);
+  overflow: hidden;
+}
+.pal-input {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.pal-input > span { color: var(--ink3); font-size: 16px; }
+.pal-input input {
+  flex: 1; background: none; border: 0; outline: none;
+  color: var(--ink); font: inherit; font-size: 15px;
+}
+.pal-input input::placeholder { color: var(--ink3); }
+
+.pal-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; flex: 1; }
+.pal-group {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink3); padding: 10px 10px 4px;
+}
+.pal-item {
+  display: flex; flex-direction: column; gap: 2px;
+  width: 100%; text-align: left;
+  padding: 8px 10px; border: 0; border-radius: 6px;
+  background: none; color: var(--ink2); cursor: pointer; font: inherit;
+}
+.pal-item.on { background: var(--sunken); color: var(--ink); }
+.pal-item.on .pal-title { color: var(--accent); }
+.pal-title { font-size: 14px; }
+.pal-sub { font-size: 12px; color: var(--ink3); line-height: 1.4; }
+.pal-empty { padding: 24px 12px; color: var(--ink3); font-size: 14px; text-align: center; }
+
+.pal-foot {
+  display: flex; align-items: center; gap: 16px;
+  padding: 9px 14px; border-top: 1px solid var(--line);
+  font-size: 11px; color: var(--ink3);
+}
+.pal-count { margin-left: auto; font-family: ui-monospace, monospace; }
+.pal kbd, .pal-open kbd {
+  font-family: ui-monospace, monospace; font-size: 10px;
+  border: 1px solid var(--line2); border-radius: 4px;
+  padding: 1px 5px; margin-left: 2px; color: var(--ink3);
+}
+.pal-open { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ============================================================================
+   CAPACITY BENCH
+   ========================================================================== */
+.bench { margin-top: 22px; }
+.bn-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.bn-title { font-size: 20px; margin: 4px 0 0; line-height: 1.25; }
+.bn-lede { color: var(--ink2); font-size: 15px; max-width: 74ch; margin: 12px 0 20px; }
+
+.bn-grid { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 22px; }
+@media (max-width: 860px) { .bn-grid { grid-template-columns: 1fr; } }
+
+.bn-ctl { display: block; margin-bottom: 14px; }
+.bn-ctl > span { display: block; font-size: 13px; color: var(--ink2); margin-bottom: 5px; }
+.bn-ctl > span strong { color: var(--ink); font-family: ui-monospace, monospace; }
+.bn-ctl input[type="range"] { width: 100%; }
+.bn-mode { margin: 18px 0; }
+.bn-mode .speeds { margin-top: 7px; }
+
+.bn-readout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 18px 0 0; padding: 14px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--sunken);
+}
+.bn-readout div { margin: 0; }
+.bn-readout dt { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.bn-readout dd {
+  margin: 2px 0 0; font-family: ui-monospace, monospace;
+  font-size: 19px; color: var(--ink);
+}
+.bn-readout dd.warn { color: var(--amber); }
+.bn-readout dd.danger, .bn-readout dd.over { color: var(--red); }
+.bn-readout dd.ok { color: var(--accent); }
+
+.bn-charts { display: flex; flex-direction: column; gap: 16px; }
+.bn-chart { display: flex; flex-direction: column; gap: 6px; }
+.bn-canvas {
+  width: 100%; display: block;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--sunken);
+}
+.bn-canvas.depth { height: 140px; }
+.bn-canvas.curve { height: 170px; }
+
+.bn-verdict {
+  margin: 22px 0; padding: 14px 16px;
+  border-left: 3px solid var(--line2); border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--sunken);
+}
+.bn-verdict strong { display: block; font-size: 15px; margin-bottom: 5px; }
+.bn-verdict p { margin: 0; color: var(--ink2); font-size: 14.5px; max-width: 74ch; }
+.bn-verdict.ok { border-left-color: var(--accent); }
+.bn-verdict.ok strong { color: var(--accent); }
+.bn-verdict.warn { border-left-color: var(--amber); }
+.bn-verdict.warn strong { color: var(--amber); }
+.bn-verdict.danger, .bn-verdict.over {
+  border-left-color: var(--red);
+  background: color-mix(in srgb, var(--red) 7%, var(--sunken));
+}
+.bn-verdict.danger strong, .bn-verdict.over strong { color: var(--red); }
+
+.bn-table { border-collapse: collapse; margin: 8px 0 10px; font-size: 14px; }
+.bn-table th, .bn-table td { text-align: left; padding: 6px 20px 6px 0; }
+.bn-table thead th { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.bn-table tbody th { font-weight: 600; color: var(--ink3); font-size: 12px; }
+.bn-table td { font-family: ui-monospace, monospace; color: var(--ink); }
+.bn-table td.hot { color: var(--red); }
+.bn-table td.dim, .bn-table .dim { color: var(--ink3); }
+
+.bn-note {
+  margin: 22px 0; padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.bn-note p { margin: 0 0 9px; color: var(--ink2); font-size: 14.5px; max-width: 74ch; }
+.bn-note p:last-child { margin-bottom: 0; }

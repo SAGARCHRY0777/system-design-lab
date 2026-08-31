@@ -6,7 +6,9 @@ difficulty: Advanced
 
 # Ticket Booking — parameter decisions
 
-4 decisions taken while building [Ticket Booking](../17-case-studies/). Not *which component* — that is the other exercise. These are the values you set once the component is there, which is the half that ends up in the postmortem.
+4 decisions taken while building **Ticket Booking**. Not *which component* — that is the other exercise. These are the values you set once the component is there, which is the half that ends up in the postmortem.
+
+> This system is animated, quizzed and gradeable in the [lab](https://sagarchry0777.github.io/system-design-lab/), but its V1→V8 prose page is not written yet — see [gaps](../GAPS.md).
 
 **Commit to an answer before opening the box.** A parameter question you read the answer to teaches nothing; the correction only lands if there was a prediction for it to contradict.
 
@@ -127,6 +129,6 @@ Of these 4: **0 are one-way doors**, 2 are costly to reverse, 2 are config. Sort
 
 ## Related
 
-- [Ticket Booking — the full design](../17-case-studies/)
+- [Real-world problems](../15-real-world-problems/) — the systems that *do* have a written V1→V8 design (Ticket Booking does not yet)
 - [All parameter decisions](README.md)
 - [Trade-off framework](../TRADEOFF-FRAMEWORK.md)

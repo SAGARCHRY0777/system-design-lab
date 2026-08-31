@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SCENES } from '../scenes/index.js'
 import { decisionsForScene } from '../scenes/decisions.js'
 import { buildBriefs, grade, whyWrong } from '../lib/studio.js'
@@ -54,18 +54,37 @@ export default function Studio() {
 
   const b = briefs[Math.min(i, briefs.length - 1)]
   const decisions = assigned[Math.min(i, briefs.length - 1)] ?? []
+  const d = decisions[di]
+
+  // Every hook must sit ABOVE the early return below, or a scene with no briefs
+  // changes how many hooks this component calls and React loses its place.
+  //
+  // Only the FIRST attempt at a decision is recorded. This phase has a "Try
+  // again" button and Predict does not, so without this a reader could miss a
+  // decision, retry it immediately, and erase their own miss -- record(_, true)
+  // retires the entry. The retention list would then hold only the things you
+  // had not yet bothered to retry, which is the opposite of what it is for.
+  const attempted = useRef(new Set())
+  useEffect(() => { attempted.current = new Set() }, [sceneId])
+
+  const missedBefore = useMemo(
+    () => (d ? missedIn('decision').includes(`${scene.id}:${d.id}`) : false),
+    // `dResult` is the trigger: the tag must re-evaluate after a commit writes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scene.id, d, dResult],
+  )
+
   if (!b) return <div className="studio"><p className="hint">No briefs for this system.</p></div>
 
   const label = id => scene.nodes[id]?.label ?? id
   const toggle = id => setPicked(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
-  const nextBrief = () => setI(n => (n + 1) % briefs.length)
+  // Reset here as well as in the [i] effect. The effect only runs after paint,
+  // so advancing would otherwise commit one frame holding the NEW brief's
+  // decisions against the OLD phase and index -- a visible flash of a body with
+  // nothing in it.
+  const nextBrief = () => { reset(); setI(n => (n + 1) % briefs.length) }
 
-  const d = decisions[di]
   const rev = d ? REVERSIBILITY[d.reversibility] : null
-  // Read at render rather than in state: `record` writes on commit, and the tag
-  // should disappear the moment a previously-missed decision is corrected.
-  const missedBefore = d != null
-    && missedIn('decision').includes(`${scene.id}:${d.id}`)
 
   const VERDICT = {
     exact: ['Exactly right.', 'You added what was needed and nothing else.'],
@@ -271,7 +290,11 @@ export default function Studio() {
                 onClick={() => {
                   const g = gradeDecision(d, dPicked)
                   setDResult(g)
-                  record('decision', `${scene.id}:${d.id}`, g.correct)
+                  const key = `${scene.id}:${d.id}`
+                  if (!attempted.current.has(key)) {
+                    attempted.current.add(key)
+                    record('decision', key, g.correct)
+                  }
                 }}
               >
                 Commit

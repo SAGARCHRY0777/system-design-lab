@@ -98,6 +98,14 @@ jobs:
         working-directory: visualizer
         run: npm run check:decisions
 
+      # The capacity bench states that 90% utilisation costs 10x the service
+      # time. A drifted simulator would go on drawing a smooth, confident,
+      # wrong curve, so the simulation and the closed form are computed by
+      # separate code and asserted to agree.
+      - name: Capacity bench agrees with queueing theory
+        working-directory: visualizer
+        run: npm run check:queueing
+
       - name: Build
         working-directory: visualizer
         run: npm run build

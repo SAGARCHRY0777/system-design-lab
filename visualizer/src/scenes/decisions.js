@@ -26,11 +26,14 @@ const FILES = [
   chatSystem, notificationSystem, paymentSystem,
 ]
 
-export const DECISIONS = Object.fromEntries(
-  FILES.map(f => [f.scene, f.decisions]),
-)
+const BY_SCENE = Object.fromEntries(FILES.map(f => [f.scene, f.decisions]))
 
 /** The decisions for one scene, or an empty list if it has none yet. */
 export function decisionsForScene(sceneId) {
-  return DECISIONS[sceneId] ?? []
+  return BY_SCENE[sceneId] ?? []
+}
+
+/** Every decision, tagged with its scene -- for search and the review queue. */
+export function allDecisions() {
+  return FILES.flatMap(f => f.decisions.map(d => ({ ...d, scene: f.scene })))
 }

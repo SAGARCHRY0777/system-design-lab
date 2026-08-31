@@ -53,9 +53,15 @@ export const REVERSIBILITY = {
  * reader meets the ranking in the order that teaches it.
  */
 export function buildDecisions(decisions) {
+  // Unknown reversibility must not throw. check_scenes.py rejects one in CI, so
+  // this should be unreachable -- but an unguarded lookup here took down the
+  // whole studio tab rather than degrading, and it only fired when two
+  // decisions shared a version, because that is the only time the tie-break
+  // clause evaluates. A latent crash that hides behind a `||` is worse than a
+  // loud one.
+  const weight = d => REVERSIBILITY[d.reversibility]?.weight ?? -1
   return [...(decisions ?? [])].sort(
-    (a, b) => a.v - b.v
-      || REVERSIBILITY[b.reversibility].weight - REVERSIBILITY[a.reversibility].weight,
+    (a, b) => a.v - b.v || weight(b) - weight(a),
   )
 }
 
