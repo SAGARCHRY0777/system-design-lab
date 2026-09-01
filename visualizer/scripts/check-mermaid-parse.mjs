@@ -17,6 +17,11 @@
  * one. A check that fails everything proves as little as one that passes
  * everything.
  *
+ * jsdom is pinned to ^26 on purpose: 30 requires node ^22.22 || ^24.15, and CI
+ * runs node 20. npm only WARNS about an unmet engines field, so installing the
+ * newer one succeeds and then fails at import time, in this script, looking
+ * like a diagram problem. Match the declared floor rather than the latest tag.
+ *
  *     npm run check:mermaid
  */
 
