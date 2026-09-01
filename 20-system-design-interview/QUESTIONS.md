@@ -48,6 +48,14 @@ Not sure which track to start with? The [diagnostic](../DIAGNOSTIC.md) is twelve
 
 *Whether you can put arithmetic on a system instead of adjectives*
 
+```mermaid
+flowchart LR
+    P["Pick any two<br/>under a partition"] --> C["Consistency<br/>every read sees the last write"]
+    P --> A["Availability<br/>every request gets an answer"]
+    P --> T["Partition tolerance<br/>the network WILL split"]
+    T --> N["Not optional.<br/>So the real choice<br/>is C or A."]
+```
+
 ### Foundations · Basic
 
 **1.** Our dashboard says average response time is 40 ms and has not moved in a month. Support has a growing pile of tickets saying the app is slow. Which one is lying?
@@ -242,6 +250,16 @@ When the dependency is anywhere near saturation, because hedging adds load exact
 ## Caching
 
 *Whether you know a cache is a bet on skew, and what it costs when it dies*
+
+```mermaid
+flowchart LR
+    CL["Client"] --> AP["App"]
+    AP -->|"1 - look"| CA["Cache"]
+    CA -->|"HIT, ~95%<br/>1 ms"| AP
+    AP -.->|"2 - MISS only<br/>~30 ms"| DB[("Database")]
+    DB -.->|"3 - populate"| CA
+    X["Cache dies:<br/>100% of reads land<br/>on the database at once"] -.-> DB
+```
 
 ### Caching · Basic
 
@@ -438,6 +456,15 @@ No — it is a durability decision wearing one. Choose it deliberately, for data
 
 *Whether you have an ordered list of options, or a favourite one*
 
+```mermaid
+flowchart TB
+    Q["A query arrives"] --> D{"What shape<br/>is the access?"}
+    D -->|"known key,<br/>one row"| K["Point lookup<br/>index does the work"]
+    D -->|"range over<br/>one column"| R["Range scan<br/>ordering does the work"]
+    D -->|"join across<br/>many tables"| J["Normalised relational<br/>correctness does the work"]
+    D -->|"whole document<br/>at once"| N["Denormalised<br/>read speed, write amplification"]
+```
+
 ### Databases · Basic
 
 **1.** Reads are slow and the database is the suspect. Walk me through your options, in order.
@@ -633,6 +660,25 @@ Because the engine sets write amplification, read amplification and the shape of
 
 *Whether you can tell read scale from write scale, and reversible from permanent*
 
+```mermaid
+flowchart TB
+    subgraph rep["Replication — COPIES of the same data"]
+        direction LR
+        PR[("Primary")] -.->|"lag"| RA[("Replica")]
+        PR -.-> RB[("Replica")]
+    end
+    subgraph sh["Sharding — SPLITS of different data"]
+        direction LR
+        S1[("Shard 1<br/>keys a-h")]
+        S2[("Shard 2<br/>keys i-p")]
+        S3[("Shard 3<br/>keys q-z")]
+    end
+    rep --> W["Replication buys read capacity<br/>and survives a node loss."]
+    sh --> V["Sharding buys write capacity<br/>and dataset size."]
+    W --> Z["Different axes.<br/>Most systems need both."]
+    V --> Z
+```
+
 ### Sharding and Replication · Basic
 
 **1.** A user creates a record, is shown 201 Created, immediately loads their list of records, and the list is empty. Nothing is broken. Explain, and give the cheapest fix.
@@ -819,6 +865,16 @@ It fell to about 99.2%, and the shape is worse than the number: losing one shard
 ## Messaging
 
 *Delivery semantics, backpressure, and what a queue quietly stops doing for you*
+
+```mermaid
+flowchart LR
+    PD["Producer"] -->|"publish and return<br/>caller does not wait"| Q[["Queue"]]
+    Q --> C1["Consumer"]
+    Q --> C2["Consumer"]
+    C1 -->|"ack"| Q
+    C2 -.->|"fails N times"| DLQ[["Dead letter"]]
+    DLQ -.-> H["A human looks at it.<br/>Without this a poison message<br/>occupies a worker forever."]
+```
 
 ### Messaging · Basic
 
@@ -1015,6 +1071,19 @@ Because the queue is exactly where work goes missing. Propagate the correlation 
 
 *The contract other teams build on, and the defaults in it that are quietly wrong*
 
+```mermaid
+flowchart TB
+    subgraph rest["REST"]
+        R1["GET /users/1"] --> R2["GET /users/1/orders"] --> R3["N more calls<br/>for each order"]
+    end
+    subgraph gql["GraphQL"]
+        G1["One query,<br/>exactly the fields wanted"] --> G2["One round trip.<br/>Cost moves to the server."]
+    end
+    subgraph grpc["gRPC"]
+        P1["Binary, typed,<br/>streaming"] --> P2["Fast between services.<br/>Awkward from a browser."]
+    end
+```
+
 ### API Design · Basic
 
 **1.** You are building a feed endpoint and a colleague writes LIMIT 20 OFFSET ?. What is wrong with it?
@@ -1209,6 +1278,16 @@ No, it is the weakest of its four. Protobuf is several times smaller than equiva
 ## Security
 
 *Whether you authorise the object, and whether you state your revocation window*
+
+```mermaid
+flowchart LR
+    U["User"] -->|"1 - credentials"| I["Identity provider"]
+    I -->|"2 - signed token<br/>short lived"| U
+    U -->|"3 - token on every call"| G["API Gateway"]
+    G -->|"4 - verify SIGNATURE<br/>not the contents"| G
+    G -->|"5 - authenticated:<br/>who are you"| S["Service"]
+    S -->|"6 - authorised:<br/>may you do THIS"| D[("Data")]
+```
 
 ### Security · Basic
 
@@ -1440,6 +1519,14 @@ Because the firewall sits behind the link that is already full. You cannot rate-
 
 *Whether you would know it broke, and whether the pager still means anything*
 
+```mermaid
+flowchart TB
+    M["Metrics<br/>cheap, aggregate<br/>tells you SOMETHING is wrong"] --> AL{"Alert"}
+    T["Traces<br/>one request end to end<br/>tells you WHERE"] --> AL
+    L["Logs<br/>expensive, detailed<br/>tells you WHY"] --> AL
+    AL --> SLO["Alert on SLO burn,<br/>not on CPU.<br/>A page nobody acts on<br/>trains people to ignore pages."]
+```
+
 ### Observability · Basic
 
 **1.** To chase one customer complaint, an engineer adds user_id as a label on the HTTP request metric. The deploy goes out at 14:00. Predict 14:30.
@@ -1626,6 +1713,14 @@ Alert fatigue, and it is a correctness problem rather than a comfort one — the
 ## Architecture
 
 *Naming the bottleneck before drawing the box, and scaling one at a time*
+
+```mermaid
+flowchart LR
+    A["Monolith<br/>one deploy, no boundaries"] --> B["Modular monolith<br/>boundaries, still one deploy"]
+    B --> C["Services<br/>boundaries plus a network"]
+    B --> D["The boundaries are<br/>the valuable part, and free."]
+    C --> E["The network is the<br/>expensive part, and deferrable."]
+```
 
 ### Architecture · Basic
 

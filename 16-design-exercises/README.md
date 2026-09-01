@@ -35,6 +35,21 @@ The uncomfortable pattern is that **one-way doors cluster at the beginning.** Th
 | [Notification System](notification-system.md) | 4 | 0 | 1 | 3 |
 | [Payment System](payment-system.md) | 4 | 1 | 2 | 1 |
 
+## Where the one-way doors are
+
+Plotted against the version they are taken at. The pattern is the uncomfortable part — the decisions you cannot undo are the ones you make first.
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+timeline
+    title Parameter decisions by the version that forces them
+    V1-V2 · smallest system : URL Shortener: Short code length
+    V3-V5 · growing : Social Feed: What a feed row stores : Payment System: When ledger entries are written
+    V6+ · at scale : URL Shortener: Shard key : Chat System: Message ordering key
+```
+
+They land at V1, V3, V4, V6, V6 — 3 of 5 by V4, roughly the midpoint of a system's life here and long before there is enough traffic to prove which choice was right. An ID scheme, a feed row's contents and an ordering key all have to be settled while the evidence that would settle them does not exist yet. **That is the argument for recognising a one-way door, not for expecting to avoid one.**
+
 ## Do these interactively instead
 
 The [design studio](https://sagarchry0777.github.io/system-design-lab/) asks these in sequence, after first making you choose the components — so the parameter question arrives where it does in real life: once you have already committed to the design. It also remembers which ones you got wrong.

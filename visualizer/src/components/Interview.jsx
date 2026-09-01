@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import BANK from '../../../20-system-design-interview/questions.json'
+import Mermaid from './Mermaid.jsx'
 
 /**
  * The interview tab.
@@ -88,6 +89,15 @@ export default function Interview() {
         </div>
 
         <p className="hint" style={{ margin: '2px 0 0' }}>{track.blurb}</p>
+
+        {/* The shape this track's questions keep circling back to. Generated
+            from the same source as QUESTIONS.md, so the page and the app show
+            the same picture. */}
+        {track.diagram && (
+          <div className="iv-diagram">
+            <Mermaid chart={track.diagram} id={`track-${track.id}`} />
+          </div>
+        )}
 
         <ul className="pat-list">
           {questions.map(x => (

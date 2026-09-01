@@ -22,6 +22,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 
 **At V3** (5M users): A user following 2,000 accounts needed a 2,000-way merge on every refresh. Read-time assembly does not scale with follow count.
 
+<img src="../19-diagrams/generated/social-feed-v3.svg" alt="Social Feed at version 3: 5M users" width="740">
+
 **You are materialising feeds. What goes in each row?**
 
 - The full post: text, author name, avatar URL, counts
@@ -48,6 +50,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V3** (5M users): A user following 2,000 accounts needed a 2,000-way merge on every refresh. Read-time assembly does not scale with follow count.
+
+<img src="../19-diagrams/generated/social-feed-v3.svg" alt="Social Feed at version 3: 5M users" width="740">
 
 **How many entries do you keep in a user's precomputed feed?**
 
@@ -76,6 +80,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 
 **At V4** (20M users): Fan-out on write made posting slow: the author waited while the system wrote to thousands of feeds.
 
+<img src="../19-diagrams/generated/social-feed-v4.svg" alt="Social Feed at version 4: 20M users" width="740">
+
 **A fan-out worker crashes halfway through a job. What did you configure?**
 
 - At-least-once, with an idempotent feed insert
@@ -102,6 +108,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V6** (Hybrid fan-out): Neither strategy works alone: write fan-out dies on celebrities, read fan-out dies on high follow counts.
+
+<img src="../19-diagrams/generated/social-feed-v6.svg" alt="Social Feed at version 6: Hybrid fan-out" width="740">
 
 **Above what follower count do you stop fanning out on write?**
 

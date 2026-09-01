@@ -20,6 +20,8 @@ Of these 4: **1 is a one-way door**, 2 are costly to reverse, 1 is config. Sort 
 
 **At V2** (1M/day · idempotency keys): A customer's phone lost signal mid-checkout and the app retried. They were charged twice and the refund took nine days.
 
+<img src="../19-diagrams/generated/payment-system-v2.svg" alt="Payment System at version 2: 1M/day · idempotency keys" width="740">
+
 **A phone lost signal mid-checkout and the app retried. How long is the key remembered?**
 
 - 60 seconds
@@ -46,6 +48,8 @@ Of these 4: **1 is a one-way door**, 2 are costly to reverse, 1 is config. Sort 
 > **One-way door** — You do not get to change your mind. Reversing it is a migration measured in months, or it is simply not possible.
 
 **At V4** (3M/day · double-entry ledger): Finance asked what the outstanding balance was and three services gave three different answers. A boolean paid column on an order is not an accounting record.
+
+<img src="../19-diagrams/generated/payment-system-v4.svg" alt="Payment System at version 4: 3M/day · double-entry ledger" width="740">
 
 **A payment is captured. When do the double-entry rows get written?**
 
@@ -74,6 +78,8 @@ Of these 4: **1 is a one-way door**, 2 are costly to reverse, 1 is config. Sort 
 
 **At V6** (5M/day · webhooks): The provider's captured event arrived before its authorised event, and a retried webhook applied the same capture twice.
 
+<img src="../19-diagrams/generated/payment-system-v6.svg" alt="Payment System at version 6: 5M/day · webhooks" width="740">
+
 **The captured event arrived before authorised, and one webhook was redelivered. How do you apply them?**
 
 - Apply each webhook in the order it arrives
@@ -100,6 +106,8 @@ Of these 4: **1 is a one-way door**, 2 are costly to reverse, 1 is config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V8** (Provider degraded · unknown outcomes): Design review: the provider times out on 8% of captures, and most of those captures actually succeeded.
+
+<img src="../19-diagrams/generated/payment-system-v8.svg" alt="Payment System at version 8: Provider degraded · unknown outcomes" width="740">
 
 **The provider times out on 8% of captures, and most of those actually succeeded. What do you do?**
 

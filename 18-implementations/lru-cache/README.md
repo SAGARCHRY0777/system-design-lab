@@ -19,6 +19,34 @@ python bench.py                 # real measurements, run them yourself
 
 ## What this demonstrates
 
+An LRU cache is two data structures that point at each other, and that pairing
+is the only reason every operation is O(1):
+
+```mermaid
+flowchart TB
+    subgraph map["dict: key to node — O(1) lookup"]
+        direction LR
+        KA["'a'"]
+        KB["'b'"]
+        KC["'c'"]
+    end
+    subgraph list["doubly linked list: recency order — O(1) move"]
+        direction LR
+        H(["head<br/>most recent"]) --> NC["'c'"] --> NA["'a'"] --> NB["'b'"] --> T(["tail<br/>evict here"])
+    end
+    KA -.-> NA
+    KB -.-> NB
+    KC -.-> NC
+```
+
+The dict finds the node without scanning. The list reorders without shifting.
+Either one alone forces a linear operation somewhere: a dict cannot tell you
+what was least recently used, and a list cannot find a key without walking it.
+
+**Eviction is always the tail**, which is what makes the scan vulnerability
+below so damaging — one pass over cold keys pushes the entire working set toward
+it.
+
 | | Hit rate after a scan | Structure | Cost per get |
 |---|---|---|---|
 | `LRUCache` | **0.0%** — the hot set is gone | dict + one doubly-linked list | 0.433 µs |

@@ -41,6 +41,31 @@ loud what it costs, because the cost is not the one people expect.
 
 ## Decision
 
+```mermaid
+flowchart LR
+    subgraph before["Before — more replicas"]
+        direction LR
+        A1["App"] --> R1["Replica 1"]
+        A1 --> R2["Replica 2"]
+        A1 --> R3["Replica 3"]
+        R0["Primary"] -.->|"replication lag"| R1
+        R0 -.-> R2
+        R0 -.-> R3
+    end
+    subgraph after["After — cache first"]
+        direction LR
+        A2["App"] -->|"~95% of reads<br/>never leave here"| C["Cache<br/>TTL 1h"]
+        A2 -->|"on miss only"| RR["Replica"]
+        P["Primary"] -.-> RR
+    end
+```
+
+Each replica is a full copy of the dataset carrying full write traffic, and it
+still costs a network round trip on every read. The cache absorbs the same
+traffic at a fraction of the memory and returns in single-digit milliseconds —
+**but only because this workload is skewed.** Uniformly random reads over a
+large keyspace would have made the replicas the right answer.
+
 Put a **shared distributed cache** in front of the `urls` table:
 
 - **Strategy** — cache-aside, populated on miss by the application.

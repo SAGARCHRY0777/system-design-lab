@@ -20,6 +20,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 
 **At V3** (200K online · two gateways): A second gateway was added and half the messages vanished. The sender's gateway had no idea which machine held the recipient's socket, so it delivered to nobody.
 
+<img src="../19-diagrams/generated/chat-system-v3.svg" alt="Chat System at version 3: 200K online · two gateways" width="740">
+
 **The registry maps user to gateway. How does an entry go away?**
 
 - Deleted when the gateway sees a clean disconnect
@@ -47,6 +49,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 
 **At V5** (600K online · offline delivery): Most recipients are not connected. A message published to a bus with nobody listening is a message deleted, and that is what was happening to every message sent to a sleeping phone.
 
+<img src="../19-diagrams/generated/chat-system-v5.svg" alt="Chat System at version 5: 600K online · offline delivery" width="740">
+
 **The recipient is offline and the push provider might time out. What guarantee?**
 
 - At-most-once — try to deliver, do not retry
@@ -73,6 +77,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 > **One-way door** — You do not get to change your mind. Reversing it is a migration measured in months, or it is simply not possible.
 
 **At V6** (800K online · order and receipts): Two messages sent 30 ms apart arrived in the opposite order on one device and the right order on another. Nobody could tell whether a message had been read, or by whom.
+
+<img src="../19-diagrams/generated/chat-system-v6.svg" alt="Chat System at version 6: 800K online · order and receipts" width="740">
 
 **Two messages 30 ms apart arrived in different orders on different devices. What orders them?**
 
@@ -103,6 +109,8 @@ Of these 4: **1 is a one-way door**, 1 is costly to reverse, 2 are config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V7** (1M online · presence): Presence was the cheapest-looking item on the roadmap. With 1M connections and 200 contacts each, one person going online is 200 notifications — and people go online about 40 times a day.
+
+<img src="../19-diagrams/generated/chat-system-v7.svg" alt="Chat System at version 7: 1M online · presence" width="740">
 
 **1M users, 200 contacts each. How does an online/offline change reach contacts?**
 

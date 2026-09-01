@@ -27,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from interview_data import TRACKS  # noqa: E402
+from interview_diagrams import DIAGRAMS  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "20-system-design-interview" / "QUESTIONS.md"
@@ -225,6 +226,11 @@ def build() -> str:
         A("")
         A(f"*{t['blurb']}*")
         A("")
+        if t["id"] in DIAGRAMS:
+            A("```mermaid")
+            A(DIAGRAMS[t["id"]].rstrip())
+            A("```")
+            A("")
         pairs = numbered(t)
         for lv in LEVELS:
             group = [(qid, q) for qid, q in pairs if q["level"] == lv]
@@ -269,6 +275,7 @@ def build_json() -> str:
     for t in TRACKS:
         out["tracks"].append({
             "id": t["id"],
+            "diagram": DIAGRAMS.get(t["id"]),
             "name": t["name"],
             "blurb": t["blurb"],
             "questions": [

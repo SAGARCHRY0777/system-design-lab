@@ -18,6 +18,35 @@ python bench.py                     # real measurements, run them yourself
 
 ## What this demonstrates
 
+A circuit breaker is a state machine, and almost every bug in one is a missing
+transition. This is the whole of it:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Closed
+    Closed --> Open: consecutive failures reach the threshold
+    Open --> HalfOpen: reset timeout elapses
+    HalfOpen --> Closed: the single trial call succeeds
+    HalfOpen --> Open: the trial call fails
+    note right of Closed
+        Calls pass through.
+        Failures are counted.
+    end note
+    note right of Open
+        Calls fail immediately.
+        The dependency is not called at all.
+    end note
+    note right of HalfOpen
+        Exactly ONE call is allowed through.
+        Everything else still fails fast.
+    end note
+```
+
+**The half-open state is the part people leave out**, and without it the breaker
+either never recovers or slams every waiting caller into a dependency that has
+not finished recovering. One trial call is the difference.
+
 | State | Behaviour | Cost per call |
 |---|---|---|
 | `CLOSED` | Calls pass; consecutive failures counted | 0.250 µs — invisible |

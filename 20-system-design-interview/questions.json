@@ -2,6 +2,7 @@
   "tracks": [
     {
       "id": "foundations",
+      "diagram": "flowchart LR\n    P[\"Pick any two<br/>under a partition\"] --> C[\"Consistency<br/>every read sees the last write\"]\n    P --> A[\"Availability<br/>every request gets an answer\"]\n    P --> T[\"Partition tolerance<br/>the network WILL split\"]\n    T --> N[\"Not optional.<br/>So the real choice<br/>is C or A.\"]\n",
       "name": "Foundations",
       "blurb": "Whether you can put arithmetic on a system instead of adjectives",
       "questions": [
@@ -133,6 +134,7 @@
     },
     {
       "id": "caching",
+      "diagram": "flowchart LR\n    CL[\"Client\"] --> AP[\"App\"]\n    AP -->|\"1 - look\"| CA[\"Cache\"]\n    CA -->|\"HIT, ~95%<br/>1 ms\"| AP\n    AP -.->|\"2 - MISS only<br/>~30 ms\"| DB[(\"Database\")]\n    DB -.->|\"3 - populate\"| CA\n    X[\"Cache dies:<br/>100% of reads land<br/>on the database at once\"] -.-> DB\n",
       "name": "Caching",
       "blurb": "Whether you know a cache is a bet on skew, and what it costs when it dies",
       "questions": [
@@ -264,6 +266,7 @@
     },
     {
       "id": "databases",
+      "diagram": "flowchart TB\n    Q[\"A query arrives\"] --> D{\"What shape<br/>is the access?\"}\n    D -->|\"known key,<br/>one row\"| K[\"Point lookup<br/>index does the work\"]\n    D -->|\"range over<br/>one column\"| R[\"Range scan<br/>ordering does the work\"]\n    D -->|\"join across<br/>many tables\"| J[\"Normalised relational<br/>correctness does the work\"]\n    D -->|\"whole document<br/>at once\"| N[\"Denormalised<br/>read speed, write amplification\"]\n",
       "name": "Databases",
       "blurb": "Whether you have an ordered list of options, or a favourite one",
       "questions": [
@@ -395,6 +398,7 @@
     },
     {
       "id": "sharding-replication",
+      "diagram": "flowchart TB\n    subgraph rep[\"Replication — COPIES of the same data\"]\n        direction LR\n        PR[(\"Primary\")] -.->|\"lag\"| RA[(\"Replica\")]\n        PR -.-> RB[(\"Replica\")]\n    end\n    subgraph sh[\"Sharding — SPLITS of different data\"]\n        direction LR\n        S1[(\"Shard 1<br/>keys a-h\")]\n        S2[(\"Shard 2<br/>keys i-p\")]\n        S3[(\"Shard 3<br/>keys q-z\")]\n    end\n    rep --> W[\"Replication buys read capacity<br/>and survives a node loss.\"]\n    sh --> V[\"Sharding buys write capacity<br/>and dataset size.\"]\n    W --> Z[\"Different axes.<br/>Most systems need both.\"]\n    V --> Z\n",
       "name": "Sharding and Replication",
       "blurb": "Whether you can tell read scale from write scale, and reversible from permanent",
       "questions": [
@@ -522,6 +526,7 @@
     },
     {
       "id": "messaging",
+      "diagram": "flowchart LR\n    PD[\"Producer\"] -->|\"publish and return<br/>caller does not wait\"| Q[[\"Queue\"]]\n    Q --> C1[\"Consumer\"]\n    Q --> C2[\"Consumer\"]\n    C1 -->|\"ack\"| Q\n    C2 -.->|\"fails N times\"| DLQ[[\"Dead letter\"]]\n    DLQ -.-> H[\"A human looks at it.<br/>Without this a poison message<br/>occupies a worker forever.\"]\n",
       "name": "Messaging",
       "blurb": "Delivery semantics, backpressure, and what a queue quietly stops doing for you",
       "questions": [
@@ -653,6 +658,7 @@
     },
     {
       "id": "api-design",
+      "diagram": "flowchart TB\n    subgraph rest[\"REST\"]\n        R1[\"GET /users/1\"] --> R2[\"GET /users/1/orders\"] --> R3[\"N more calls<br/>for each order\"]\n    end\n    subgraph gql[\"GraphQL\"]\n        G1[\"One query,<br/>exactly the fields wanted\"] --> G2[\"One round trip.<br/>Cost moves to the server.\"]\n    end\n    subgraph grpc[\"gRPC\"]\n        P1[\"Binary, typed,<br/>streaming\"] --> P2[\"Fast between services.<br/>Awkward from a browser.\"]\n    end\n",
       "name": "API Design",
       "blurb": "The contract other teams build on, and the defaults in it that are quietly wrong",
       "questions": [
@@ -784,6 +790,7 @@
     },
     {
       "id": "security",
+      "diagram": "flowchart LR\n    U[\"User\"] -->|\"1 - credentials\"| I[\"Identity provider\"]\n    I -->|\"2 - signed token<br/>short lived\"| U\n    U -->|\"3 - token on every call\"| G[\"API Gateway\"]\n    G -->|\"4 - verify SIGNATURE<br/>not the contents\"| G\n    G -->|\"5 - authenticated:<br/>who are you\"| S[\"Service\"]\n    S -->|\"6 - authorised:<br/>may you do THIS\"| D[(\"Data\")]\n",
       "name": "Security",
       "blurb": "Whether you authorise the object, and whether you state your revocation window",
       "questions": [
@@ -939,6 +946,7 @@
     },
     {
       "id": "observability",
+      "diagram": "flowchart TB\n    M[\"Metrics<br/>cheap, aggregate<br/>tells you SOMETHING is wrong\"] --> AL{\"Alert\"}\n    T[\"Traces<br/>one request end to end<br/>tells you WHERE\"] --> AL\n    L[\"Logs<br/>expensive, detailed<br/>tells you WHY\"] --> AL\n    AL --> SLO[\"Alert on SLO burn,<br/>not on CPU.<br/>A page nobody acts on<br/>trains people to ignore pages.\"]\n",
       "name": "Observability",
       "blurb": "Whether you would know it broke, and whether the pager still means anything",
       "questions": [
@@ -1066,6 +1074,7 @@
     },
     {
       "id": "architecture",
+      "diagram": "flowchart LR\n    A[\"Monolith<br/>one deploy, no boundaries\"] --> B[\"Modular monolith<br/>boundaries, still one deploy\"]\n    B --> C[\"Services<br/>boundaries plus a network\"]\n    B --> D[\"The boundaries are<br/>the valuable part, and free.\"]\n    C --> E[\"The network is the<br/>expensive part, and deferrable.\"]\n",
       "name": "Architecture",
       "blurb": "Naming the bottleneck before drawing the box, and scaling one at a time",
       "questions": [

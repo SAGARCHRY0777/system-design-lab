@@ -19,6 +19,27 @@ python bench.py                        # real measurements, run them yourself
 
 ## What this demonstrates
 
+The ring is the entire idea. A key hashes to a point on it and walks clockwise
+to the first virtual node it meets:
+
+```mermaid
+flowchart LR
+    K["key<br/>hash = 0.42"] -.->|"walks clockwise"| V3
+    subgraph ring["The ring, 0 to 2^32 wrapped around"]
+        direction LR
+        V1["A-1<br/>0.08"] --> V2["C-2<br/>0.31"] --> V3["B-1<br/>0.55"] --> V4["A-2<br/>0.71"] --> V5["C-1<br/>0.93"] --> V1
+    end
+```
+
+Now delete node B. Only the keys between `0.31` and `0.55` move, and they move
+to the next vnode along — **every other key stays exactly where it was**. With
+`hash % N` the same deletion renumbers every bucket, so roughly `(N-1)/N` of all
+keys relocate: for four nodes that is 75% of the dataset moving because one
+machine left.
+
+The virtual nodes are why the load stays even. One point per server on a ring
+gives wildly uneven arcs; a few hundred each averages out.
+
 | | Keys moved when one node joins | Load spread | Lookup |
 |---|---|---|---|
 | `HashRing` (150 vnodes) | **~1/N** — 10.7% at eight nodes | 0.078 relative stdev | O(log(N·V)) — a `bisect` |

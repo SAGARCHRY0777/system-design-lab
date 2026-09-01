@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildQuiz } from '../lib/quiz.js'
 import { missedIn, record } from '../lib/progress.js'
+import SceneDiagram from './SceneDiagram.jsx'
 
 /**
  * Commit-then-reveal.
@@ -37,6 +38,10 @@ export default function Predict({ scene, onReplay }) {
   }
 
   const correct = revealed && picked === q.correct
+  const qVersion = scene.versions.find(v => v.v === q.version)
+  // Marks appear only after the reveal -- showing which box is the answer
+  // beforehand would give the question away.
+  const answerStatus = revealed ? (q.mark ?? {}) : {}
   const next = () => {
     setI(n => (n + 1) % questions.length)
     setPicked(null)
@@ -60,6 +65,21 @@ export default function Predict({ scene, onReplay }) {
       </div>
 
       <h2 className="pq-prompt">{q.prompt}</h2>
+
+      {/* The question names components; without the picture the reader has to
+          hold the architecture in their head and the question tests memory
+          instead of reasoning. After the reveal the answer is marked on the
+          diagram, so the correction is spatial as well as verbal. */}
+      {qVersion && (
+        <SceneDiagram
+          scene={scene}
+          active={qVersion.active}
+          edges={qVersion.edges}
+          status={answerStatus}
+          compact
+          caption={`V${qVersion.v} — ${qVersion.label}`}
+        />
+      )}
 
       <ul className="pq-options">
         {q.options.map(opt => {

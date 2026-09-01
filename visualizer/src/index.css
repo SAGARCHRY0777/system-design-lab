@@ -1069,3 +1069,63 @@ footer p { margin: 0; max-width: 82ch; }
 }
 .bn-note p { margin: 0 0 9px; color: var(--ink2); font-size: 14.5px; max-width: 74ch; }
 .bn-note p:last-child { margin-bottom: 0; }
+
+/* ============================================================================
+   SCENE DIAGRAM — the static architecture picture, shared by studio and quiz.
+   The studio previously asked readers to add components to a system they could
+   not see; the quiz asked which component saturates without showing them one.
+   ========================================================================== */
+.sd { margin: 0 0 20px; }
+.sd-title, .sd-caption {
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink3);
+}
+.sd-title { margin-bottom: 7px; }
+.sd-caption { margin-top: 7px; text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+.sd-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  padding: 8px;
+}
+.sd-compact .sd-scroll { padding: 4px; }
+.sd-compact .canvas { max-height: 190px; }
+.sd-empty {
+  border: 1px dashed var(--line2); border-radius: var(--radius);
+  padding: 18px; margin-bottom: 20px;
+}
+.sd-empty .hint { margin: 0; }
+
+/* Two designs side by side: what you drew, and what the reference did. */
+.st-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+@media (max-width: 820px) { .st-compare { grid-template-columns: 1fr; } }
+
+/* Per-node marks. Each one is also a text tag on the node, so the meaning does
+   not rest on colour alone. */
+.sd-added .node-shape   { stroke: var(--accent); stroke-width: 2.4; }
+.sd-answer .node-shape  { stroke: var(--accent); stroke-width: 2.6; }
+.sd-answer .node-label  { fill: var(--accent); font-weight: 600; }
+.sd-missing .node-shape { stroke: var(--amber); stroke-width: 2.4; stroke-dasharray: 5 4; }
+.sd-missing .node-label, .sd-missing .node-note { opacity: .55; }
+.sd-extra .node-shape   { stroke: var(--red); stroke-width: 2; opacity: .65; }
+.sd-extra .node-label, .sd-extra .node-note { opacity: .5; }
+.sd-down .node-shape    { stroke: var(--red); stroke-dasharray: 4 4; opacity: .5; }
+.sd-down .node-label, .sd-down .node-note { opacity: .4; }
+
+.sd-tag-added, .sd-tag-answer { fill: var(--accent); }
+.sd-tag-missing { fill: var(--amber); }
+.sd-tag-extra, .sd-tag-down { fill: var(--red); }
+
+.edge-faint { opacity: .3; }
+
+/* The interview track's framing diagram. */
+.iv-diagram {
+  margin: 14px 0 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  overflow-x: auto;
+}
+.iv-diagram svg { max-width: 100%; height: auto; display: block; }

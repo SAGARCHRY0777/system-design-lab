@@ -55,6 +55,10 @@ function bottleneckQuestions(scene) {
         options: placeAt([...pool.slice(0, 3), correct], correct, i % 4),
         correct,
         because: v.note ?? v.trigger,
+        // Which node the answer IS, so the diagram can mark it on reveal.
+        // The option text is a LABEL; reverse-mapping a label to a node in the
+        // UI would break the moment two nodes shared one.
+        mark: { [v.bottleneck]: 'answer' },
       }
     })
     // A question with fewer than three options is a coin flip wearing a
@@ -83,6 +87,7 @@ function failureQuestions(scene) {
       options: placeAt(OUTCOMES, correct, i % 3),
       correct,
       because: f.effect,
+      mark: { [f.node]: 'down' },
     }
   })
 }
@@ -100,6 +105,13 @@ function evolutionQuestions(scene) {
       options: placeAt([...others, v.trigger], v.trigger, i % 4),
       correct: v.trigger,
       because: v.note ?? `That is the trigger recorded for V${v.v}.`,
+      // Reveal marks what actually arrived at this version, so the trigger and
+      // the component it forced are seen together rather than described apart.
+      mark: Object.fromEntries(
+        v.active
+          .filter(id => !scene.versions[i].active.includes(id))
+          .map(id => [id, 'added']),
+      ),
     }
   })
 }
@@ -145,6 +157,7 @@ function flowQuestions(scene) {
       options: placeAt([...pool.slice(0, 3), correct], correct, out.length % 4),
       correct,
       because: fail.effect,
+      mark: { [fail.node]: 'down', [tl.blockedNode]: 'answer' },
       // Lets the UI offer "watch it happen" with the right state pre-set.
       replay: { version: v.v, flowId: flow.id, down: fail.node },
     })

@@ -118,6 +118,17 @@ def scene_page(scene_id: str) -> str:
         out.append("")
         out.append(f"**At V{d['v']}** ({ver.get('label', '')}): {ver.get('trigger', '')}")
         out.append("")
+
+        # The architecture this decision is actually about. A parameter question
+        # read without the system in front of you is a vocabulary question --
+        # "what do you shard on" only means something once you can see that the
+        # read path carries a code and nothing else.
+        svg = f"../19-diagrams/generated/{scene_id}-v{d['v']}.svg"
+        if (ROOT / "19-diagrams" / "generated" / f"{scene_id}-v{d['v']}.svg").exists():
+            out.append(f'<img src="{svg}" alt="{scene["title"]} at version {d["v"]}: '
+                       f'{ver.get("label", "")}" width="740">')
+            out.append("")
+
         out.append(f"**{d['question']}**")
         out.append("")
         for o in d["options"]:
@@ -242,6 +253,45 @@ def index_page() -> str:
     out.append("| System | Decisions | One-way | Costly | Reversible |")
     out.append("|---|---|---|---|---|")
     out.extend(rows)
+    out.append("")
+    out.append("## Where the one-way doors are")
+    out.append("")
+    out.append(
+        "Plotted against the version they are taken at. The pattern is the "
+        "uncomfortable part — the decisions you cannot undo are the ones you make first."
+    )
+    out.append("")
+    out.append("```mermaid")
+    out.append("%%{init: {'theme':'base'}}%%")
+    out.append("timeline")
+    out.append("    title Parameter decisions by the version that forces them")
+    for band, label in ((range(1, 3), "V1-V2 · smallest system"),
+                        (range(3, 6), "V3-V5 · growing"),
+                        (range(6, 99), "V6+ · at scale")):
+        items = []
+        for sid in SCENES:
+            scene, decisions = load(sid)
+            for d in decisions:
+                if d["v"] in band and d["reversibility"] == "one-way":
+                    items.append(f"{scene['title']}: {d['parameter']}")
+        out.append(f"    {label} : " + " : ".join(items or ["(none)"]))
+    out.append("```")
+    out.append("")
+    # Derived, not asserted. An earlier draft of this paragraph claimed "four of
+    # the five sit at V1-V3" and the real answer was two -- a made-up number
+    # inside a page arguing for measured ones.
+    oneway_vs = sorted(d["v"] for sid in SCENES for d in load(sid)[1]
+                       if d["reversibility"] == "one-way")
+    med = oneway_vs[len(oneway_vs) // 2]
+    early = sum(1 for v in oneway_vs if v <= med)
+    out.append(
+        f"They land at V{', V'.join(str(v) for v in oneway_vs)} — {early} of "
+        f"{len(oneway_vs)} by V{med}, roughly the midpoint of a system's life here and "
+        "long before there is enough traffic to prove which choice was right. An ID "
+        "scheme, a feed row's contents and an ordering key all have to be settled while "
+        "the evidence that would settle them does not exist yet. **That is the argument "
+        "for recognising a one-way door, not for expecting to avoid one.**"
+    )
     out.append("")
     out.append("## Do these interactively instead")
     out.append("")

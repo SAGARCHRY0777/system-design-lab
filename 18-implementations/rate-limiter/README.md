@@ -18,6 +18,26 @@ python bench.py                    # real measurements, run them yourself
 
 ## What this demonstrates
 
+The fixed window's flaw is a picture of two adjacent windows:
+
+```mermaid
+flowchart LR
+    subgraph w0["Window 0 — 0.000s to 1.000s"]
+        A["5 requests<br/>at t = 0.99s<br/>counter 0 to 5, all allowed"]
+    end
+    subgraph w1["Window 1 — 1.000s to 2.000s"]
+        B["5 requests<br/>at t = 1.001s<br/>counter RESETS, all allowed"]
+    end
+    A --> X["10 requests in 20 ms<br/>against a limit of 5 per second"]
+    B --> X
+```
+
+Both windows are individually correct. The counter reset at the boundary is what
+lets twice the limit through, and no amount of tuning the limit fixes it —
+the burst simply scales with it. The two tests immediately after
+`test_fixed_window_allows_double_the_limit_across_a_boundary` show the other two
+limiters refusing exactly this traffic.
+
 | Limiter | Burst behaviour | Memory per key |
 |---|---|---|
 | `TokenBucket` | Allows a burst up to `capacity`, then settles to `rate` | O(1) — two floats |

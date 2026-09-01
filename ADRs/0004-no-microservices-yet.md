@@ -51,6 +51,38 @@ deployment unit is the cheapest way to satisfy them, and whether six people can 
 
 ## Decision
 
+```mermaid
+flowchart TB
+    subgraph mono["Now — modular monolith"]
+        direction LR
+        M1["links"] --- M2["analytics"] --- M3["accounts"]
+        MD[("One database,<br/>schema per module")]
+        M1 --- MD
+        M2 --- MD
+        M3 --- MD
+    end
+    subgraph micro["Not yet — services"]
+        direction LR
+        N1["links svc"] -.->|"network"| N2["analytics svc"]
+        N2 -.->|"network"| N3["accounts svc"]
+        ND1[("db")]
+        ND2[("db")]
+        ND3[("db")]
+        N1 --- ND1
+        N2 --- ND2
+        N3 --- ND3
+    end
+```
+
+The module boundaries are already drawn; what has not been added is the network
+between them. That network is the entire cost — every call becomes a thing that
+can time out, retry, partially fail and need tracing, and a transaction that
+spanned two modules becomes a saga.
+
+**The boundaries are the valuable part and they are free. The network is the
+expensive part and it is deferrable.** Splitting later is a refactor; splitting
+early and being wrong about the seams is a rewrite.
+
 **We are not splitting.** We stay on one artefact, run in three roles behind separate autoscaling
 groups, with module boundaries enforced by CI.
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SCENES } from '../scenes/index.js'
 import { decisionsForScene } from '../scenes/decisions.js'
+import SceneDiagram from './SceneDiagram.jsx'
 import { buildBriefs, grade, whyWrong } from '../lib/studio.js'
 import {
   REVERSIBILITY, assignDecisions, gradeDecision, verdictText,
@@ -86,6 +87,23 @@ export default function Studio() {
 
   const rev = d ? REVERSIBILITY[d.reversibility] : null
 
+  // The scene versions either side of this brief, so the diagram can show both
+  // what the reader starts from and what the reference design became.
+  const fromVersion = scene.versions.find(x => x.v === b.fromV)
+  const toVersion = scene.versions.find(x => x.v === b.toV)
+
+  // The architecture the reader has actually drawn. Edges come from the target
+  // version filtered to the nodes they picked, so a component they added is
+  // wired up the way the reference wires it -- the diagram shows their design,
+  // not a guess at how they would have connected it.
+  const yours = [...b.have, ...picked, 'client'].filter((v, i, a) => a.indexOf(v) === i)
+  const yourStatus = Object.fromEntries(picked.map(id => [
+    id,
+    result ? (b.answer.includes(id) ? 'added' : 'extra') : 'added',
+  ]))
+  if (result) for (const id of result.missed) yourStatus[id] = 'missing'
+  const yoursWithMissing = result ? [...yours, ...result.missed] : yours
+
   const VERDICT = {
     exact: ['Exactly right.', 'You added what was needed and nothing else.'],
     overbuilt: ['Right, but too much.', 'Everything needed is there — along with things whose problem does not exist yet.'],
@@ -124,6 +142,36 @@ export default function Studio() {
             : `You are at V${b.toV}. The components are decided — now set them.`}
         </p>
       </div>
+
+      {phase === 'build' && !result && fromVersion && (
+        <SceneDiagram
+          scene={scene}
+          active={fromVersion.active}
+          edges={fromVersion.edges}
+          title={`What you have — V${b.fromV}, ${fromVersion.label}`}
+          caption="This is the system today. The symptom above is what it is now doing wrong."
+        />
+      )}
+
+      {phase === 'build' && result && toVersion && (
+        <div className="st-compare">
+          <SceneDiagram
+            scene={scene}
+            active={yoursWithMissing}
+            edges={toVersion.edges}
+            status={yourStatus}
+            title="What you designed"
+            compact
+          />
+          <SceneDiagram
+            scene={scene}
+            active={toVersion.active}
+            edges={toVersion.edges}
+            title={`The reference — V${b.toV}, ${toVersion.label}`}
+            compact
+          />
+        </div>
+      )}
 
       {phase === 'build' && (
         <div className="st-palette">
@@ -251,6 +299,16 @@ export default function Studio() {
           </div>
 
           <h2 className="pq-prompt">{d.question}</h2>
+
+          {toVersion && (
+            <SceneDiagram
+              scene={scene}
+              active={toVersion.active}
+              edges={toVersion.edges}
+              compact
+              caption={`The system you are configuring — V${b.toV}, ${toVersion.label}.`}
+            />
+          )}
 
           <ul className="pq-options">
             {d.options.map(o => {

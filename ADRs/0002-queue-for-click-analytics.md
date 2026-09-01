@@ -53,6 +53,30 @@ possible answer and one nobody has priced.
 
 ## Decision
 
+```mermaid
+flowchart LR
+    subgraph before["Before — the counter is on the request path"]
+        direction LR
+        C1["Client"] --> A1["App"]
+        A1 -->|"1 - increment counter"| D1[("Database")]
+        A1 -->|"2 - redirect"| C1
+    end
+    subgraph after["After — the counter is behind a queue"]
+        direction LR
+        C2["Client"] --> A2["App"]
+        A2 -->|"1 - redirect immediately"| C2
+        A2 -.->|"2 - publish, fire and forget"| Q[["Queue"]]
+        Q -.-> W["Worker"]
+        W -.-> D2[("Database")]
+    end
+```
+
+The user's redirect no longer waits for a write they do not care about. The
+trade is explicit and worth stating out loud: **counters are now eventually
+consistent and can be lost if the queue is lost**, which is acceptable precisely
+because a missing click count is not a missing redirect. The same move would be
+indefensible for a payment.
+
 Take click counting off the request path.
 
 - The redirect handler writes the `Location` header first, then emits a **click event** to a durable

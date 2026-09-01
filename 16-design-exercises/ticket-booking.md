@@ -22,6 +22,8 @@ Of these 4: **0 are one-way doors**, 2 are costly to reverse, 2 are config. Sort
 
 **At V2** (Overselling found): Two customers bought seat 14A four milliseconds apart. Both reads saw it free; both writes succeeded.
 
+<img src="../19-diagrams/generated/ticket-booking-v2.svg" alt="Ticket Booking at version 2: Overselling found" width="740">
+
 **Two buyers hit seat 14A four milliseconds apart. What stops the oversell?**
 
 - Read the seat, check it is free, then update it
@@ -52,6 +54,8 @@ Of these 4: **0 are one-way doors**, 2 are costly to reverse, 2 are config. Sort
 
 **At V4** (Checkout takes minutes): Customers picked a seat, then spent four minutes entering card details — and lost it to someone else at the last step.
 
+<img src="../19-diagrams/generated/ticket-booking-v4.svg" alt="Ticket Booking at version 4: Checkout takes minutes" width="740">
+
 **The hold duration passes. What mechanism returns the seat to the map?**
 
 - A TTL on the hold key — it expires by itself
@@ -79,6 +83,8 @@ Of these 4: **0 are one-way doors**, 2 are costly to reverse, 2 are config. Sort
 
 **At V4** (Checkout takes minutes): Customers picked a seat, then spent four minutes entering card details — and lost it to someone else at the last step.
 
+<img src="../19-diagrams/generated/ticket-booking-v4.svg" alt="Ticket Booking at version 4: Checkout takes minutes" width="740">
+
 **A seat is held while the buyer enters card details. How long?**
 
 - 60 seconds
@@ -105,6 +111,8 @@ Of these 4: **0 are one-way doors**, 2 are costly to reverse, 2 are config. Sort
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V6** (Payment in the loop): Charging the card is a call to someone else's system that can be slow, fail, or succeed without telling you.
+
+<img src="../19-diagrams/generated/ticket-booking-v6.svg" alt="Ticket Booking at version 6: Payment in the loop" width="740">
 
 **Holds last 10 minutes. What timeout do you set on the payment provider?**
 

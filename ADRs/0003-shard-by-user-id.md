@@ -56,6 +56,26 @@ exactly backwards.
 
 ## Decision
 
+```mermaid
+flowchart LR
+    W["Create link<br/>request carries a user"] -->|"shard = hash of user_id"| S1
+    R["Redirect<br/>request carries ONLY a code"] -->|"shard = hash of code"| S2
+    subgraph shards["Shards"]
+        direction LR
+        S1[("Shard 1")]
+        S2[("Shard 2")]
+        S3[("Shard 3")]
+    end
+```
+
+Two paths, two different keys, and that asymmetry is the whole decision. The
+creation path knows who is creating, so sharding it by user keeps everything one
+account owns together. **The redirect path knows nothing but the code** — it
+cannot compute a user shard, so hashing the code is the only key that sends it
+to exactly one place instead of fanning out to all N.
+
+Picking one key for both would have broken whichever path did not carry it.
+
 Two stores, two shard keys, chosen from the read path in each case.
 
 - **`urls` — the redirect table — is sharded by `hash(code)`.** It stays a single-key lookup: one

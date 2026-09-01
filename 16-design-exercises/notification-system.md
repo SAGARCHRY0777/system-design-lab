@@ -20,6 +20,8 @@ Of these 4: **0 are one-way doors**, 1 is costly to reverse, 3 are config. Sort 
 
 **At V3** (20M users · three channels): Push and SMS arrived. They are not variations of email: SMS costs real money per message and is regulated, push tokens expire silently, and email is the only one where "accepted" means nothing at all.
 
+<img src="../19-diagrams/generated/notification-system-v3.svg" alt="Notification System at version 3: 20M users · three channels" width="740">
+
 **Three channels, 20M users. What do you partition the work queue on?**
 
 - Channel — one partition each for email, push and SMS
@@ -46,6 +48,8 @@ Of these 4: **0 are one-way doors**, 1 is costly to reverse, 3 are config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V4** (50M users · the provider fails): The SMS provider returned 500s for twenty minutes. The workers retried immediately in a tight loop and turned a provider outage into a self-inflicted one.
+
+<img src="../19-diagrams/generated/notification-system-v4.svg" alt="Notification System at version 4: 50M users · the provider fails" width="740">
 
 **The SMS provider returns 500s for twenty minutes. How do workers retry?**
 
@@ -77,6 +81,8 @@ Of these 4: **0 are one-way doors**, 1 is costly to reverse, 3 are config. Sort 
 
 **At V5** (80M users · deduplication): A deploy replayed six hours of the event log. Every user received every notification a second time, at 03:00, and 40,000 of them turned notifications off permanently.
 
+<img src="../19-diagrams/generated/notification-system-v5.svg" alt="Notification System at version 5: 80M users · deduplication" width="740">
+
 **A deploy replayed six hours of the event log. How long do you remember an event ID?**
 
 - 5 minutes
@@ -103,6 +109,8 @@ Of these 4: **0 are one-way doors**, 1 is costly to reverse, 3 are config. Sort 
 > **Reversible** — A config change. Get it wrong, notice, fix it the same day.
 
 **At V6** (100M users · consent and budget): One busy comment thread sent a single user 140 push notifications in an hour. The system was nowhere near its own limits — the limit that matters is per user, not per system.
+
+<img src="../19-diagrams/generated/notification-system-v6.svg" alt="Notification System at version 6: 100M users · consent and budget" width="740">
 
 **One busy thread sent a single user 140 pushes in an hour. What do you limit?**
 

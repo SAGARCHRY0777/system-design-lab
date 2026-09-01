@@ -20,6 +20,8 @@ Of these 4: **2 are one-way doors**, 1 is costly to reverse, 1 is config. Sort y
 
 **At V1** (10K req/day): Launch. One box, one database, no traffic worth planning for.
 
+<img src="../19-diagrams/generated/url-shortener-v1.svg" alt="URL Shortener at version 1: 10K req/day" width="740">
+
 **Codes are base62. How many characters?**
 
 - 4 characters (~14.8M codes)
@@ -50,6 +52,8 @@ Of these 4: **2 are one-way doors**, 1 is costly to reverse, 1 is config. Sort y
 
 **At V4** (200M req/day): p99 reached 800ms under peak. 92% of reads were for the top 0.1% of codes.
 
+<img src="../19-diagrams/generated/url-shortener-v4.svg" alt="URL Shortener at version 4: 200M req/day" width="740">
+
 **The cache is read-through. What TTL do you set on an entry?**
 
 - No expiry — the mapping never changes
@@ -76,6 +80,8 @@ Of these 4: **2 are one-way doors**, 1 is costly to reverse, 1 is config. Sort y
 > **One-way door** — You do not get to change your mind. Reversing it is a migration measured in months, or it is simply not possible.
 
 **At V6** (1B req/day): Write throughput and dataset size both exceeded what one primary could hold.
+
+<img src="../19-diagrams/generated/url-shortener-v6.svg" alt="URL Shortener at version 6: 1B req/day" width="740">
 
 **You are sharding. What do you shard on?**
 
@@ -106,6 +112,8 @@ Of these 4: **2 are one-way doors**, 1 is costly to reverse, 1 is config. Sort y
 > **Costly to reverse** — Reversing this means changing code that already depends on it, or repairing data written under the old assumption.
 
 **At V7** (1B/day, multi-region): EU traffic still crossed the Atlantic on every cache miss.
+
+<img src="../19-diagrams/generated/url-shortener-v7.svg" alt="URL Shortener at version 7: 1B/day, multi-region" width="740">
 
 **US and EU each hold a copy. How do writes propagate?**
 

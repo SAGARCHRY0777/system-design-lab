@@ -50,6 +50,29 @@ for (const id of SCENES) {
     if (expect !== x.correct) bad(`${x.id}: says "${x.correct}", timeline says "${expect}"`)
   }
 
+  // Every question marks nodes on the diagram after the reveal. A mark naming a
+  // node that is not active at that version draws nothing at all -- no error, no
+  // crash, just a correction the reader never sees. Silent is the failure mode
+  // worth checking for.
+  for (const x of q) {
+    if (!x.mark) { bad(`${x.id}: no diagram mark`); continue }
+    const ver = scene.versions.find(v => v.v === x.version)
+    if (!ver) { bad(`${x.id}: version ${x.version} is not in this scene`); continue }
+    for (const [node, state] of Object.entries(x.mark)) {
+      if (!ver.active.includes(node)) {
+        bad(`${x.id}: marks "${node}" but it is not active at V${x.version}`)
+      }
+      if (!['answer', 'down', 'added', 'missing', 'extra'].includes(state)) {
+        bad(`${x.id}: unknown mark state "${state}"`)
+      }
+    }
+    // An Evolution question with nothing to mark is the V-to-V step that added
+    // no components; every other kind must point at something.
+    if (x.kind !== 'Evolution' && !Object.keys(x.mark).length) {
+      bad(`${x.id}: ${x.kind} question marks nothing`)
+    }
+  }
+
   // If the answer always sits in the same slot it is guessable without knowing anything.
   const spread = new Set(q.map(x => x.options.indexOf(x.correct))).size
   if (spread < 3) bad(`${id}: answer sits in only ${spread} distinct slots`)

@@ -106,6 +106,15 @@ jobs:
         working-directory: visualizer
         run: npm run check:queueing
 
+      # check_mermaid.py is a heuristic and cannot see a diagram that is
+      # well-formed text and invalid mermaid. This runs the real parser over
+      # every block, and cross-checks its own block count against the Python
+      # checker -- the first version of it silently skipped every CRLF file and
+      # reported success on 294 of 302.
+      - name: Every mermaid diagram parses
+        working-directory: visualizer
+        run: npm run check:mermaid
+
       - name: Build
         working-directory: visualizer
         run: npm run build
