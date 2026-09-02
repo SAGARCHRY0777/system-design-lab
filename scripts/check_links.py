@@ -87,6 +87,34 @@ def orphans(files: list[Path]) -> list[Path]:
     return [f for f in files if f.resolve() not in linked and f.resolve() not in roots]
 
 
+
+def empty_tables(files: list[Path]) -> list[str]:
+    """Markdown tables with a header and no rows.
+
+    GitHub renders these as a heading, a set of column names, and nothing --
+    a promise of a list followed by silence. They arise the way this one did:
+    a table of open items, struck through one row at a time as each is built,
+    until only the header survives. No link is broken and no build fails, so it
+    sat in GAPS.md across four commits.
+    """
+    bad: list[str] = []
+    for path in files:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for i, line in enumerate(lines):
+            # A separator row (|---|---|) means the line before it was a header.
+            if not re.fullmatch(r"\s*\|[\s:|-]*\|\s*", line) or "-" not in line:
+                continue
+            rows = 0
+            for nxt in lines[i + 1:]:
+                if nxt.strip().startswith("|"):
+                    rows += 1
+                elif nxt.strip():
+                    break
+            if rows == 0:
+                bad.append(f"{path.relative_to(ROOT)}:{i + 1}")
+    return bad
+
+
 def exercises_without_answers(files: list[Path]) -> list[Path]:
     """Exercise sections whose answers are not hidden.
 
@@ -127,6 +155,12 @@ def main() -> int:
         for f in unhidden:
             print(f"        {f.relative_to(ROOT)}")
 
+    hollow = empty_tables(files)
+    if hollow:
+        print("EMPTY TABLE -- a header with no rows renders as a promise and then nothing:")
+        for h in hollow:
+            print(f"        {h}")
+
     lost = orphans(files)
     if lost:
         print("ORPHANED -- committed but unreachable, nothing links to these:")
@@ -134,15 +168,17 @@ def main() -> int:
             print(f"        {f.relative_to(ROOT)}")
 
     print()
-    if total_bad or lost or unhidden:
+    if total_bad or lost or unhidden or hollow:
         if total_bad:
             print(f"{total_bad} broken link(s) across {checked} markdown file(s)")
         if lost:
             print(f"{len(lost)} orphaned page(s)")
         if unhidden:
             print(f"{len(unhidden)} exercise section(s) with visible answers")
+        if hollow:
+            print(f"{len(hollow)} empty table(s)")
         return 1
-    print(f"links resolve, no orphans, exercise answers hidden "
+    print(f"links resolve, no orphans, no empty tables, exercise answers hidden "
           f"({checked} markdown file(s) checked)")
     return 0
 

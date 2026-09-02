@@ -28,6 +28,24 @@ trade-off" is not an answer to anything.
 
 ## The questions
 
+Twelve questions, then a route. The point is not the score — it is that
+different wrong answers mean different starting places:
+
+```mermaid
+flowchart TB
+    Q["17 questions<br/>basic to expert"] --> S{"Score"}
+    S -->|"0-6"| F["Foundations, in order.<br/>The vocabulary is there;<br/>the arithmetic is not."]
+    S -->|"7-11"| C["The component pages —<br/>read §14 When NOT to and<br/>§19 Failure scenarios FIRST."]
+    S -->|"12-17"| K["Components are not the problem.<br/>Go to the combination matrix<br/>and the worked problem."]
+    F --> M["But the score is the least<br/>useful output. Each missed<br/>question maps to exactly one<br/>page — that mapping is the<br/>real result."]
+    C --> M
+    K --> M
+```
+
+**A high score is not a reason to read more of this; it is a reason to read
+less of it and go and design something.**
+
+
 **1.** `[B]` Your dashboard says average response time is 40 ms and has not moved in a month.
 Support has a growing pile of tickets saying the app is slow. Which one is lying?
 
@@ -334,7 +352,7 @@ trade-off", "you'd use a cache", "p99" with no account of why the average could 
 | 17 | The old DNS TTL governs what is cached | [dns](01-networking/dns/) |
 
 A caveat on a perfect score: every question here has one right answer and production does not.
-Twelve out of twelve means you are ready for the [combinations](14-component-combinations/MATRIX.md)
+Seventeen out of seventeen means you are ready for the [combinations](14-component-combinations/MATRIX.md)
 and the [judgement](TRADEOFF-FRAMEWORK.md) material, not that the reading is finished.
 
 **Preparing for an interview rather than learning?** The [question bank](20-system-design-interview/) is the same material asked the way an interviewer asks it — 46 questions with their follow-up chains, and what each one is actually probing.

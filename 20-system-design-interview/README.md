@@ -30,6 +30,20 @@ Three failure modes account for most of it, and none is a knowledge gap:
 
 ## The four approaches, by clock
 
+```mermaid
+flowchart LR
+    T0["0-10 min"] --> T1["10-25 min"] --> T2["25-40 min"] --> T3["40-45 min"]
+    T0 --> A["Scope and estimate.<br/>Skipping this is the<br/>most common failure."]
+    T1 --> B["API, data model,<br/>and the SIMPLE design."]
+    T2 --> C["Evolve under load.<br/>One bottleneck at a time."]
+    T3 --> D["Failure and trade-offs.<br/>What you gave up."]
+```
+
+Candidates lose here by spending twenty-five minutes on the box drawing and
+reaching the last panel with two minutes left. **The last panel is where the
+signal is** — anyone can draw the boxes.
+
+
 The same method at four resolutions. Pick by how long you have, not by how much you know.
 
 | You have | Do this | The one thing you must produce |

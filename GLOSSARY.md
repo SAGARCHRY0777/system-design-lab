@@ -6,6 +6,26 @@ difficulty: Beginner
 
 # Glossary
 
+Most of these terms are not independent — they are consequences of each other,
+and the arrows are where the confusion usually is:
+
+```mermaid
+flowchart TB
+    P["Partition<br/>the network splits"] --> CAP{"CAP:<br/>now choose"}
+    CAP -->|"keep answering"| AV["Availability"]
+    CAP -->|"keep agreeing"| CO["Consistency"]
+    AV --> EC["Eventual consistency<br/>replication lag<br/>read-your-writes"]
+    CO --> QU["Quorums, consensus<br/>higher latency<br/>lower availability"]
+    LA["Latency<br/>one request"] --> TH["Throughput<br/>requests per second"]
+    TH --> UT["Utilisation"]
+    UT -->|"queueing:<br/>1 / 1-rho"| LA
+```
+
+That last loop is the one people miss: **latency and throughput are not
+independent axes.** Pushing utilisation up to buy throughput buys latency back
+at an accelerating rate — see the [capacity bench](https://sagarchry0777.github.io/system-design-lab/#/bench).
+
+
 The hub of the cross-link graph. A term is defined here in one or two sentences and linked to its
 full treatment — a concept is explained **once** and referenced everywhere else.
 

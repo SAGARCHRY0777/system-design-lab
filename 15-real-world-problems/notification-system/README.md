@@ -176,6 +176,8 @@ it.
 
 ### V2 — 3M users · *a nine-minute provider wobble took checkout down with it*
 
+![V2 architecture](../../19-diagrams/generated/notification-system-v2.svg)
+
 `+ Queue, + email workers.` Ingest p99 falls from 2,100 ms to 35 ms.
 
 The queue is a rate-mismatch absorber, not a latency trick: it reconciles a 6,000/s peak against a
@@ -187,6 +189,8 @@ every part of the product that wanted one has to be redesigned around not having
 
 ### V3 — 20M users · *push and SMS arrived*
 
+![V3 architecture](../../19-diagrams/generated/notification-system-v3.svg)
+
 `+ Router, + per-channel workers and providers.`
 
 They are not variations of email. Latency differs by 20×, cost by four orders of magnitude, the
@@ -196,6 +200,8 @@ retry that is free for push is expensive for SMS, and every provider rate-limits
 of all three, and a dead SMS provider stops your password resets *and* your order confirmations.
 
 ### V4 — 50M users · *the SMS provider returned 500s and the workers turned it into our outage*
+
+![V4 architecture](../../19-diagrams/generated/notification-system-v4.svg)
 
 `+ Backoff with jitter, + a circuit breaker per provider, + a dead letter queue.`
 
@@ -228,6 +234,8 @@ nothing at all.
 
 ### V6 — 100M users · *one thread sent a single user 140 pushes in an hour*
 
+![V6 architecture](../../19-diagrams/generated/notification-system-v6.svg)
+
 `+ Preferences, + per-user rate limits.`
 
 The system was nowhere near its own limits. **The limit that matters is per user, not per system** —
@@ -258,6 +266,8 @@ product as well as a cheaper one.
 of failing — a digest job that misses its window sends a summary of yesterday at breakfast.
 
 ### V8 — the push provider dies mid-campaign
+
+![V8 architecture](../../19-diagrams/generated/notification-system-v8.svg)
 
 `20M notifications enqueued in a minute; the push provider stops answering.`
 

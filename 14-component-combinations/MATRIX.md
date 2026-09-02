@@ -7,6 +7,16 @@ difficulty: Intermediate
 
 # Component Combination Matrix
 
+```mermaid
+flowchart LR
+    C["18 components"] --> P["153 unordered pairs<br/>every one classified"]
+    P --> A1["CORE · the pairing is the point"]
+    P --> A2["REAL · common, with a caveat"]
+    P --> A3["RARE · defensible, narrow"]
+    P --> A4["ANTI · looks reasonable, is not"]
+    A4 --> N["The ANTI cells are why this exists.<br/>A catalogue listing only what WORKS<br/>teaches that everything works."]
+```
+
 Every pair of 18 components — all **153** of them — classified. Not a curated selection, so coverage is provable and the gaps are visible.
 
 Literal *all permutations* would be 2<sup>18</sup> = 262,144 subsets, almost all meaningless (CDN + distributed lock). Pairs are the level at which exhaustiveness is both achievable and useful. [Meaningful triples](#meaningful-triples) are listed separately, because those are what real architectures are made of.

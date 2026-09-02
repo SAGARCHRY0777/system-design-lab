@@ -16,6 +16,26 @@ Status values: ✅ covered · ◐ partial · ❌ absent
 
 ## Scorecard — the standard system design syllabus
 
+```mermaid
+flowchart LR
+    subgraph done["Covered"]
+        direction TB
+        D1["Foundations, networking, security"]
+        D2["Components: LB, cache, DB, queue,<br/>sharding, replication, storage"]
+        D3["78 patterns, 153 pairs, 10 case studies"]
+        D4["6 scenes: 148 questions,<br/>33 briefs, 24 decisions"]
+    end
+    subgraph open["Open"]
+        direction TB
+        O1["Load shedding — linked from<br/>three pages, has none of its own"]
+        O2["4 of 8 implementations"]
+        O3["Search, geospatial,<br/>probabilistic structures"]
+    end
+    done --> H["This page exists so the<br/>second box is as visible<br/>as the first."]
+    open --> H
+```
+
+
 The list most interview guides and job descriptions use, scored honestly against this repository.
 
 | Topic | Status | Where it is, or why not |
@@ -69,20 +89,15 @@ What a high-level design document is expected to contain.
 
 ## Tier 1 — Missing from the plan, and load-bearing
 
-| Gap | Why it matters |
-|---|---|
+Every item that was here has been built. The last of them,
+~~SLI / SLO / error budgets~~, is now in
+[observability](11-observability/#11-sli-slo-error-budget).
 
-
-
-
-
-
-
-
-
-| ~~SLI / SLO / error budgets~~ | Now in [observability](11-observability/#11-sli-slo-error-budget). |
-
-
+This section used to be a table, and it emptied itself one struck-through row at
+a time until only the header was left — which renders on GitHub as a heading
+promising a list, followed by nothing. **What is still open now lives in one
+place:** [what is genuinely still missing](#what-is-genuinely-still-missing),
+below. Two lists of open gaps is how one of them goes stale.
 
 ## Tier 2 — Missing from the plan, narrower
 
@@ -94,16 +109,19 @@ vs read · compliance and data residency · chaos engineering · feature flags
 
 ## Tier 3 — Planned, not yet built
 
-On [ROADMAP.md](ROADMAP.md). **Components:** CDN, API gateway. **Patterns:** batching, retries,
-circuit breaker, rate limiting page, backpressure, async. **Combinations:** the 10 `CORE` pairs need
-pages. **Problems:** 7 of 8. **Implementations:** 7 of 8. **Judgment:** done — [ADRs](ADRs/),
+On [ROADMAP.md](ROADMAP.md). **Components:** done — CDN and API gateway both have
+pages. **Patterns:** done — all 78 are in the [catalogue](13-design-patterns/CATALOGUE.md)
+with a diagram and a case study each. **Combinations:** 11 of the `CORE` pairs
+have their own page; the rest are classified in the
+[matrix](14-component-combinations/MATRIX.md) only. **Problems:** 4 of 8 written.
+**Implementations:** 4 of 8. **Judgment:** done — [ADRs](ADRs/),
 [anti-patterns](anti-patterns/), [comparisons](comparisons/), interview guide.
 
 ---
 
 ## What is genuinely covered
 
-**122 markdown pages · 293 diagrams · 482 hidden-answer blocks.**
+**122 markdown pages · 382 diagrams · 482 hidden-answer blocks — every page carries at least one.**
 
 - [Foundations](00-foundations/) — 7 concepts · [Networking](01-networking/) — 5 ·
   [Security](12-security/) — 5 · [API design](07-api-design/) — 4

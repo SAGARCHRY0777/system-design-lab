@@ -152,12 +152,16 @@ Correct for the scale. Adding anything here is
 
 ### V2 — 10M/day · *one app server saturated, and deploys meant downtime*
 
+![V2 architecture](../../19-diagrams/generated/url-shortener-v2.svg)
+
 `+ Load balancer.` The second reason is usually the one that actually forces the change — see
 [load balancer §8](../../03-load-balancing/fundamentals/).
 
 **Cost:** the load balancer is now a single point of failure unless it is itself redundant.
 
 ### V3 — 50M/day · *reads swamped the primary; writes were fine*
+
+![V3 architecture](../../19-diagrams/generated/url-shortener-v3.svg)
 
 `+ Read replicas.` The 100:1 ratio makes this obvious.
 
@@ -178,10 +182,14 @@ Also, quietly, the database can no longer survive the traffic alone.
 
 ### V5 — 500M/day · *the median user was 120 ms away before any work began*
 
+![V5 architecture](../../19-diagrams/generated/url-shortener-v5.svg)
+
 `+ CDN / edge.` The only fix for distance is to be closer; no amount of hardware addresses the speed
 of light.
 
 ### V6 — 1B/day · *write throughput and dataset size both exceeded one primary*
+
+![V6 architecture](../../19-diagrams/generated/url-shortener-v6.svg)
 
 `+ Sharding, + analytics queue.` Two changes for two different reasons: sharding for write capacity,
 and moving the click counter onto a queue so the user no longer waits for a counter increment.
@@ -190,6 +198,8 @@ and moving the click counter onto a queue so the user no longer waits for a coun
 [sharding §11](../../05-databases/sharding/).
 
 ### V7 — multi-region · *EU traffic still crossed the Atlantic on every cache miss*
+
+![V7 architecture](../../19-diagrams/generated/url-shortener-v7.svg)
 
 `+ A second region`, async replication, ~200 ms lag.
 

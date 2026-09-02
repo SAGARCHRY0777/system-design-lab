@@ -6,6 +6,17 @@ difficulty: Intermediate
 
 # Component Combinations
 
+```mermaid
+flowchart LR
+    C["18 components"] --> P["153 unordered pairs<br/>every one classified"]
+    P --> A["CORE<br/>the pairing is the point"]
+    P --> B["REAL<br/>common, with a caveat"]
+    P --> D["RARE<br/>defensible, narrow"]
+    P --> E["ANTI<br/>looks reasonable, is not"]
+    E --> N["The ANTI cells are the reason<br/>this exists. A catalogue that only<br/>lists what WORKS teaches that<br/>everything works."]
+```
+
+
 **→ [The full matrix](MATRIX.md)** — all 153 component pairs, classified.
 
 This is the part most system design material skips. Knowing what a cache is and what a queue is does

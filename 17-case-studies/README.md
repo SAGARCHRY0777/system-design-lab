@@ -25,6 +25,18 @@ So each case here is written to answer three questions rather than one:
 
 ## What is in it
 
+```mermaid
+flowchart TB
+    C["10 systems"] --> S["Each with a named primary source<br/>paper, engineering blog, or talk"]
+    S --> F["4 fields per system"]
+    F --> F1["What they built"]
+    F --> F2["What it cost them"]
+    F --> F3["The decision behind it"]
+    F --> F4["When this does NOT apply to you"]
+    F4 --> W["Weighted heaviest on purpose.<br/>A case study read without it becomes<br/>a licence to copy Dynamo into a<br/>service doing 40 requests a second."]
+```
+
+
 | | System | The mechanism |
 |:-:|---|---|
 | 1 | Facebook | Leases — one token gates the herd, and revokes a stale fill |

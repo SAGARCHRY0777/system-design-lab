@@ -31,6 +31,23 @@ early is a decision taken with less information, so if this could have waited, s
 
 ## Decision
 
+```mermaid
+flowchart LR
+    subgraph before["Before"]
+        direction LR
+        B1["what exists today"]
+    end
+    subgraph after["After"]
+        direction LR
+        A1["what this decision changes it to"]
+    end
+```
+
+*Replace the diagram above. An ADR without a before and after makes the reader
+reconstruct the change from prose, and the whole point of the record is that
+somebody in eighteen months can see it at a glance.*
+
+
 *The chosen option, in the active voice and the present tense: "We shard the creator store by user
 ID." Not "it was decided that" and not "we will consider". Include the parameters someone would need
 to implement it — the TTL, the key, the threshold — because a decision without its numbers is a

@@ -6,6 +6,17 @@ difficulty: n/a
 
 # Roadmap
 
+```mermaid
+flowchart LR
+    P0["Phase 0<br/>Spine"] --> P1["Phase 1<br/>Visualizer"] --> P2["Phase 2<br/>Foundations"] --> P3["Phase 3<br/>Components"] --> P4["Phase 4<br/>Patterns and<br/>combinations"] --> P5["Phase 5<br/>Practice:<br/>predict, studio,<br/>decisions, bench"]
+    P5 --> N["Open: load shedding,<br/>4 implementations,<br/>a blank-page scene editor"]
+```
+
+Each phase only started once the previous one was usable, which is the same
+rule the repository teaches: **build the thing the current problem forces, not
+the thing the final diagram implies.**
+
+
 What exists, what is next, and in what order. Topics not yet written are **absent from the tree
 rather than stubbed**, so an empty checkbox here means "not built", never "built badly".
 

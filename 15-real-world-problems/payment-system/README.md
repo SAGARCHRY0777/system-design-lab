@@ -204,6 +204,8 @@ that word; the last five versions exist to make it recoverable.
 
 ### V2 — 1M/day · *a phone lost signal mid-checkout and the app retried*
 
+![V2 architecture](../../19-diagrams/generated/payment-system-v2.svg)
+
 The customer was charged twice and the refund took nine days.
 
 `+ Idempotency keys.` The three rules above, and the detail that decides whether it works: **the
@@ -212,6 +214,8 @@ storage that happens to be fast — not a cache. Getting that one wrong turns an
 charge.
 
 ### V3 — 2M/day · *authorise, capture and record are three steps across two systems*
+
+![V3 architecture](../../19-diagrams/generated/payment-system-v3.svg)
 
 `+ Saga queue, + orchestrator.` The checkout request had been holding a socket open for all three.
 
@@ -223,6 +227,8 @@ themselves fail. There is no undo — only apologies you can afford.
 previously exist.
 
 ### V4 — 3M/day · *finance asked what the balance was and three services gave three answers*
+
+![V4 architecture](../../19-diagrams/generated/payment-system-v4.svg)
 
 `+ Double-entry ledger.` A boolean `paid` column on an order is not an accounting record.
 
@@ -253,6 +259,8 @@ design that omits it has quietly assumed a distributed transaction it does not h
 
 ### V6 — 5M/day · *`captured` arrived before `authorised`, and one capture applied twice*
 
+![V6 architecture](../../19-diagrams/generated/payment-system-v6.svg)
+
 `+ Webhook receiver.` Four rules, all mandatory:
 
 1. **Verify the signature before parsing anything.** This endpoint is public.
@@ -265,6 +273,8 @@ Rule 4 is the one that gets skipped, and it is the one that turns a spoofed or r
 an incident into a no-op.
 
 ### V7 — 5M/day · *a customer returned one item from a three-item order*
+
+![V7 architecture](../../19-diagrams/generated/payment-system-v7.svg)
 
 `+ Balance projection.` The system could refund all of it or none of it, because it had recorded one
 amount and one state.

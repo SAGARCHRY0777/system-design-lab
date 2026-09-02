@@ -180,6 +180,8 @@ doubles. There is no interval that is both cheap and fast — see
 
 ### V2 — 10K online · *99.6% of polls returned an empty array*
 
+![V2 architecture](../../19-diagrams/generated/chat-system-v2.svg)
+
 `+ WebSocket gateway.` The same product now costs 60 rps instead of 5,000, and delivers in 12 ms.
 
 **Cost, and it is enormous:** the gateway is no longer stateless. It knows which sockets it holds and
@@ -203,6 +205,8 @@ to restart.
 
 ### V4 — 400K online · *one message to a 500-member group made the sender wait for the slowest gateway*
 
+![V4 architecture](../../19-diagrams/generated/chat-system-v4.svg)
+
 `+ Fan-out queue, + workers, + membership.` Store once, deliver many.
 
 Worth contrasting with the [social feed](../../19-diagrams/scenes/social-feed.json): a feed *copies*
@@ -214,6 +218,8 @@ anyone has received it — [queues and workers](../../14-component-combinations/
 
 ### V5 — 600K online · *a message published to a bus with nobody listening is a message deleted*
 
+![V5 architecture](../../19-diagrams/generated/chat-system-v5.svg)
+
 `+ Push providers.` Most recipients are not connected, and until now their messages were being
 dropped into a channel nobody was subscribed to.
 
@@ -223,6 +229,8 @@ after the last `seq` it saw; the socket only saves it from waiting. Build it the
 every reconnect loses messages.
 
 ### V6 — 800K online · *two messages 30 ms apart arrived in opposite orders on two devices*
+
+![V6 architecture](../../19-diagrams/generated/chat-system-v6.svg)
 
 `+ Per-conversation sequence numbers, + receipts.` One writer per conversation assigns `seq`; clients
 sort by it and refuse to render across a gap.
@@ -247,6 +255,8 @@ laptop shows as online for that long. Nobody has ever escalated this. The altern
 the entire infrastructure budget on a dot.
 
 ### V8 — a gateway is lost
+
+![V8 architecture](../../19-diagrams/generated/chat-system-v8.svg)
 
 `25,000 sockets drop at once.` Each client reconnects: TLS handshake, registry write, backfill query
 — arriving together.

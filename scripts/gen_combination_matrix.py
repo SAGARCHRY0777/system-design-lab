@@ -451,6 +451,17 @@ def build() -> str:
     L.append("")
     L.append("# Component Combination Matrix")
     L.append("")
+    # The four classifications, and why the ANTI ones justify the page.
+    L.append("```mermaid")
+    L.append("flowchart LR")
+    L.append('    C["18 components"] --> P["153 unordered pairs<br/>every one classified"]')
+    L.append('    P --> A1["CORE · the pairing is the point"]')
+    L.append('    P --> A2["REAL · common, with a caveat"]')
+    L.append('    P --> A3["RARE · defensible, narrow"]')
+    L.append('    P --> A4["ANTI · looks reasonable, is not"]')
+    L.append('    A4 --> N["The ANTI cells are why this exists.<br/>A catalogue listing only what WORKS<br/>teaches that everything works."]')
+    L.append("```")
+    L.append("")
     L.append(f"Every pair of {len(IDS)} components — all **{total}** of them — classified. Not a "
              "curated selection, so coverage is provable and the gaps are visible.")
     L.append("")

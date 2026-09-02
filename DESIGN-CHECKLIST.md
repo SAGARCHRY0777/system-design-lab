@@ -15,6 +15,24 @@ Print it, or keep it open in a second tab.
 
 ## Before you draw anything · 5 min
 
+The whole checklist, on one clock. The failure mode it exists to prevent is
+spending thirty minutes drawing boxes and never reaching failure or trade-offs
+— the two sections an interviewer is actually scoring.
+
+```mermaid
+flowchart LR
+    A["Understand<br/>5 min<br/>scope, users, R:W"] --> B["Size it<br/>5 min<br/>rps, storage, bandwidth"]
+    B --> C["API and data<br/>5 min<br/>endpoints, schema, key"]
+    C --> D["Draw V1<br/>5 min<br/>the SIMPLE version"]
+    D --> E["Evolve it<br/>15 min<br/>one bottleneck at a time"]
+    E --> F["Break it<br/>10 min<br/>what dies, what survives"]
+    F --> G["Trade-offs<br/>5 min<br/>what you gave up"]
+```
+
+**Steps F and G are the ones that get cut when you run out of time, and they
+are the ones that separate candidates.** Budget them first.
+
+
 - [ ] Restate the problem in one sentence and get agreement
 - [ ] Who are the users, how many, and where?
 - [ ] **Three** functional requirements. Explicitly defer the rest out loud.

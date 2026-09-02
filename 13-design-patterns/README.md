@@ -6,6 +6,17 @@ difficulty: Intermediate
 
 # Design Patterns
 
+```mermaid
+flowchart TB
+    R["78 patterns"] --> A["Object patterns · 23<br/>Gang of Four"]
+    R --> B["Distributed patterns · 17<br/>saga, outbox, CQRS"]
+    R --> C["Resilience patterns · 17<br/>breaker, bulkhead, retry"]
+    R --> D["Data patterns · 12<br/>sharding, CDC, materialised view"]
+    R --> E["Deployment patterns · 9<br/>blue-green, canary, sidecar"]
+    A --> X["Every GoF entry also shows what it<br/>becomes ACROSS A NETWORK — where<br/>a method call becomes a thing that<br/>can time out."]
+```
+
+
 **→ [The full catalogue](CATALOGUE.md)** — 78 patterns across five families.
 
 Most system design material covers architectural patterns and drops the Gang of Four on the grounds

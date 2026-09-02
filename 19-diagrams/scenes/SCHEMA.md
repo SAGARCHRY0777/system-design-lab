@@ -12,6 +12,24 @@ means re-positioning the others by hand.
 
 ## Top level
 
+One scene file drives four different things, which is the reason the format is
+worth having rules about — a mistake here is a mistake in four places at once:
+
+```mermaid
+flowchart LR
+    S["scene.json<br/>nodes, versions,<br/>flows, failures"] --> A["render_diagrams.py<br/>48 committed SVGs"]
+    S --> B["The visualizer<br/>animation and scrubber"]
+    S --> C["quiz.js<br/>148 questions"]
+    S --> D["studio.js<br/>33 design briefs"]
+    E["decisions/scene.json<br/>parameters"] --> D
+    E --> F["gen_decisions.py<br/>the design exercises"]
+```
+
+**Nothing downstream holds its own copy of the architecture.** That is what
+makes it impossible for the diagram in a README to disagree with the answer key
+in the quiz.
+
+
 ```jsonc
 {
   "id":      "url-shortener",        // filename stem, kebab-case, used in generated SVG names

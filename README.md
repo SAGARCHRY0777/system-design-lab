@@ -2,7 +2,7 @@
 
 # System Design Lab
 
-**A system design learning laboratory** — 122 pages, 293 diagrams, 482 hidden-answer exercises,
+**A system design learning laboratory** — 122 pages, 382 diagrams, 482 hidden-answer exercises,
 4 measured implementations, and an interactive lab where you commit to an answer before you see one.
 
 [Take the diagnostic](DIAGNOSTIC.md) · [Open the lab](https://SAGARCHRY0777.github.io/system-design-lab/) · [Patterns](13-design-patterns/CATALOGUE.md) · [Combinations](14-component-combinations/MATRIX.md) · [Case studies](17-case-studies/) · [Interview](20-system-design-interview/) · [Gaps](GAPS.md)

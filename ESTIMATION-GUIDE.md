@@ -16,6 +16,24 @@ than "11,574.07 rps", because the second one implies a confidence you do not hav
 
 ## 1. Numbers worth memorising
 
+Everything below hangs off one fact: the gaps between these are **orders of
+magnitude**, not percentages. That is what makes estimation possible in your
+head — you are never adding, you are finding the one term that dominates.
+
+```mermaid
+flowchart LR
+    A["L1 cache<br/>1 ns"] --> B["RAM<br/>100 ns<br/>100x"]
+    B --> C["SSD random read<br/>150 us<br/>1,500x"]
+    C --> D["Same-datacentre<br/>round trip<br/>500 us"]
+    D --> E["Disk seek<br/>10 ms<br/>20x"]
+    E --> F["Cross-continent<br/>round trip<br/>150 ms<br/>speed of light"]
+```
+
+The last one is the only entry no hardware will ever improve. Everything else
+is engineering; that one is physics, and it is why the answer to a latency
+problem is so often *be closer* rather than *be faster*.
+
+
 Round, deliberately. These are for arithmetic in your head, not for a capacity plan.
 
 | Quantity | Use |

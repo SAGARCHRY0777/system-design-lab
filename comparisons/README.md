@@ -12,6 +12,16 @@ difficulty: Intermediate
 
 ## Why these pages are not feature tables
 
+```mermaid
+flowchart TB
+    Q["A comparison page"] --> BAD["Feature table<br/>X has this, Y has that"]
+    Q --> GOOD["The deciding question<br/>ONE question whose answer<br/>picks for you"]
+    BAD --> B1["Ages badly — features move.<br/>Tells you nothing about YOUR case.<br/>Reads as a tie."]
+    GOOD --> G1["Ages well — the question is<br/>about your workload, not their<br/>roadmap."]
+    G1 --> G2["Plus: when NEITHER is the answer,<br/>which a table can never say."]
+```
+
+
 Search for any of these comparisons and you will find a grid: rows of capabilities, ticks and
 crosses, and a conclusion that says "it depends on your use case". That is true and useless. It
 leaves the reader exactly where they started, holding a longer list.
