@@ -90,14 +90,6 @@ export default function Interview() {
 
         <p className="hint" style={{ margin: '2px 0 0' }}>{track.blurb}</p>
 
-        {/* The shape this track's questions keep circling back to. Generated
-            from the same source as QUESTIONS.md, so the page and the app show
-            the same picture. */}
-        {track.diagram && (
-          <div className="iv-diagram">
-            <Mermaid chart={track.diagram} id={`track-${track.id}`} />
-          </div>
-        )}
 
         <ul className="pat-list">
           {questions.map(x => (
@@ -116,6 +108,17 @@ export default function Interview() {
       </div>
 
       <div className="pat-detail">
+        {/* The shape this track's questions keep circling back to. It sits
+            here rather than in the sidebar because that column is ~320px --
+            the diagram rendered into a scroll box two lines tall, which is
+            worse than no diagram. Same source as QUESTIONS.md. */}
+        {track.diagram && (
+          <details className="iv-diagram" open>
+            <summary>{track.name} — the shape behind these questions</summary>
+            <Mermaid chart={track.diagram} id={`track-${track.id}`} />
+          </details>
+        )}
+
         {!q && <p className="hint">Select a question.</p>}
         {q && (
           <>

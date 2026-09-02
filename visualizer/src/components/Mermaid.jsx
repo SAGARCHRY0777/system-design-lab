@@ -56,6 +56,11 @@ export default function Mermaid({ chart, id }) {
         startOnLoad: false,
         securityLevel: 'strict',
         fontFamily: 'inherit',
+        // themeVariables are IGNORED unless the theme is 'base'. Without this
+        // line every diagram rendered in Mermaid's default lavender regardless
+        // of the six palettes below it -- and the code looked correct, because
+        // the variables were all being set. They were just being discarded.
+        theme: 'base',
         themeVariables: {
           background:        cssVar('--panel', '#fff'),
           primaryColor:      cssVar('--sunken', '#eee'),

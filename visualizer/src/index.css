@@ -1119,13 +1119,31 @@ footer p { margin: 0; max-width: 82ch; }
 
 .edge-faint { opacity: .3; }
 
-/* The interview track's framing diagram. */
+/* The interview track's framing diagram.
+   Collapsible, because it is the same picture on every question in the track
+   and a reader working through five of them does not need it five times. */
 .iv-diagram {
-  margin: 14px 0 4px;
-  padding: 10px;
+  margin: 0 0 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--sunken);
+}
+.iv-diagram > summary {
+  cursor: pointer;
+  padding: 9px 13px;
+  font-size: 11px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  list-style: none;
+}
+.iv-diagram > summary::-webkit-details-marker { display: none; }
+.iv-diagram > summary::before { content: '▾ '; }
+.iv-diagram:not([open]) > summary::before { content: '▸ '; }
+.iv-diagram > summary:hover { color: var(--ink); }
+.iv-diagram > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.iv-diagram .mmd {
+  padding: 4px 13px 14px;
   overflow-x: auto;
 }
-.iv-diagram svg { max-width: 100%; height: auto; display: block; }
+.iv-diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
