@@ -177,6 +177,19 @@ The largest remaining holes are **load shedding**, which is referenced from thre
 and has no page of its own, and the **real-world problems** — several of the eight are still
 unwritten. Both are listed in [GAPS.md](GAPS.md) rather than left implicit.
 
+## Companion repos
+
+| Repo | What it covers |
+|---|---|
+| [dsa-handbook](https://github.com/SAGARCHRY0777/dsa-handbook) | Coding — patterns, ladders, worked solutions in Python and Java |
+| [llm-handbook](https://github.com/SAGARCHRY0777/llm-handbook) | ML/LLM systems — RAG, evaluation, serving, agents |
+| [system-design-handbook](https://github.com/SAGARCHRY0777/system-design-handbook) | The 45-minute round — framework, building blocks, 8 worked designs |
+
 ## License
 
 MIT
+
+---
+
+**Sagar Chaudhary** — AI Engineer, industrial & manufacturing AI · Bengaluru  
+[Portfolio](https://sagarchry0777.github.io) · [GitHub](https://github.com/SAGARCHRY0777) · [LinkedIn](https://www.linkedin.com/in/sagar-chaudhary777/)
