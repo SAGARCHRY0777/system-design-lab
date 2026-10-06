@@ -9,10 +9,16 @@ Two severities, deliberately:
 
   ERROR    structurally broken -- empty, no recognised diagram type, unbalanced
            brackets or quotes. These will definitely not render.
-  WARNING  characters that are hazardous in the position they appear, chiefly
-           unquoted parentheses in sequence-diagram message text. Some of these
-           render fine today; they are reported so new ones are not added
-           casually, and they do not fail the build.
+  WARNING  characters that are hazardous in the position they appear: an
+           unquoted '&' or '(' inside a flowchart node label. Both end the
+           label early in flowchart syntax. They do not fail the build.
+
+           Parentheses in SEQUENCE message text were warned about here until
+           the claim was tested against the bundled mermaid: every flagged
+           line parsed, including 'S256(x)' and 'replicate (async, ~200ms)'.
+           Message text runs to end of line and is not re-parsed, so the rule
+           only ever produced false positives -- nine of them, permanently,
+           which is how a warning stops being read.
 
     python scripts/check_mermaid.py
     python scripts/check_mermaid.py --strict   # warnings become errors
@@ -78,22 +84,19 @@ def check_block(body: str) -> tuple[list[str], list[str]]:
         if not line or line.startswith("%%"):
             continue
 
-        # In a sequence diagram, message text follows the arrow and is not
-        # quoted -- parentheses there are the classic parser trip.
-        if is_sequence and ":" in line:
-            arrow = re.search(r"(->>|-->>|-\)|--\)|->|-->)", line)
-            if arrow:
-                msg = re.sub(r"--?\)", "", line).split(":", 1)[1]
-                if "(" in msg or ")" in msg:
-                    warnings.append(f"line {i}: parentheses in sequence message text")
-
         # An unquoted ampersand inside a node label joins nodes in flowchart
         # syntax rather than printing.
-        for label in re.findall(r"\[([^\]]*)\]", line):
-            if label.startswith('"') and label.endswith('"'):
-                continue
-            if "&" in label:
-                warnings.append(f"line {i}: unquoted '&' in a node label")
+        # A[Cache (Redis)] is a real parse error -- '(' opens a shape, so the
+        # label ends early. [(cyl)], ([stadium]) and ((circle)) are shape
+        # syntax, not labels, and the negative lookahead leaves them alone.
+        if not is_sequence:
+            for label in re.findall(r"\[(?!\(|\[)([^\[\]]*)\]", line):
+                if label.startswith('"') and label.endswith('"'):
+                    continue
+                if "&" in label:
+                    warnings.append(f"line {i}: unquoted '&' in a node label")
+                if "(" in label or ")" in label:
+                    warnings.append(f"line {i}: unquoted parentheses in a node label")
 
     return errors, warnings
 
