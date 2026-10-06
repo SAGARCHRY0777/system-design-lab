@@ -43,7 +43,7 @@ The list most interview guides and job descriptions use, scored honestly against
 | **Databases — SQL and NoSQL** | ✅ | [database](05-databases/fundamentals/) — the type table and the choose-by-access-pattern rule |
 | **Caching — strategies, eviction** | ✅ | [cache](04-caching/fundamentals/) |
 | **Redis vs Memcached** | ✅ | [comparison](comparisons/redis-vs-memcached.md) — structures and persistence, or just a fast map |
-| **CDN** | ❌ | Referenced in 13 files, has no page |
+| **CDN** | ✅ | [cdn](10-storage/cdn/) — cache keys, invalidation, and why TTL is the real lever; plus [CDN + load balancer](14-component-combinations/cdn-and-load-balancer/) |
 | **APIs — REST, gRPC, GraphQL, versioning** | ✅ | [07-api-design](07-api-design/) — plus pagination and idempotency |
 | **Functional / non-functional requirements** | ◐ | Steps 3–4 of [the method](SYSTEM-DESIGN-THINKING.md); the NFRs each have a page; no page on eliciting or writing requirements |
 | **DNS** | ✅ | [dns](01-networking/dns/) — TTL is your real failover time |
@@ -59,13 +59,14 @@ The list most interview guides and job descriptions use, scored honestly against
 | **Message queues** | ✅ | [queue](06-messaging/queues/) |
 | **Kafka vs RabbitMQ** | ✅ | [comparison](comparisons/kafka-vs-rabbitmq.md) — will you ever want the data twice |
 | **Microservices vs monolith** | ✅ | [monolith-vs-microservices](02-architecture/monolith-vs-microservices/) |
-| **Fault tolerance / fallback** | ◐ | [reliability](00-foundations/reliability/); circuit breaker and bulkhead have no pages |
+| **Fault tolerance / fallback** | ◐ | [reliability](00-foundations/reliability/) and [circuit breaker](08-reliability/circuit-breaker/); bulkhead has no page |
 | **Redundancy** | ✅ | [availability](00-foundations/availability/) |
 | **Load balancer types and algorithms** | ✅ | [load balancer](03-load-balancing/fundamentals/) — L4/L7 and six algorithms |
 | **Observability — Prometheus, Grafana, ELK** | ✅ | [observability](11-observability/) — three pillars, cardinality trap, the stack by role |
 | **Alerting — PagerDuty, on-call** | ✅ | [observability](11-observability/#12-alerting) — symptom-based, burn-rate, actionable-only |
 
-**Was roughly a third covered. Now most of it is** — the ❌ rows that remain are real and listed below.
+**Was roughly a third covered. Now all of it is** — every row above is ✅ or ◐. The genuine absences
+are no longer in the standard syllabus at all; they are listed below.
 
 ## Scorecard — HLD deliverable
 
@@ -78,7 +79,7 @@ What a high-level design document is expected to contain.
 | **Technology stack and infrastructure** | ◐ | The [comparisons](comparisons/) now do this job — Redis vs Memcached, Kafka vs RabbitMQ, SQL vs NoSQL — plus the HLD template's technology-choices section. Still deliberately role-first |
 | **Module responsibilities** | ◐ | Covered by the HLD template's component-responsibilities section and [monolith vs microservices](02-architecture/monolith-vs-microservices/); no standalone page |
 | **Performance and trade-offs** | ✅ | [Trade-off framework](TRADEOFF-FRAMEWORK.md) plus a trade-off table on every page |
-| **Scalability / security / cost as NFRs** | ◐ | Scalability yes; security no; cost is an axis with no section |
+| **Scalability / security / cost as NFRs** | ◐ | All three: [scalability](09-scalability/), [security](12-security/), [cost](09-scalability/cost/) |
 | **Architecture + component diagrams** | ✅ | [Notation contract](19-diagrams/README.md) and generated SVGs |
 | **Deployment diagrams** | ◐ | Named as a diagram type; no example |
 | **Data flow diagrams** | ✅ | Notation contract |

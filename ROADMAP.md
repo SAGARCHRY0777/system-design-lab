@@ -87,18 +87,19 @@ because in practice it is never traded alone — always against write latency.
 - [x] ★ [Cache](04-caching/fundamentals/) `[B]`
 - [x] ★ [Database](05-databases/fundamentals/) `[I]`
 - [x] ★ [Queue](06-messaging/queues/) `[I]`
-- [ ] Worker `[B]`
+- [x] [Worker](06-messaging/workers/) `[B]`
 - [x] [CDN](10-storage/cdn/) `[B]`
 - [x] [API gateway](13-design-patterns/api-gateway/) `[I]`
 
 ## Phase 4 — Core patterns
 
 - [ ] Batching `[I]`
-- [ ] Retries `[B]`
+- [x] [Retries](08-reliability/retries/) `[B]`
 - [ ] Exponential backoff + jitter `[I]` — *needs retries*
-- [x] [Circuit breaker](18-implementations/circuit-breaker/) — 40x faster failure, measured `[I]` — *needs retries*
-- [ ] Rate limiting `[I]`
-- [ ] Backpressure `[A]`
+- [x] [Circuit breaker](08-reliability/circuit-breaker/) `[I]` — *needs retries*
+- [x] [Rate limiting](08-reliability/rate-limiting/) `[I]`
+- [x] [Backpressure](08-reliability/backpressure/) `[A]`
+- [x] [Timeouts](08-reliability/timeouts/) `[B]` — *was never on the plan; the page exists*
 - [x] ★ [Sharding](05-databases/sharding/) `[A]`
 - [x] [Replication](05-databases/replication/) `[I]`
 - [ ] Asynchronous processing `[I]`
@@ -114,12 +115,12 @@ The part most material skips, and the reason this repository exists.
 - [x] [GAPS.md](GAPS.md) — what the original plan never included, tracked separately from what is
       merely unbuilt
 
-The 10 `CORE` pairs below still need their own pages:
+Four of these `CORE` pairs now have pages; the rest still need them:
 
-- [ ] Load balancer + cache `[I]`
-- [ ] Cache + database `[I]`
-- [ ] Queue + workers `[I]`
-- [ ] Queue + database `[I]`
+- [x] [Load balancer + cache](14-component-combinations/load-balancer-and-cache/) `[I]`
+- [x] [Cache + database](14-component-combinations/cache-and-database/) `[I]`
+- [x] [Queue + workers](14-component-combinations/queue-and-workers/) `[I]`
+- [x] [Queue + database](14-component-combinations/queue-and-database/) `[I]`
 - [ ] Load balancer + cache + database `[I]`
 - [ ] Batching + queue `[A]`
 - [ ] Retry + circuit breaker `[A]`
@@ -131,11 +132,11 @@ Each written V1→V8 with the reason for every change, and each with a scene fil
 in the visualizer.
 
 - [x] [URL shortener](15-real-world-problems/url-shortener/) — full V1→V8 worked design with exercises `[B]`
-- [ ] Notification system `[I]`
-- [ ] Chat system `[A]`
+- [x] [Notification system](15-real-world-problems/notification-system/) `[I]`
+- [x] [Chat system](15-real-world-problems/chat-system/) `[A]`
 - [x] [Social feed](19-diagrams/scenes/social-feed.json) — scene: fan-out on write vs read, the celebrity problem, hybrid `[A]`
 - [ ] File storage `[I]`
-- [ ] Payment system `[E]`
+- [x] [Payment system](15-real-world-problems/payment-system/) `[E]`
 - [ ] Ticket booking `[A]`
 - [ ] Video streaming `[A]`
 
@@ -146,7 +147,7 @@ Python, stdlib-only, with tests and **executed** benchmarks.
 - [x] [Rate limiter](18-implementations/rate-limiter/) — token bucket, sliding window, fixed window `[I]`
 - [x] [Consistent hashing](18-implementations/consistent-hashing/) — 19.8% vs 80.2% remap, measured `[A]`
 - [x] [Cache](18-implementations/lru-cache/) — LRU + TTL, and the scan vulnerability measured `[I]`
-- [ ] Circuit breaker `[I]`
+- [x] [Circuit breaker](18-implementations/circuit-breaker/) — 40x faster failure, measured `[I]`
 - [ ] Worker pool `[I]`
 - [ ] Load balancer — the algorithms `[B]`
 - [ ] Message queue `[A]`
