@@ -379,7 +379,14 @@ footer p { margin: 0; max-width: 82ch; }
 
 /* ---------- view nav & patterns browser ---------- */
 
-.viewnav { display: flex; gap: 5px; }
+/* max-width is what makes the overflow-x:auto below 680px actually work. A flex
+   row sizes to its content, and nothing in the header constrains this one to the
+   viewport -- so without it the tabs push the whole document wider instead of
+   scrolling inside themselves. Measured across 7 views x 18 widths: 49 of 126
+   combinations scrolled the page sideways, up to 231px at 320px wide. Kept on
+   the base rule rather than inside the media query so it cannot come undone if
+   the breakpoints move. */
+.viewnav { display: flex; gap: 5px; max-width: 100%; }
 .viewnav .tick { padding: 5px 12px; font-size: 12.5px; font-family: inherit; }
 
 .scrub { margin-top: 10px; }
