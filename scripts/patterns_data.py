@@ -109,34 +109,48 @@ GOF_CREATIONAL = {
 "Builder": P(
     "Construct a complex object step by step, separating construction from representation.",
     "HTTP request builders; query builders; `StringBuilder`.",
-    "A builder accumulates parameters through chained calls, then produces the object.",
+    "A builder accumulates parameters through chained calls, then produces the object in one "
+    "validated piece. Two patterns share the name: the GoF one has a *Director* driving the "
+    "builder through steps, and almost nobody writes it; the one everyone means is Effective "
+    "Java Item 2 — fluent setters and a terminal `build()`. Required fields belong in the "
+    "builder's constructor, optional ones in setters.",
     "Constructors with many optional parameters become unreadable and error-prone — two adjacent "
     "booleans are a bug waiting to happen.",
     "Readable at the call site; supports immutability; validates once at build time.",
-    "More code than a constructor. An unbuilt builder is an easy thing to leave dangling.",
+    "More code than a constructor — every field written twice. An unbuilt builder is an easy "
+    "thing to leave dangling. And in Python it is usually unnecessary: keyword arguments, "
+    "default values and a frozen dataclass with `__post_init__` give the same four guarantees "
+    "in five lines, because Java invented this to work around features Python already has.",
     "Call-site clarity bought with boilerplate.",
     "They validate in `build()`, not in each setter, so the object cannot exist in an invalid "
     "state — and they make the built object immutable. The version that quietly causes bugs is a "
     "reusable builder whose state leaks between builds.",
     "Fluent request builders · infrastructure-as-code",
-    "A half-built distributed resource is already running and already costing money."),
+    "A half-built distributed resource is already running and already costing money.",
+    page="builder"),
 
 "Prototype": P(
     "Create new objects by cloning an existing instance.",
     "Container images; VM templates; database snapshots; game entity spawning.",
-    "The object exposes a `clone()` that copies its own state.",
+    "The object exposes a `clone()` that deep-copies its payload and then *explicitly resets* "
+    "what must not be inherited — identity, connections, locks, caches. A clone() whose body "
+    "is `return deepcopy(self)` has not made that decision, it has deferred it to whoever "
+    "first notices two rows with one primary key.",
     "Sometimes construction is expensive but copying is cheap — or the desired initial state only "
     "exists at runtime.",
     "Avoids expensive setup; captures runtime-configured state.",
     "Deep versus shallow copy is a persistent source of bugs. Cloning objects holding handles, "
-    "locks or connections is usually wrong.",
+    "locks or connections is usually wrong — and the language protects you only by accident: one "
+    "unpicklable field makes a whole object uncopyable, so a class that happens to hold a lock is "
+    "guarded and a class holding a connection *wrapper* is not.",
     "Cheap creation bought with copy-semantics hazards.",
     "They ask what the clone must *not* inherit — identity, connections, locks, caches — and "
     "explicitly reset those. The classic production bug is a cloned object that inherited the "
     "original's open connection or its ID.",
     "Container images · VM templates · snapshots",
     "Cloning state is easy; cloning identity is not. The clone must not inherit leases or "
-    "client connections."),
+    "client connections.",
+    page="prototype"),
 }
 
 GOF_STRUCTURAL = {

@@ -105,11 +105,13 @@ How objects get made.
 
 **Construct a complex object step by step, separating construction from representation.**
 
+**→ [Full page](builder/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — HTTP request builders; query builders; `StringBuilder`.
-- **How** — A builder accumulates parameters through chained calls, then produces the object.
+- **How** — A builder accumulates parameters through chained calls, then produces the object in one validated piece. Two patterns share the name: the GoF one has a *Director* driving the builder through steps, and almost nobody writes it; the one everyone means is Effective Java Item 2 — fluent setters and a terminal `build()`. Required fields belong in the builder's constructor, optional ones in setters.
 - **Why** — Constructors with many optional parameters become unreadable and error-prone — two adjacent booleans are a bug waiting to happen.
 - **Advantages** — Readable at the call site; supports immutability; validates once at build time.
-- **Disadvantages** — More code than a constructor. An unbuilt builder is an easy thing to leave dangling.
+- **Disadvantages** — More code than a constructor — every field written twice. An unbuilt builder is an easy thing to leave dangling. And in Python it is usually unnecessary: keyword arguments, default values and a frozen dataclass with `__post_init__` give the same four guarantees in five lines, because Java invented this to work around features Python already has.
 - **Trade-off** — *Call-site clarity bought with boilerplate.*
 
 > **Distributed counterpart:** Fluent request builders · infrastructure-as-code  
@@ -121,11 +123,13 @@ How objects get made.
 
 **Create new objects by cloning an existing instance.**
 
+**→ [Full page](prototype/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Container images; VM templates; database snapshots; game entity spawning.
-- **How** — The object exposes a `clone()` that copies its own state.
+- **How** — The object exposes a `clone()` that deep-copies its payload and then *explicitly resets* what must not be inherited — identity, connections, locks, caches. A clone() whose body is `return deepcopy(self)` has not made that decision, it has deferred it to whoever first notices two rows with one primary key.
 - **Why** — Sometimes construction is expensive but copying is cheap — or the desired initial state only exists at runtime.
 - **Advantages** — Avoids expensive setup; captures runtime-configured state.
-- **Disadvantages** — Deep versus shallow copy is a persistent source of bugs. Cloning objects holding handles, locks or connections is usually wrong.
+- **Disadvantages** — Deep versus shallow copy is a persistent source of bugs. Cloning objects holding handles, locks or connections is usually wrong — and the language protects you only by accident: one unpicklable field makes a whole object uncopyable, so a class that happens to hold a lock is guarded and a class holding a connection *wrapper* is not.
 - **Trade-off** — *Cheap creation bought with copy-semantics hazards.*
 
 > **Distributed counterpart:** Container images · VM templates · snapshots  
