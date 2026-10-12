@@ -56,6 +56,7 @@ treatment, with failure modes and exercises.
 |---|---|
 | [API gateway](api-gateway/) | One door for auth, routing, quotas and TLS. **It becomes a deployment bottleneck the moment domain logic leaks into it**, and that happens one reasonable request at a time. |
 | [Factory Method](factory-method/) | Four different things get called "factory" and the Gang of Four one is the least used. The one people *do* write is a registry — and **a plugin registers on import, nothing imports it, so the lookup raises in production while passing CI**. |
+| [Abstract Factory](abstract-factory/) | Its product is a *negative* guarantee — a mismatched family becomes unreachable. **Adding a family costs O(1), adding a product costs O(F)**, which is the whole decision. And it leaks the moment providers differ in capability rather than naming, which is why JDBC works and multi-cloud does not. |
 | [Singleton](singleton/) | Everyone teaches thread-safe *creation*. The two that cost money are that **a correctly-created instance is not safe to use**, and that **"one" means one per process** — four workers hold four, a limiter set to 100 admits 400, and nothing anywhere reports it. |
 
 ## Related

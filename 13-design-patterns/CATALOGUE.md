@@ -87,11 +87,13 @@ How objects get made.
 
 **Create families of related objects without naming their concrete classes.**
 
+**→ [Full page](abstract-factory/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Cross-platform UI toolkits; cloud-provider abstraction layers.
-- **How** — An interface with several creation methods; each concrete factory returns a matched set.
+- **How** — An interface with several creation methods, implemented once per family, so every object a caller receives is guaranteed compatible with every other it got from the same place. The product is not easier creation — it is a *negative* guarantee: no path through a factory can produce a mismatched pair.
 - **Why** — Some objects only work together — a Windows button with a Windows scrollbar — and mixing families breaks things.
 - **Advantages** — Guarantees a consistent family; swapping the whole set is one line.
-- **Disadvantages** — Adding a new *product* to the family changes every factory. Heavy for small variation.
+- **Disadvantages** — Adding a new *product* to the family changes every factory, so growth costs O(1) in families and O(F) in products — which is the whole decision: use it where families grow and products are stable, and avoid it where that is reversed. Heavy for small variation. And unless capability differences are declared outright, the interface asserts a symmetry the family does not have.
 - **Trade-off** — *Family consistency bought with rigidity.*
 
 > **Distributed counterpart:** Cloud provider abstraction · driver families  

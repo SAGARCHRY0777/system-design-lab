@@ -84,11 +84,18 @@ GOF_CREATIONAL = {
 "Abstract Factory": P(
     "Create families of related objects without naming their concrete classes.",
     "Cross-platform UI toolkits; cloud-provider abstraction layers.",
-    "An interface with several creation methods; each concrete factory returns a matched set.",
+    "An interface with several creation methods, implemented once per family, so every object a "
+    "caller receives is guaranteed compatible with every other it got from the same place. The "
+    "product is not easier creation — it is a *negative* guarantee: no path through a factory can "
+    "produce a mismatched pair.",
     "Some objects only work together — a Windows button with a Windows scrollbar — and mixing "
     "families breaks things.",
     "Guarantees a consistent family; swapping the whole set is one line.",
-    "Adding a new *product* to the family changes every factory. Heavy for small variation.",
+    "Adding a new *product* to the family changes every factory, so growth costs O(1) in "
+    "families and O(F) in products — which is the whole decision: use it where families grow and "
+    "products are stable, and avoid it where that is reversed. Heavy for small variation. And "
+    "unless capability differences are declared outright, the interface asserts a symmetry the "
+    "family does not have.",
     "Family consistency bought with rigidity.",
     "They are sceptical of it for cloud abstraction specifically. Providers differ in "
     "*capability*, not only in naming, so the abstraction leaks the moment one lacks a primitive "
@@ -96,7 +103,8 @@ GOF_CREATIONAL = {
     "picking one. They use it where the families are genuinely symmetric, and accept lock-in "
     "where they are not.",
     "Cloud provider abstraction · driver families",
-    "The families differ in what they can do, not just in what they are called."),
+    "The families differ in what they can do, not just in what they are called.",
+    page="abstract-factory"),
 
 "Builder": P(
     "Construct a complex object step by step, separating construction from representation.",
