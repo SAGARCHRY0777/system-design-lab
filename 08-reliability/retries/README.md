@@ -424,7 +424,7 @@ reason.
 
 ---
 
-<sub>**The reading path** · step 21 of 27 · *Retries*</sub>
+<sub>**The reading path** · step 22 of 28 · *Retries*</sub>
 
 ◀ **Previous** [Timeouts](../../08-reliability/timeouts/README.md) &nbsp;·&nbsp; **Next** [Circuit breaker](../../08-reliability/circuit-breaker/README.md) ▶
 

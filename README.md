@@ -69,13 +69,19 @@ so the two cannot disagree.
 **Not sure where you are?** [The diagnostic](DIAGNOSTIC.md) — 17 questions, easy to expert, routing
 you by *what you get wrong*. A missed question is worth more than the score.
 
+**Which kind of question is this?** [Types of system design](SYSTEM-DESIGN-TYPES.md) — HLD against
+LLD, product against infrastructure, greenfield against evolution, and which of the four orders in
+this repository you actually want. The most common failure is not weak knowledge, it is answering
+the wrong *kind* of question.
+
 **New to this** — in order, it is a deliberate sequence:
 
-1. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
-2. [Estimation Guide](ESTIMATION-GUIDE.md) — putting numbers on a problem in your head
-3. [Trade-off Framework](TRADEOFF-FRAMEWORK.md) — how to *choose*, with decision trees
-4. [Foundations](00-foundations/) — latency, availability, consistency, CAP
-5. [The URL shortener](15-real-world-problems/url-shortener/), V1→V8 — the whole method on one problem
+1. [Types of system design](SYSTEM-DESIGN-TYPES.md) — what kind of answer the question wants
+2. [System Design Thinking](SYSTEM-DESIGN-THINKING.md) — the chain, and the 18-step method
+3. [Estimation Guide](ESTIMATION-GUIDE.md) — putting numbers on a problem in your head
+4. [Trade-off Framework](TRADEOFF-FRAMEWORK.md) — how to *choose*, with decision trees
+5. [Foundations](00-foundations/) — latency, availability, consistency, CAP
+6. [The URL shortener](15-real-world-problems/url-shortener/), V1→V8 — the whole method on one problem
 
 **Already comfortable** — the [combination matrix](14-component-combinations/MATRIX.md), the
 [case studies](17-case-studies/), and the [parameter decisions](16-design-exercises/), which ask
@@ -87,7 +93,8 @@ what you would *set* things to rather than which component to reach for.
 
 ```mermaid
 flowchart TD
-    F["FOUNDATIONS<br/><i>latency · availability · consistency · CAP</i>"] --> E["ESTIMATION<br/><i>put numbers on it</i>"]
+    T["WHICH TYPE?<br/><i>HLD or LLD · product or primitive<br/>greenfield or evolution</i>"] --> F["FOUNDATIONS<br/><i>latency · availability · consistency · CAP</i>"]
+    F --> E["ESTIMATION<br/><i>put numbers on it</i>"]
     E --> C["COMPONENTS<br/><i>load balancer · cache · database · queue</i>"]
     C --> P["PATTERNS<br/><i>78, with distributed counterparts</i>"]
     P --> K["COMBINATIONS<br/><i>how components behave together</i>"]

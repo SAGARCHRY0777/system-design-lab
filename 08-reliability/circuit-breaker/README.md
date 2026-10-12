@@ -439,7 +439,7 @@ absorbing every thread you own.
 
 ---
 
-<sub>**The reading path** · step 22 of 27 · *Circuit breaker*</sub>
+<sub>**The reading path** · step 23 of 28 · *Circuit breaker*</sub>
 
 ◀ **Previous** [Retries](../../08-reliability/retries/README.md) &nbsp;·&nbsp; **Next** [Observability](../../11-observability/README.md) ▶
 

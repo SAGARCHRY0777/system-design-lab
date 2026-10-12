@@ -17,6 +17,10 @@ rule the repository teaches: **build the thing the current problem forces, not
 the thing the final diagram implies.**
 
 
+> **This is the order this repository was *built* in, not an order to *read* it in.** If you came
+> here looking for a study plan, you want [Types of system design](SYSTEM-DESIGN-TYPES.md#part-1--which-order-do-you-actually-want),
+> which indexes the four different orders here and says which one answers which question.
+
 What exists, what is next, and in what order. Topics not yet written are **absent from the tree
 rather than stubbed**, so an empty checkbox here means "not built", never "built badly".
 

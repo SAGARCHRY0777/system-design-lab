@@ -477,7 +477,7 @@ guess is bounded, observable, and improvable, which is as close to certainty as 
 
 ---
 
-<sub>**The reading path** · step 20 of 27 · *Timeouts*</sub>
+<sub>**The reading path** · step 21 of 28 · *Timeouts*</sub>
 
 ◀ **Previous** [Reliability patterns](../../08-reliability/README.md) &nbsp;·&nbsp; **Next** [Retries](../../08-reliability/retries/README.md) ▶
 

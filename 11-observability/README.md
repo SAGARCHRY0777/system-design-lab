@@ -402,7 +402,7 @@ decision. Set it below what users currently experience and above what they would
 
 ---
 
-<sub>**The reading path** · step 23 of 27 · *Observability*</sub>
+<sub>**The reading path** · step 24 of 28 · *Observability*</sub>
 
 ◀ **Previous** [Circuit breaker](../08-reliability/circuit-breaker/README.md) &nbsp;·&nbsp; **Next** [Combinations](../14-component-combinations/README.md) ▶
 

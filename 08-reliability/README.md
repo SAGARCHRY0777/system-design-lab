@@ -163,7 +163,7 @@ rather than paraphrased:
 
 ---
 
-<sub>**The reading path** · step 19 of 27 · *Reliability patterns*</sub>
+<sub>**The reading path** · step 20 of 28 · *Reliability patterns*</sub>
 
 ◀ **Previous** [Worker](../06-messaging/workers/README.md) &nbsp;·&nbsp; **Next** [Timeouts](../08-reliability/timeouts/README.md) ▶
 

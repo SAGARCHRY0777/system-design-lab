@@ -13,6 +13,12 @@ a **method** — a repeatable way to get from a vague sentence to a defended arc
 This document is the method. Every other page in this repository is a detail you will need while
 executing it.
 
+One thing to settle first: the method below is written for a **high-level, greenfield, product**
+design, which is the interview default and roughly a quarter of real cases. Which steps apply to
+the other three quarters depends on what kind of design you are doing — see
+[Types of system design](SYSTEM-DESIGN-TYPES.md), and
+[Part 6 there](SYSTEM-DESIGN-TYPES.md#part-6--the-method-is-not-uniform) for what changes.
+
 ---
 
 ## Part 1 · The chain
@@ -224,8 +230,8 @@ Working checklist: [DESIGN-CHECKLIST.md](DESIGN-CHECKLIST.md).
 
 ---
 
-<sub>**The reading path** · step 1 of 27 · *System design thinking*</sub>
+<sub>**The reading path** · step 2 of 28 · *System design thinking*</sub>
 
-**Next** [Estimation](ESTIMATION-GUIDE.md) ▶
+◀ **Previous** [Types of system design](SYSTEM-DESIGN-TYPES.md) &nbsp;·&nbsp; **Next** [Estimation](ESTIMATION-GUIDE.md) ▶
 
 <!-- PATH:END -->

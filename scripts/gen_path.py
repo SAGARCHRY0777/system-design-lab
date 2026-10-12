@@ -32,6 +32,7 @@ END = "<!-- PATH:END -->"
 # Ordered so that every page's prerequisite comes before it -- this is the same
 # order the README's "where to start" advertises, made real.
 PATH: list[tuple[str, str]] = [
+    ("SYSTEM-DESIGN-TYPES.md", "Types of system design"),
     ("SYSTEM-DESIGN-THINKING.md", "System design thinking"),
     ("ESTIMATION-GUIDE.md", "Estimation"),
     ("TRADEOFF-FRAMEWORK.md", "Trade-off framework"),

@@ -85,6 +85,7 @@ What a high-level design document is expected to contain.
 | **Data flow diagrams** | ✅ | Notation contract |
 | **ER / schema diagrams** | ✅ | [data-modelling](05-databases/data-modelling/) — including a Mermaid erDiagram |
 | **An HLD / LLD document template** | ✅ | [_templates/hld.md](_templates/hld.md) and [lld.md](_templates/lld.md) |
+| **What HLD and LLD actually are** | ✅ | [Types of system design · Part 2](SYSTEM-DESIGN-TYPES.md#part-2--altitude). The templates existed for months and nothing explained the distinction they presuppose — a gap nobody had written down |
 
 ---
 
