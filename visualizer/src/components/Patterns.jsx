@@ -220,6 +220,18 @@ export default function Patterns() {
               </div>
             )}
 
+            {active.page && (
+              <p className="hint">
+                <a
+                  href={`https://github.com/SAGARCHRY0777/system-design-lab/tree/main/13-design-patterns/${active.page}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >Full page →</a>{' '}
+                decoded terminology, Python and Java, runnable tests, interview follow-ups.
+                This panel is the summary.
+              </p>
+            )}
+
             {active.top1 && (
               <div className="pat-top1">
                 <span className="pat-top1-h">What the top 1% do differently</span>
@@ -227,7 +239,7 @@ export default function Patterns() {
               </div>
             )}
 
-            {!active.top1 && (
+            {!active.top1 && !active.page && (
               <p className="hint">
                 Indexed here; the full entry lands as this family is written out. See the
                 catalogue in the repository.

@@ -51,11 +51,13 @@ How objects get made.
 
 **Exactly one instance of a type, globally reachable.**
 
+**→ [Full page](singleton/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Logger and config objects in almost every codebase; connection pools.
-- **How** — A private constructor and a static accessor that lazily creates and caches the instance.
+- **How** — Three mechanisms, one job each: a *private constructor* blocks the normal way in; a *static* accessor provides the only way in — static because you need a way in before any instance exists, and an ordinary method would need the instance you are trying to get; a cached field makes the second call return the first object.
 - **Why** — Some resources genuinely must be unique — one connection pool, one metrics registry — and creating a second silently doubles the resource.
 - **Advantages** — Guarantees uniqueness; avoids repeatedly constructing something expensive.
-- **Disadvantages** — Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong.
+- **Disadvantages** — Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong — and getting *creation* right does nothing for the instance's own mutable state, which every thread then shares for the life of the process. Worst of all, "one" means one per *process*: four workers hold four, and nothing anywhere reports it.
 - **Trade-off** — *Uniqueness bought with global state and untestability.*
 
 > **Distributed counterpart:** Leader election · distributed lock  

@@ -55,6 +55,7 @@ treatment, with failure modes and exercises.
 | Pattern | The one thing to take away |
 |---|---|
 | [API gateway](api-gateway/) | One door for auth, routing, quotas and TLS. **It becomes a deployment bottleneck the moment domain logic leaks into it**, and that happens one reasonable request at a time. |
+| [Singleton](singleton/) | Everyone teaches thread-safe *creation*. The two that cost money are that **a correctly-created instance is not safe to use**, and that **"one" means one per process** — four workers hold four, a limiter set to 100 admits 400, and nothing anywhere reports it. |
 
 ## Related
 

@@ -9,14 +9,15 @@
           "name": "Singleton",
           "what": "Exactly one instance of a type, globally reachable.",
           "where": "Logger and config objects in almost every codebase; connection pools.",
-          "how": "A private constructor and a static accessor that lazily creates and caches the instance.",
+          "how": "Three mechanisms, one job each: a *private constructor* blocks the normal way in; a *static* accessor provides the only way in — static because you need a way in before any instance exists, and an ordinary method would need the instance you are trying to get; a cached field makes the second call return the first object.",
           "why": "Some resources genuinely must be unique — one connection pool, one metrics registry — and creating a second silently doubles the resource.",
           "adv": "Guarantees uniqueness; avoids repeatedly constructing something expensive.",
-          "dis": "Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong.",
+          "dis": "Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong — and getting *creation* right does nothing for the instance's own mutable state, which every thread then shares for the life of the process. Worst of all, \"one\" means one per *process*: four workers hold four, and nothing anywhere reports it.",
           "tradeoff": "Uniqueness bought with global state and untestability.",
           "top1": "They mostly do not use it. They register a single instance in a dependency-injection container instead — you still get one instance, but it arrives as a constructor argument, so it is visible, substitutable in tests, and has an obvious lifetime. When they *do* use the classic form, it is for something with no state worth resetting. The tell that it is being misused: a test that passes alone and fails in a suite.",
           "bridge": "Leader election · distributed lock",
-          "harder": "One process needs a static field. A cluster needs consensus, a lease and a fencing token — and during a partition two nodes can both believe they are the singleton."
+          "harder": "One process needs a static field. A cluster needs consensus, a lease and a fencing token — and during a partition two nodes can both believe they are the singleton.",
+          "page": "singleton"
         },
         {
           "name": "Factory Method",
@@ -29,7 +30,8 @@
           "tradeoff": "Flexibility bought with indirection.",
           "top1": "They add it when the *second* variant appears, not in anticipation of one. A factory with a single implementation is speculative generality — the cost is paid now, the benefit may never arrive. They also prefer a plain function over a class hierarchy when the language allows it.",
           "bridge": "Service discovery · DI container",
-          "harder": "'Which implementation' becomes 'which instance, and is it healthy right now'."
+          "harder": "'Which implementation' becomes 'which instance, and is it healthy right now'.",
+          "page": null
         },
         {
           "name": "Abstract Factory",
@@ -42,7 +44,8 @@
           "tradeoff": "Family consistency bought with rigidity.",
           "top1": "They are sceptical of it for cloud abstraction specifically. Providers differ in *capability*, not only in naming, so the abstraction leaks the moment one lacks a primitive — and you end up with the intersection of every provider's features, which is worse than picking one. They use it where the families are genuinely symmetric, and accept lock-in where they are not.",
           "bridge": "Cloud provider abstraction · driver families",
-          "harder": "The families differ in what they can do, not just in what they are called."
+          "harder": "The families differ in what they can do, not just in what they are called.",
+          "page": null
         },
         {
           "name": "Builder",
@@ -55,7 +58,8 @@
           "tradeoff": "Call-site clarity bought with boilerplate.",
           "top1": "They validate in `build()`, not in each setter, so the object cannot exist in an invalid state — and they make the built object immutable. The version that quietly causes bugs is a reusable builder whose state leaks between builds.",
           "bridge": "Fluent request builders · infrastructure-as-code",
-          "harder": "A half-built distributed resource is already running and already costing money."
+          "harder": "A half-built distributed resource is already running and already costing money.",
+          "page": null
         },
         {
           "name": "Prototype",
@@ -68,7 +72,8 @@
           "tradeoff": "Cheap creation bought with copy-semantics hazards.",
           "top1": "They ask what the clone must *not* inherit — identity, connections, locks, caches — and explicitly reset those. The classic production bug is a cloned object that inherited the original's open connection or its ID.",
           "bridge": "Container images · VM templates · snapshots",
-          "harder": "Cloning state is easy; cloning identity is not. The clone must not inherit leases or client connections."
+          "harder": "Cloning state is easy; cloning identity is not. The clone must not inherit leases or client connections.",
+          "page": null
         }
       ]
     },
@@ -88,7 +93,8 @@
           "tradeoff": "Compatibility bought with a translation layer.",
           "top1": "They use it as a boundary for the *domain model*, not just for method signatures — a true anti-corruption layer. The failure they avoid: an adapter that mirrors the vendor's model one-to-one, which spreads the vendor's concepts through your code while adding a layer.",
           "bridge": "Anti-corruption layer · protocol translation",
-          "harder": "The adapter now fails independently of both sides it adapts."
+          "harder": "The adapter now fails independently of both sides it adapts.",
+          "page": null
         },
         {
           "name": "Bridge",
@@ -101,7 +107,8 @@
           "tradeoff": "Independent variation bought with an extra indirection.",
           "top1": "They reach for it only when both axes are *actually* varying. Most codebases have one implementation and will always have one, and a bridge there is pure cost.",
           "bridge": "Storage/driver interfaces · pluggable backends",
-          "harder": "Implementations differ in failure modes, not only in method bodies."
+          "harder": "Implementations differ in failure modes, not only in method bodies.",
+          "page": null
         },
         {
           "name": "Composite",
@@ -114,7 +121,8 @@
           "tradeoff": "Uniformity bought with a weakened interface.",
           "top1": "They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting. Distributed, they know a scatter-gather composite is as slow as its slowest member — every single time.",
           "bridge": "Scatter-gather · fan-out aggregation",
-          "harder": "A composite call takes the slowest member's latency, every time — *The Tail at Scale*."
+          "harder": "A composite call takes the slowest member's latency, every time — *The Tail at Scale*.",
+          "page": null
         },
         {
           "name": "Decorator",
@@ -127,7 +135,8 @@
           "tradeoff": "Composability bought with debuggability.",
           "top1": "They keep the chain shallow and make the order explicit and reviewable, because auth-then-log and log-then-auth are different systems. In middleware they know the ordering *is* the security model.",
           "bridge": "Middleware · service mesh sidecar · filter chain",
-          "harder": "Each decorator is now a network hop with its own latency and its own failure mode."
+          "harder": "Each decorator is now a network hop with its own latency and its own failure mode.",
+          "page": null
         },
         {
           "name": "Facade",
@@ -140,7 +149,8 @@
           "tradeoff": "Simplicity bought with hidden capability.",
           "top1": "They keep the subsystem reachable for the callers who need it, rather than making the facade the only door. Distributed, they watch for the facade becoming both a single point of failure and a deployment bottleneck for every team behind it.",
           "bridge": "API gateway · backend-for-frontend",
-          "harder": "It becomes a single point of failure and a release bottleneck for every team behind it."
+          "harder": "It becomes a single point of failure and a release bottleneck for every team behind it.",
+          "page": null
         },
         {
           "name": "Flyweight",
@@ -153,7 +163,8 @@
           "tradeoff": "Memory bought with shared-mutability risk.",
           "top1": "They measure first. It is a real win at millions of objects and pure complexity at thousands. Its distributed descendant — connection pooling — they *always* use, and they size it with Little's Law rather than by copying a default.",
           "bridge": "Connection pooling · shared caches · interning",
-          "harder": "Shared state across processes needs invalidation; a pooled connection can be stale in ways an interned string never is."
+          "harder": "Shared state across processes needs invalidation; a pooled connection can be stale in ways an interned string never is.",
+          "page": null
         },
         {
           "name": "Proxy",
@@ -166,7 +177,8 @@
           "tradeoff": "Transparency bought with hidden cost.",
           "top1": "They make the expensive case *visible* rather than seamless. An ORM lazy-loading proxy that silently issues a query per loop iteration is the single most common performance bug in web applications, and it exists because the proxy hid the cost perfectly.",
           "bridge": "Reverse proxy · sidecar · read-through cache",
-          "harder": "A remote proxy can be reachable while its subject is not — exactly the case needing a timeout and a circuit breaker."
+          "harder": "A remote proxy can be reachable while its subject is not — exactly the case needing a timeout and a circuit breaker.",
+          "page": null
         }
       ]
     },
@@ -186,7 +198,8 @@
           "tradeoff": "Decoupling bought with control-flow opacity.",
           "top1": "They always define terminal behaviour, so nothing silently falls through, and they make the chain order explicit configuration rather than registration-order accident. In middleware the order is the security model, so it gets reviewed like one.",
           "bridge": "Middleware pipeline · filter chain",
-          "harder": "A handler mid-chain can be slow rather than absent, and the chain has no natural timeout."
+          "harder": "A handler mid-chain can be slow rather than absent, and the chain has no natural timeout.",
+          "page": null
         },
         {
           "name": "Command",
@@ -199,7 +212,8 @@
           "tradeoff": "Deferability bought with indirection and versioning obligations.",
           "top1": "They treat a serialised command as a **permanent public API**. A command written today may be replayed in two years by code that does not exist yet, so it is versioned from day one and never has a field's meaning quietly changed. That discipline is what makes event sourcing survivable.",
           "bridge": "Message · job · event sourcing",
-          "harder": "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe."
+          "harder": "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe.",
+          "page": null
         },
         {
           "name": "Interpreter",
@@ -212,7 +226,8 @@
           "tradeoff": "Expressiveness bought with a language to maintain forever.",
           "top1": "They resist writing one. A configuration DSL becomes Turing-complete by accident, and then you own a programming language you never meant to design. When it is genuinely warranted they use an existing grammar or parser generator.",
           "bridge": "Query planners · SQL and DSL execution",
-          "harder": "The same query has different optimal plans on different shards."
+          "harder": "The same query has different optimal plans on different shards.",
+          "page": null
         },
         {
           "name": "Iterator",
@@ -225,7 +240,8 @@
           "tradeoff": "Abstraction bought with lifetime and concurrency concerns.",
           "top1": "In distributed systems they insist on **cursor** pagination over offset pagination. Offset pagination silently skips and duplicates rows when the underlying data changes mid-traversal, and the bug is invisible in testing because test data does not move. This one distinction separates people who have run a paginated API in production from people who have not.",
           "bridge": "Cursor pagination · scroll APIs",
-          "harder": "The collection changes mid-traversal; offset pagination silently skips and duplicates."
+          "harder": "The collection changes mid-traversal; offset pagination silently skips and duplicates.",
+          "page": null
         },
         {
           "name": "Mediator",
@@ -238,7 +254,8 @@
           "tradeoff": "Decoupling bought by concentrating complexity in one place.",
           "top1": "They watch for the mediator becoming the thing nobody dares change. Distributed, the critical question is one most people skip: **is the mediator itself redundant?** A message broker mediating twelve services caps all twelve at its own availability, and it is routinely the least redundant thing in the diagram.",
           "bridge": "Message broker · orchestrator · saga coordinator",
-          "harder": "It becomes the availability ceiling for everything it mediates."
+          "harder": "It becomes the availability ceiling for everything it mediates.",
+          "page": null
         },
         {
           "name": "Memento",
@@ -251,7 +268,8 @@
           "tradeoff": "Reversibility bought with storage and versioning.",
           "top1": "They snapshot *deltas* rather than full state where they can, and version the snapshot format. Distributed, they know a snapshot across nodes is not a moment in time unless it is coordinated — which is what Chandy–Lamport exists for, and why 'just snapshot everything at midnight' is not a backup strategy.",
           "bridge": "Snapshots · checkpoints · consumer offsets",
-          "harder": "A distributed snapshot is not a single moment unless coordinated (Chandy–Lamport)."
+          "harder": "A distributed snapshot is not a single moment unless coordinated (Chandy–Lamport).",
+          "page": null
         },
         {
           "name": "Observer",
@@ -264,7 +282,8 @@
           "tradeoff": "Decoupling bought with untraceable control flow.",
           "top1": "They treat unsubscription as a lifecycle obligation, because the leak is silent and only appears under sustained load. Distributed, they know the in-process version cannot fail and the distributed version fails constantly — delivery is not guaranteed, ordering is not guaranteed, and the observer may be down. Every webhook needs retry, idempotency and a DLQ.",
           "bridge": "Pub/sub · webhooks · change data capture",
-          "harder": "Delivery and ordering are not guaranteed and the observer may be down. In-process this was a method call that could not fail."
+          "harder": "Delivery and ordering are not guaranteed and the observer may be down. In-process this was a method call that could not fail.",
+          "page": null
         },
         {
           "name": "State",
@@ -277,7 +296,8 @@
           "tradeoff": "Correctness bought with class count.",
           "top1": "They draw the diagram first and treat *missing* arrows as the specification — the value is in the transitions you have made unrepresentable. Distributed, transitions must be durable and exactly-once, because a crash mid-transition leaves the machine in a state that does not appear on the diagram at all.",
           "bridge": "Workflow engines · Step Functions · Temporal",
-          "harder": "Transitions must be durable and exactly-once, or a crash lands you in an undefined state."
+          "harder": "Transitions must be durable and exactly-once, or a crash lands you in an undefined state.",
+          "page": null
         },
         {
           "name": "Strategy",
@@ -290,7 +310,8 @@
           "tradeoff": "Flexibility bought with a choice the caller now has to make.",
           "top1": "They make the *default* correct and the choice rare, rather than exposing a menu. In load balancing they know least-connections usually beats round-robin for heterogeneous request costs — and that the right strategy depends on live conditions the caller cannot see, which is an argument for choosing adaptively rather than configuring.",
           "bridge": "Load balancing algorithms · routing and placement policy",
-          "harder": "The right strategy depends on live conditions the caller cannot observe."
+          "harder": "The right strategy depends on live conditions the caller cannot observe.",
+          "page": null
         },
         {
           "name": "Template Method",
@@ -303,7 +324,8 @@
           "tradeoff": "Shared structure bought with inheritance coupling.",
           "top1": "They prefer composition — pass the steps in as functions — because it composes and tests better than a hierarchy. Distributed, one slow step stalls every stage behind it, which is why pipelines need per-stage timeouts.",
           "bridge": "Framework hooks · pipeline stages · MapReduce",
-          "harder": "One slow or failing step stalls every stage behind it."
+          "harder": "One slow or failing step stalls every stage behind it.",
+          "page": null
         },
         {
           "name": "Visitor",
@@ -316,7 +338,8 @@
           "tradeoff": "Operation extensibility bought with element rigidity.",
           "top1": "They apply the rule that decides it: use Visitor when the *structure* is stable and the *operations* churn; if new element types appear regularly, it is the wrong pattern and will punish you on every addition. In languages with pattern matching they use that instead.",
           "bridge": "AST/query traversal · schema migration tooling",
-          "harder": "The structure is distributed, so traversal is a distributed algorithm with partial failure."
+          "harder": "The structure is distributed, so traversal is a distributed algorithm with partial failure.",
+          "page": null
         }
       ]
     },

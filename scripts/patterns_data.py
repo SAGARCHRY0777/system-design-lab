@@ -16,24 +16,36 @@ Each entry:
               is available in any reference.
     bridge    (GoF only) the distributed counterpart
     harder    (GoF only) why the distributed version costs more
+    page      a directory with the full treatment, for the patterns that have
+              one. An index entry has room for a sentence per field; some of
+              these need a decoded glossary, runnable code and an interview
+              section, and the catalogue is the wrong place for that.
 """
 
 
-def P(what, where, how, why, adv, dis, tradeoff, top1, bridge=None, harder=None):
+def P(what, where, how, why, adv, dis, tradeoff, top1, bridge=None, harder=None,
+      page=None):
     return dict(what=what, where=where, how=how, why=why, adv=adv, dis=dis,
-                tradeoff=tradeoff, top1=top1, bridge=bridge, harder=harder)
+                tradeoff=tradeoff, top1=top1, bridge=bridge, harder=harder,
+                page=page)
 
 
 GOF_CREATIONAL = {
 "Singleton": P(
     "Exactly one instance of a type, globally reachable.",
     "Logger and config objects in almost every codebase; connection pools.",
-    "A private constructor and a static accessor that lazily creates and caches the instance.",
+    "Three mechanisms, one job each: a *private constructor* blocks the normal way in; a *static* "
+    "accessor provides the only way in — static because you need a way in before any instance "
+    "exists, and an ordinary method would need the instance you are trying to get; a cached field "
+    "makes the second call return the first object.",
     "Some resources genuinely must be unique — one connection pool, one metrics registry — and "
     "creating a second silently doubles the resource.",
     "Guarantees uniqueness; avoids repeatedly constructing something expensive.",
     "Global mutable state. Hidden dependencies that do not appear in any signature. Hostile to "
-    "testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong.",
+    "testing, because tests cannot substitute or reset it. Thread-safety is easy to get wrong — "
+    "and getting *creation* right does nothing for the instance's own mutable state, which every "
+    "thread then shares for the life of the process. Worst of all, \"one\" means one per "
+    "*process*: four workers hold four, and nothing anywhere reports it.",
     "Uniqueness bought with global state and untestability.",
     "They mostly do not use it. They register a single instance in a dependency-injection "
     "container instead — you still get one instance, but it arrives as a constructor argument, so "
@@ -42,7 +54,8 @@ GOF_CREATIONAL = {
     "misused: a test that passes alone and fails in a suite.",
     "Leader election · distributed lock",
     "One process needs a static field. A cluster needs consensus, a lease and a fencing token — "
-    "and during a partition two nodes can both believe they are the singleton."),
+    "and during a partition two nodes can both believe they are the singleton.",
+    page="singleton"),
 
 "Factory Method": P(
     "A method that creates objects, letting subclasses decide the concrete type.",

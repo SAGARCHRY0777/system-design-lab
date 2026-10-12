@@ -121,6 +121,10 @@ def entry(name: str, p: dict) -> list[str]:
     L = [f"### {name}", ""]
     L.append(f"**{p['what']}**")
     L.append("")
+    if p.get("page"):
+        L.append(f"**→ [Full page]({p['page']}/)** — decoded terminology, Python and Java, "
+                 "runnable tests, and the interview follow-ups. The entry below is the summary.")
+        L.append("")
     L.append(f"- **Where** — {p['where']}")
     L.append(f"- **How** — {p['how']}")
     L.append(f"- **Why** — {p['why']}")
@@ -306,7 +310,8 @@ def build_json() -> str:
                 {"name": n, "what": p["what"], "where": p["where"], "how": p["how"],
                  "why": p["why"], "adv": p["adv"], "dis": p["dis"],
                  "tradeoff": p["tradeoff"], "top1": p["top1"],
-                 "bridge": p.get("bridge"), "harder": p.get("harder")}
+                 "bridge": p.get("bridge"), "harder": p.get("harder"),
+                 "page": p.get("page")}
                 for n, p in group.items()
             ],
         })
