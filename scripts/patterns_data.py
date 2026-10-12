@@ -60,17 +60,26 @@ GOF_CREATIONAL = {
 "Factory Method": P(
     "A method that creates objects, letting subclasses decide the concrete type.",
     "Framework extension points; `Iterator` creation in collection libraries.",
-    "Define a creation method in a base class; subclasses override it to return their own type.",
+    "A base class declares a creation method it does not implement, and *calls it* from an "
+    "algorithm it does implement; each subclass overrides it to return its own concrete type. "
+    "That inversion is the pattern — the base class owns what happens, the subclass owns which "
+    "objects it happens to. Mark the algorithm final, or subclasses can replace that too and the "
+    "guarantee is gone.",
     "Callers should depend on an interface, not on a constructor for a concrete class.",
     "Decouples construction from use; new types need no caller changes.",
-    "A class per variant. Indirection that is not worth it when there are only two cases.",
+    "A class per variant, forever. Indirection that is not worth it when there are only two "
+    "cases. The decision is frozen at construction, so anyone who wanted dispatch on a runtime "
+    "value has reached for the wrong pattern — they want a registry, and a registry brings its "
+    "own failure: a plugin registers on import, nothing imports it, and the lookup raises in "
+    "production while passing CI.",
     "Flexibility bought with indirection.",
     "They add it when the *second* variant appears, not in anticipation of one. A factory with a "
     "single implementation is speculative generality — the cost is paid now, the benefit may "
     "never arrive. They also prefer a plain function over a class hierarchy when the language "
     "allows it.",
     "Service discovery · DI container",
-    "'Which implementation' becomes 'which instance, and is it healthy right now'."),
+    "'Which implementation' becomes 'which instance, and is it healthy right now'.",
+    page="factory-method"),
 
 "Abstract Factory": P(
     "Create families of related objects without naming their concrete classes.",

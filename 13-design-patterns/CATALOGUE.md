@@ -69,11 +69,13 @@ How objects get made.
 
 **A method that creates objects, letting subclasses decide the concrete type.**
 
+**→ [Full page](factory-method/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Framework extension points; `Iterator` creation in collection libraries.
-- **How** — Define a creation method in a base class; subclasses override it to return their own type.
+- **How** — A base class declares a creation method it does not implement, and *calls it* from an algorithm it does implement; each subclass overrides it to return its own concrete type. That inversion is the pattern — the base class owns what happens, the subclass owns which objects it happens to. Mark the algorithm final, or subclasses can replace that too and the guarantee is gone.
 - **Why** — Callers should depend on an interface, not on a constructor for a concrete class.
 - **Advantages** — Decouples construction from use; new types need no caller changes.
-- **Disadvantages** — A class per variant. Indirection that is not worth it when there are only two cases.
+- **Disadvantages** — A class per variant, forever. Indirection that is not worth it when there are only two cases. The decision is frozen at construction, so anyone who wanted dispatch on a runtime value has reached for the wrong pattern — they want a registry, and a registry brings its own failure: a plugin registers on import, nothing imports it, and the lookup raises in production while passing CI.
 - **Trade-off** — *Flexibility bought with indirection.*
 
 > **Distributed counterpart:** Service discovery · DI container  
