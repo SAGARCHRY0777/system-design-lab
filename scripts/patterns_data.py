@@ -304,7 +304,12 @@ GOF_BEHAVIORAL = {
 "Command": P(
     "Encapsulate a request as an object.",
     "Undo/redo stacks; job queues; event sourcing; CQRS write side.",
-    "Wrap the action and its parameters in an object with an `execute()`.",
+    "Wrap the action and its parameters in an object with an `execute()`. Binding the "
+    "*arguments* is the point: a strategy cannot be queued because it has none, while a "
+    "command can be stored, logged, retried, replayed and undone — and once it can be "
+    "queued it is a message. Undo is compensation rather than inverse, because you cannot "
+    "un-charge a card; the log grows and never shrinks, which is why the distributed form "
+    "is Saga.",
     "Requests need to be queued, logged, retried, scheduled or undone — none of which is possible "
     "with a bare method call.",
     "Enables undo, queueing, retry, audit and replay.",
@@ -315,7 +320,10 @@ GOF_BEHAVIORAL = {
     "and never has a field's meaning quietly changed. That discipline is what makes event "
     "sourcing survivable.",
     "Message · job · event sourcing",
-    "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe."),
+    "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe. "
+    "At-least-once delivery is the default a queue gives you, so the redelivery is scheduled, not "
+    "an edge case.",
+    page="behavioural"),
 
 "Interpreter": P(
     "Represent a grammar and evaluate sentences in it.",
@@ -400,7 +408,11 @@ GOF_BEHAVIORAL = {
 "State": P(
     "Change an object's behaviour when its internal state changes.",
     "Order lifecycles; connection state machines; workflow engines like Temporal.",
-    "Each state is an object; the context delegates and states control transitions.",
+    "Each state is an object; the context delegates and states control transitions — "
+    "`on(event)` returns the *next state*, and that method is what distinguishes this from "
+    "Strategy, which is otherwise the same shape. Worth knowing when a plain dict is "
+    "better: if only the transitions differ, a table beats the classes; the classes earn "
+    "their place when the *behaviour* differs per state too.",
     "Large conditionals over a status field become unmaintainable and permit illegal transitions.",
     "Illegal transitions become impossible rather than merely discouraged; each state is testable "
     "alone.",
@@ -411,12 +423,19 @@ GOF_BEHAVIORAL = {
     "and exactly-once, because a crash mid-transition leaves the machine in a state that does not "
     "appear on the diagram at all.",
     "Workflow engines · Step Functions · Temporal",
-    "Transitions must be durable and exactly-once, or a crash lands you in an undefined state."),
+    "Transitions must be durable and exactly-once, or a crash lands you in an undefined state. "
+    "And no transition is atomic: two workers reading the same state both act on it, so the "
+    "write needs a compare-and-swap — UPDATE ... WHERE state = ? — with the affected row count "
+    "actually checked.",
+    page="behavioural"),
 
 "Strategy": P(
     "Select an interchangeable algorithm at runtime.",
     "Load balancing algorithms; compression codec selection; pricing rules; sort comparators.",
-    "Encapsulate each algorithm behind a common interface; inject the chosen one.",
+    "Encapsulate each algorithm behind a common interface; inject the chosen one. The "
+    "defining detail is an absence: no strategy has a method returning another strategy, "
+    "because the *client* chooses. That is what separates it from State, which is the same "
+    "shape and whose states pick their own successors.",
     "Hard-coded conditionals over algorithm choice are rigid and untestable in isolation.",
     "Algorithms swap without touching callers; each is testable alone.",
     "Callers must know enough to choose. A class per algorithm.",
@@ -426,7 +445,8 @@ GOF_BEHAVIORAL = {
     "costs — and that the right strategy depends on live conditions the caller cannot see, which "
     "is an argument for choosing adaptively rather than configuring.",
     "Load balancing algorithms · routing and placement policy",
-    "The right strategy depends on live conditions the caller cannot observe."),
+    "The right strategy depends on live conditions the caller cannot observe.",
+    page="behavioural"),
 
 "Template Method": P(
     "A base class defines the skeleton; subclasses fill in steps.",

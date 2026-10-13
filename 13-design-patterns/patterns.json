@@ -205,15 +205,15 @@
           "name": "Command",
           "what": "Encapsulate a request as an object.",
           "where": "Undo/redo stacks; job queues; event sourcing; CQRS write side.",
-          "how": "Wrap the action and its parameters in an object with an `execute()`.",
+          "how": "Wrap the action and its parameters in an object with an `execute()`. Binding the *arguments* is the point: a strategy cannot be queued because it has none, while a command can be stored, logged, retried, replayed and undone — and once it can be queued it is a message. Undo is compensation rather than inverse, because you cannot un-charge a card; the log grows and never shrinks, which is why the distributed form is Saga.",
           "why": "Requests need to be queued, logged, retried, scheduled or undone — none of which is possible with a bare method call.",
           "adv": "Enables undo, queueing, retry, audit and replay.",
           "dis": "A class per action. Serialised commands must stay compatible with future code.",
           "tradeoff": "Deferability bought with indirection and versioning obligations.",
           "top1": "They treat a serialised command as a **permanent public API**. A command written today may be replayed in two years by code that does not exist yet, so it is versioned from day one and never has a field's meaning quietly changed. That discipline is what makes event sourcing survivable.",
           "bridge": "Message · job · event sourcing",
-          "harder": "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe.",
-          "page": null
+          "harder": "A serialised command outlives its sender: it must be versioned, idempotent and replay-safe. At-least-once delivery is the default a queue gives you, so the redelivery is scheduled, not an edge case.",
+          "page": "behavioural"
         },
         {
           "name": "Interpreter",
@@ -289,21 +289,21 @@
           "name": "State",
           "what": "Change an object's behaviour when its internal state changes.",
           "where": "Order lifecycles; connection state machines; workflow engines like Temporal.",
-          "how": "Each state is an object; the context delegates and states control transitions.",
+          "how": "Each state is an object; the context delegates and states control transitions — `on(event)` returns the *next state*, and that method is what distinguishes this from Strategy, which is otherwise the same shape. Worth knowing when a plain dict is better: if only the transitions differ, a table beats the classes; the classes earn their place when the *behaviour* differs per state too.",
           "why": "Large conditionals over a status field become unmaintainable and permit illegal transitions.",
           "adv": "Illegal transitions become impossible rather than merely discouraged; each state is testable alone.",
           "dis": "A class per state. Overkill for two or three states.",
           "tradeoff": "Correctness bought with class count.",
           "top1": "They draw the diagram first and treat *missing* arrows as the specification — the value is in the transitions you have made unrepresentable. Distributed, transitions must be durable and exactly-once, because a crash mid-transition leaves the machine in a state that does not appear on the diagram at all.",
           "bridge": "Workflow engines · Step Functions · Temporal",
-          "harder": "Transitions must be durable and exactly-once, or a crash lands you in an undefined state.",
-          "page": null
+          "harder": "Transitions must be durable and exactly-once, or a crash lands you in an undefined state. And no transition is atomic: two workers reading the same state both act on it, so the write needs a compare-and-swap — UPDATE ... WHERE state = ? — with the affected row count actually checked.",
+          "page": "behavioural"
         },
         {
           "name": "Strategy",
           "what": "Select an interchangeable algorithm at runtime.",
           "where": "Load balancing algorithms; compression codec selection; pricing rules; sort comparators.",
-          "how": "Encapsulate each algorithm behind a common interface; inject the chosen one.",
+          "how": "Encapsulate each algorithm behind a common interface; inject the chosen one. The defining detail is an absence: no strategy has a method returning another strategy, because the *client* chooses. That is what separates it from State, which is the same shape and whose states pick their own successors.",
           "why": "Hard-coded conditionals over algorithm choice are rigid and untestable in isolation.",
           "adv": "Algorithms swap without touching callers; each is testable alone.",
           "dis": "Callers must know enough to choose. A class per algorithm.",
@@ -311,7 +311,7 @@
           "top1": "They make the *default* correct and the choice rare, rather than exposing a menu. In load balancing they know least-connections usually beats round-robin for heterogeneous request costs — and that the right strategy depends on live conditions the caller cannot see, which is an argument for choosing adaptively rather than configuring.",
           "bridge": "Load balancing algorithms · routing and placement policy",
           "harder": "The right strategy depends on live conditions the caller cannot observe.",
-          "page": null
+          "page": "behavioural"
         },
         {
           "name": "Template Method",

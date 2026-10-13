@@ -291,15 +291,17 @@ How objects collaborate.
 
 **Encapsulate a request as an object.**
 
+**→ [Full page](behavioural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Undo/redo stacks; job queues; event sourcing; CQRS write side.
-- **How** — Wrap the action and its parameters in an object with an `execute()`.
+- **How** — Wrap the action and its parameters in an object with an `execute()`. Binding the *arguments* is the point: a strategy cannot be queued because it has none, while a command can be stored, logged, retried, replayed and undone — and once it can be queued it is a message. Undo is compensation rather than inverse, because you cannot un-charge a card; the log grows and never shrinks, which is why the distributed form is Saga.
 - **Why** — Requests need to be queued, logged, retried, scheduled or undone — none of which is possible with a bare method call.
 - **Advantages** — Enables undo, queueing, retry, audit and replay.
 - **Disadvantages** — A class per action. Serialised commands must stay compatible with future code.
 - **Trade-off** — *Deferability bought with indirection and versioning obligations.*
 
 > **Distributed counterpart:** Message · job · event sourcing  
-> A serialised command outlives its sender: it must be versioned, idempotent and replay-safe.
+> A serialised command outlives its sender: it must be versioned, idempotent and replay-safe. At-least-once delivery is the default a queue gives you, so the redelivery is scheduled, not an edge case.
 
 **What the top 1% do differently.** They treat a serialised command as a **permanent public API**. A command written today may be replayed in two years by code that does not exist yet, so it is versioned from day one and never has a field's meaning quietly changed. That discipline is what makes event sourcing survivable.
 
@@ -387,15 +389,17 @@ How objects collaborate.
 
 **Change an object's behaviour when its internal state changes.**
 
+**→ [Full page](behavioural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Order lifecycles; connection state machines; workflow engines like Temporal.
-- **How** — Each state is an object; the context delegates and states control transitions.
+- **How** — Each state is an object; the context delegates and states control transitions — `on(event)` returns the *next state*, and that method is what distinguishes this from Strategy, which is otherwise the same shape. Worth knowing when a plain dict is better: if only the transitions differ, a table beats the classes; the classes earn their place when the *behaviour* differs per state too.
 - **Why** — Large conditionals over a status field become unmaintainable and permit illegal transitions.
 - **Advantages** — Illegal transitions become impossible rather than merely discouraged; each state is testable alone.
 - **Disadvantages** — A class per state. Overkill for two or three states.
 - **Trade-off** — *Correctness bought with class count.*
 
 > **Distributed counterpart:** Workflow engines · Step Functions · Temporal  
-> Transitions must be durable and exactly-once, or a crash lands you in an undefined state.
+> Transitions must be durable and exactly-once, or a crash lands you in an undefined state. And no transition is atomic: two workers reading the same state both act on it, so the write needs a compare-and-swap — UPDATE ... WHERE state = ? — with the affected row count actually checked.
 
 **What the top 1% do differently.** They draw the diagram first and treat *missing* arrows as the specification — the value is in the transitions you have made unrepresentable. Distributed, transitions must be durable and exactly-once, because a crash mid-transition leaves the machine in a state that does not appear on the diagram at all.
 
@@ -403,8 +407,10 @@ How objects collaborate.
 
 **Select an interchangeable algorithm at runtime.**
 
+**→ [Full page](behavioural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Load balancing algorithms; compression codec selection; pricing rules; sort comparators.
-- **How** — Encapsulate each algorithm behind a common interface; inject the chosen one.
+- **How** — Encapsulate each algorithm behind a common interface; inject the chosen one. The defining detail is an absence: no strategy has a method returning another strategy, because the *client* chooses. That is what separates it from State, which is the same shape and whose states pick their own successors.
 - **Why** — Hard-coded conditionals over algorithm choice are rigid and untestable in isolation.
 - **Advantages** — Algorithms swap without touching callers; each is testable alone.
 - **Disadvantages** — Callers must know enough to choose. A class per algorithm.
