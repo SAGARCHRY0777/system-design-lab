@@ -175,14 +175,18 @@ GOF_STRUCTURAL = {
     "JDBC and database drivers; rendering backends; storage interfaces.",
     "The abstraction holds a reference to an implementation interface; both hierarchies evolve "
     "separately.",
-    "Without it, `N` abstractions × `M` implementations means `N×M` classes.",
+    "Without it, `N` abstractions × `M` implementations means `N×M` classes — but note where "
+    "that stops being true: at 2×2 both forms are four classes, and with a *single* "
+    "abstraction or implementation the bridge is strictly worse at every size, because 1×M "
+    "is M and 1+M is M+1.",
     "Collapses a combinatorial class explosion to `N+M`; either side changes alone.",
     "Indirection, and an abstraction that must genuinely fit every implementation.",
     "Independent variation bought with an extra indirection.",
     "They reach for it only when both axes are *actually* varying. Most codebases have one "
     "implementation and will always have one, and a bridge there is pure cost.",
     "Storage/driver interfaces · pluggable backends",
-    "Implementations differ in failure modes, not only in method bodies."),
+    "Implementations differ in failure modes, not only in method bodies.",
+    page="structural"),
 
 "Composite": P(
     "Treat individual objects and compositions of them uniformly.",
@@ -194,10 +198,16 @@ GOF_STRUCTURAL = {
     "no sense for them. Recursion depth and cycles are real hazards.",
     "Uniformity bought with a weakened interface.",
     "They guard the depth and detect cycles, because the production failure is a stack overflow "
-    "on user-supplied nesting. Distributed, they know a scatter-gather composite is as slow as "
-    "its slowest member — every single time.",
+    "on user-supplied nesting — and they get both details right: the guard fires below the "
+    "language's own recursion limit so the error names the offending node, and cycle detection "
+    "tracks the *ancestor path* keyed on identity, because a set of every node visited rejects a "
+    "legitimate diamond and a name-keyed check rejects `src/lib/src`. Distributed, they know a "
+    "scatter-gather composite is as slow as its slowest member — so at 100 members each with a "
+    "1% chance of being slow, 63% of calls are slow, and each member's p99 is the composite's "
+    "median.",
     "Scatter-gather · fan-out aggregation",
-    "A composite call takes the slowest member's latency, every time — *The Tail at Scale*."),
+    "A composite call takes the slowest member's latency, every time — *The Tail at Scale*.",
+    page="structural"),
 
 "Decorator": P(
     "Attach behaviour to an object dynamically, without changing its type.",
@@ -238,7 +248,9 @@ GOF_STRUCTURAL = {
 
 "Flyweight": P(
     "Share common state across many objects instead of duplicating it.",
-    "String interning; glyph caches; connection pools.",
+    "String interning; glyph caches; connection pools — and dictionary encoding in Parquet, ORC "
+    "and ClickHouse, which is this pattern at the storage layer and the version most engineers "
+    "actually depend on.",
     "Split intrinsic (shared) from extrinsic (per-use) state; cache and reuse the intrinsic part.",
     "Millions of near-identical objects exhaust memory when each carries its own copy.",
     "Large memory savings when duplication is genuinely high.",
@@ -250,7 +262,8 @@ GOF_STRUCTURAL = {
     "size it with Little's Law rather than by copying a default.",
     "Connection pooling · shared caches · interning",
     "Shared state across processes needs invalidation; a pooled connection can be stale in ways "
-    "an interned string never is."),
+    "an interned string never is.",
+    page="structural"),
 
 "Proxy": P(
     "A stand-in that controls access to another object.",

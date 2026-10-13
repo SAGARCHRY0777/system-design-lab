@@ -101,14 +101,14 @@
           "what": "Separate an abstraction from its implementation so the two can vary independently.",
           "where": "JDBC and database drivers; rendering backends; storage interfaces.",
           "how": "The abstraction holds a reference to an implementation interface; both hierarchies evolve separately.",
-          "why": "Without it, `N` abstractions × `M` implementations means `N×M` classes.",
+          "why": "Without it, `N` abstractions × `M` implementations means `N×M` classes — but note where that stops being true: at 2×2 both forms are four classes, and with a *single* abstraction or implementation the bridge is strictly worse at every size, because 1×M is M and 1+M is M+1.",
           "adv": "Collapses a combinatorial class explosion to `N+M`; either side changes alone.",
           "dis": "Indirection, and an abstraction that must genuinely fit every implementation.",
           "tradeoff": "Independent variation bought with an extra indirection.",
           "top1": "They reach for it only when both axes are *actually* varying. Most codebases have one implementation and will always have one, and a bridge there is pure cost.",
           "bridge": "Storage/driver interfaces · pluggable backends",
           "harder": "Implementations differ in failure modes, not only in method bodies.",
-          "page": null
+          "page": "structural"
         },
         {
           "name": "Composite",
@@ -119,10 +119,10 @@
           "adv": "Uniform treatment; recursive structures become natural.",
           "dis": "The interface becomes the union of leaf and container needs, so leaves get methods that make no sense for them. Recursion depth and cycles are real hazards.",
           "tradeoff": "Uniformity bought with a weakened interface.",
-          "top1": "They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting. Distributed, they know a scatter-gather composite is as slow as its slowest member — every single time.",
+          "top1": "They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting — and they get both details right: the guard fires below the language's own recursion limit so the error names the offending node, and cycle detection tracks the *ancestor path* keyed on identity, because a set of every node visited rejects a legitimate diamond and a name-keyed check rejects `src/lib/src`. Distributed, they know a scatter-gather composite is as slow as its slowest member — so at 100 members each with a 1% chance of being slow, 63% of calls are slow, and each member's p99 is the composite's median.",
           "bridge": "Scatter-gather · fan-out aggregation",
           "harder": "A composite call takes the slowest member's latency, every time — *The Tail at Scale*.",
-          "page": null
+          "page": "structural"
         },
         {
           "name": "Decorator",
@@ -155,7 +155,7 @@
         {
           "name": "Flyweight",
           "what": "Share common state across many objects instead of duplicating it.",
-          "where": "String interning; glyph caches; connection pools.",
+          "where": "String interning; glyph caches; connection pools — and dictionary encoding in Parquet, ORC and ClickHouse, which is this pattern at the storage layer and the version most engineers actually depend on.",
           "how": "Split intrinsic (shared) from extrinsic (per-use) state; cache and reuse the intrinsic part.",
           "why": "Millions of near-identical objects exhaust memory when each carries its own copy.",
           "adv": "Large memory savings when duplication is genuinely high.",
@@ -164,7 +164,7 @@
           "top1": "They measure first. It is a real win at millions of objects and pure complexity at thousands. Its distributed descendant — connection pooling — they *always* use, and they size it with Little's Law rather than by copying a default.",
           "bridge": "Connection pooling · shared caches · interning",
           "harder": "Shared state across processes needs invalidation; a pooled connection can be stale in ways an interned string never is.",
-          "page": null
+          "page": "structural"
         },
         {
           "name": "Proxy",

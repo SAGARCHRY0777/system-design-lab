@@ -163,9 +163,11 @@ How objects are composed.
 
 **Separate an abstraction from its implementation so the two can vary independently.**
 
+**→ [Full page](structural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — JDBC and database drivers; rendering backends; storage interfaces.
 - **How** — The abstraction holds a reference to an implementation interface; both hierarchies evolve separately.
-- **Why** — Without it, `N` abstractions × `M` implementations means `N×M` classes.
+- **Why** — Without it, `N` abstractions × `M` implementations means `N×M` classes — but note where that stops being true: at 2×2 both forms are four classes, and with a *single* abstraction or implementation the bridge is strictly worse at every size, because 1×M is M and 1+M is M+1.
 - **Advantages** — Collapses a combinatorial class explosion to `N+M`; either side changes alone.
 - **Disadvantages** — Indirection, and an abstraction that must genuinely fit every implementation.
 - **Trade-off** — *Independent variation bought with an extra indirection.*
@@ -179,6 +181,8 @@ How objects are composed.
 
 **Treat individual objects and compositions of them uniformly.**
 
+**→ [Full page](structural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — File system trees; UI component trees; nested permission groups.
 - **How** — Leaf and container implement the same interface; the container delegates to children.
 - **Why** — Callers should not need to know whether they hold one thing or a thousand.
@@ -189,7 +193,7 @@ How objects are composed.
 > **Distributed counterpart:** Scatter-gather · fan-out aggregation  
 > A composite call takes the slowest member's latency, every time — *The Tail at Scale*.
 
-**What the top 1% do differently.** They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting. Distributed, they know a scatter-gather composite is as slow as its slowest member — every single time.
+**What the top 1% do differently.** They guard the depth and detect cycles, because the production failure is a stack overflow on user-supplied nesting — and they get both details right: the guard fires below the language's own recursion limit so the error names the offending node, and cycle detection tracks the *ancestor path* keyed on identity, because a set of every node visited rejects a legitimate diamond and a name-keyed check rejects `src/lib/src`. Distributed, they know a scatter-gather composite is as slow as its slowest member — so at 100 members each with a 1% chance of being slow, 63% of calls are slow, and each member's p99 is the composite's median.
 
 ### Decorator
 
@@ -231,7 +235,9 @@ How objects are composed.
 
 **Share common state across many objects instead of duplicating it.**
 
-- **Where** — String interning; glyph caches; connection pools.
+**→ [Full page](structural/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
+- **Where** — String interning; glyph caches; connection pools — and dictionary encoding in Parquet, ORC and ClickHouse, which is this pattern at the storage layer and the version most engineers actually depend on.
 - **How** — Split intrinsic (shared) from extrinsic (per-use) state; cache and reuse the intrinsic part.
 - **Why** — Millions of near-identical objects exhaust memory when each carries its own copy.
 - **Advantages** — Large memory savings when duplication is genuinely high.
