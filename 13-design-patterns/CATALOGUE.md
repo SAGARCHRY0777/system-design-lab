@@ -145,6 +145,8 @@ How objects are composed.
 
 **Convert one interface into another the caller expects.**
 
+**→ [Full page](wrappers/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — ORM drivers; payment gateway integrations; anti-corruption layers.
 - **How** — Wrap the incompatible object and translate calls.
 - **Why** — You do not control the third-party interface, and you do not want its shape leaking through your codebase.
@@ -193,8 +195,10 @@ How objects are composed.
 
 **Attach behaviour to an object dynamically, without changing its type.**
 
+**→ [Full page](wrappers/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — HTTP middleware; Java I/O streams; service mesh sidecars.
-- **How** — Wrap the object in something implementing the same interface, adding behaviour around calls.
+- **How** — Wrap the object in something implementing the *same* interface, adding behaviour around a call it always makes. That last clause is the discriminator against Proxy: a decorator needs a result to transform, so it cannot skip the inner call, while a proxy decides whether the call happens at all.
 - **Why** — Subclassing for every combination of optional behaviours explodes combinatorially.
 - **Advantages** — Compose behaviour at runtime; each concern stays separate.
 - **Disadvantages** — Deep wrapping is very hard to debug — a stack trace forty frames of wrappers deep tells you nothing. Order matters and is invisible at the call site.
@@ -209,8 +213,10 @@ How objects are composed.
 
 **One simplified interface over a complex subsystem.**
 
+**→ [Full page](wrappers/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — API gateways; SDK entry points; backend-for-frontend.
-- **How** — A single class exposing the few operations callers actually need.
+- **How** — A single class exposing the few operations callers actually need, over *several* objects — the count is the discriminator. A wrapper around one object is never a facade; what a facade hides is a sequence across a subsystem, not a call.
 - **Why** — Subsystems accumulate surface area that most callers should never see.
 - **Advantages** — Reduces coupling; gives newcomers one obvious entry point.
 - **Disadvantages** — Can become a god object. Hides capability that some caller eventually needs, producing pressure to leak the subsystem back out.
@@ -241,8 +247,10 @@ How objects are composed.
 
 **A stand-in that controls access to another object.**
 
+**→ [Full page](wrappers/)** — decoded terminology, Python and Java, runnable tests, and the interview follow-ups. The entry below is the summary.
+
 - **Where** — Reverse proxies; lazy-loading ORM entities; sidecars; read-through caches.
-- **How** — Same interface as the subject; intercepts calls to add laziness, access control, caching or remoting.
+- **How** — Same interface as the subject; intercepts calls to add laziness, access control, caching or remoting — and may decide not to forward at all, which is what separates it from a Decorator. Four kinds: virtual controls *when* the subject is built, caching controls *whether* the call happens, protection controls *who* may call, remote controls *where*.
 - **Why** — You want to intervene between caller and subject without either knowing.
 - **Advantages** — Adds cross-cutting behaviour transparently.
 - **Disadvantages** — Transparency is the danger: a call that looks local is a network round trip, or triggers a lazy load. This is exactly the N+1 query problem.

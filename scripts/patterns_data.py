@@ -167,7 +167,8 @@ GOF_STRUCTURAL = {
     "anti-corruption layer. The failure they avoid: an adapter that mirrors the vendor's model "
     "one-to-one, which spreads the vendor's concepts through your code while adding a layer.",
     "Anti-corruption layer · protocol translation",
-    "The adapter now fails independently of both sides it adapts."),
+    "The adapter now fails independently of both sides it adapts.",
+    page="wrappers"),
 
 "Bridge": P(
     "Separate an abstraction from its implementation so the two can vary independently.",
@@ -201,7 +202,10 @@ GOF_STRUCTURAL = {
 "Decorator": P(
     "Attach behaviour to an object dynamically, without changing its type.",
     "HTTP middleware; Java I/O streams; service mesh sidecars.",
-    "Wrap the object in something implementing the same interface, adding behaviour around calls.",
+    "Wrap the object in something implementing the *same* interface, adding behaviour around a "
+    "call it always makes. That last clause is the discriminator against Proxy: a decorator "
+    "needs a result to transform, so it cannot skip the inner call, while a proxy decides "
+    "whether the call happens at all.",
     "Subclassing for every combination of optional behaviours explodes combinatorially.",
     "Compose behaviour at runtime; each concern stays separate.",
     "Deep wrapping is very hard to debug — a stack trace forty frames of wrappers deep tells you "
@@ -211,12 +215,15 @@ GOF_STRUCTURAL = {
     "auth-then-log and log-then-auth are different systems. In middleware they know the ordering "
     "*is* the security model.",
     "Middleware · service mesh sidecar · filter chain",
-    "Each decorator is now a network hop with its own latency and its own failure mode."),
+    "Each decorator is now a network hop with its own latency and its own failure mode.",
+    page="wrappers"),
 
 "Facade": P(
     "One simplified interface over a complex subsystem.",
     "API gateways; SDK entry points; backend-for-frontend.",
-    "A single class exposing the few operations callers actually need.",
+    "A single class exposing the few operations callers actually need, over *several* objects "
+    "— the count is the discriminator. A wrapper around one object is never a facade; what a "
+    "facade hides is a sequence across a subsystem, not a call.",
     "Subsystems accumulate surface area that most callers should never see.",
     "Reduces coupling; gives newcomers one obvious entry point.",
     "Can become a god object. Hides capability that some caller eventually needs, producing "
@@ -226,7 +233,8 @@ GOF_STRUCTURAL = {
     "the only door. Distributed, they watch for the facade becoming both a single point of "
     "failure and a deployment bottleneck for every team behind it.",
     "API gateway · backend-for-frontend",
-    "It becomes a single point of failure and a release bottleneck for every team behind it."),
+    "It becomes a single point of failure and a release bottleneck for every team behind it.",
+    page="wrappers"),
 
 "Flyweight": P(
     "Share common state across many objects instead of duplicating it.",
@@ -248,7 +256,9 @@ GOF_STRUCTURAL = {
     "A stand-in that controls access to another object.",
     "Reverse proxies; lazy-loading ORM entities; sidecars; read-through caches.",
     "Same interface as the subject; intercepts calls to add laziness, access control, caching or "
-    "remoting.",
+    "remoting — and may decide not to forward at all, which is what separates it from a "
+    "Decorator. Four kinds: virtual controls *when* the subject is built, caching controls "
+    "*whether* the call happens, protection controls *who* may call, remote controls *where*.",
     "You want to intervene between caller and subject without either knowing.",
     "Adds cross-cutting behaviour transparently.",
     "Transparency is the danger: a call that looks local is a network round trip, or triggers a "
@@ -259,7 +269,8 @@ GOF_STRUCTURAL = {
     "applications, and it exists because the proxy hid the cost perfectly.",
     "Reverse proxy · sidecar · read-through cache",
     "A remote proxy can be reachable while its subject is not — exactly the case needing a "
-    "timeout and a circuit breaker."),
+    "timeout and a circuit breaker.",
+    page="wrappers"),
 }
 
 GOF_BEHAVIORAL = {
